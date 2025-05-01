@@ -14,7 +14,9 @@ export default function App() {
         {/* Simple Navigation */}
         <div className="bg-white shadow-sm">
           <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-            <div className="font-bold text-xl text-blue-600">Ring4</div>
+            <div>
+              <img src="https://www.ring4.com/hubfs/Images/r4_logo.svg" alt="Ring4 Logo" className="h-8" />
+            </div>
             <div className="flex space-x-4">
               <Button
                 variant={currentPage === 'home' ? 'default' : 'ghost'}
