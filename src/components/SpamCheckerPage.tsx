@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { useToast } from '@/hooks/use-toast'
 import {
   AlertTriangle,
   ArrowRight,
@@ -24,6 +26,7 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Badge } from '@/components/ui/badge'
 
 // Define the form schema using Zod
 const formSchema = z.object({
@@ -39,8 +42,14 @@ const leadFormSchema = z.object({
   company: z.string().optional(),
 })
 
+// Define the email notification form schema
+const emailNotificationSchema = z.object({
+  email: z.string().email({ message: 'Please enter a valid email address' }),
+})
+
 type FormValues = z.infer<typeof formSchema>
 type LeadFormValues = z.infer<typeof leadFormSchema>
+type EmailNotificationFormValues = z.infer<typeof emailNotificationSchema>
 
 export default function SpamCheckerPage() {
   const [isChecking, setIsChecking] = useState(false)
@@ -48,6 +57,8 @@ export default function SpamCheckerPage() {
   const [showFullReport, setShowFullReport] = useState(false)
   const [formSubmitted, setFormSubmitted] = useState(false)
   const [leadCaptured, setLeadCaptured] = useState(false)
+  const [showEmailDialog, setShowEmailDialog] = useState(false)
+  const { toast } = useToast()
 
   // Initialize form
   const form = useForm<FormValues>({
@@ -67,6 +78,14 @@ export default function SpamCheckerPage() {
     },
   })
 
+  // Initialize email notification form
+  const emailForm = useForm<EmailNotificationFormValues>({
+    resolver: zodResolver(emailNotificationSchema),
+    defaultValues: {
+      email: '',
+    },
+  })
+
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     setIsChecking(true)
@@ -74,11 +93,11 @@ export default function SpamCheckerPage() {
     setCheckResult(null)
     setShowFullReport(false)
     setLeadCaptured(false)
-    
+
     try {
       // Format phone number to remove non-digits
       const formattedNumber = data.phoneNumber.replace(/\D/g, '')
-      
+
       // Call the spam check service
       const result = await checkPhoneNumber(formattedNumber)
       setCheckResult(result)
@@ -98,6 +117,26 @@ export default function SpamCheckerPage() {
     setLeadCaptured(true)
     setShowFullReport(true)
   }
+
+  // Handle email notification form submission
+  const onEmailNotificationSubmit = (data: EmailNotificationFormValues) => {
+    console.log('Email notification subscription:', data)
+    setShowEmailDialog(false)
+    toast({
+      title: "Success!",
+      description: "You'll be notified when this feature becomes available.",
+    })
+    emailForm.reset()
+  }
+
+  // Show email dialog after a delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowEmailDialog(true)
+    }, 5000) // Show after 5 seconds
+
+    return () => clearTimeout(timer)
+  }, [])
 
   // Helper function to get status color
   const getStatusColor = (status: string) => {
@@ -188,7 +227,7 @@ export default function SpamCheckerPage() {
                 <div
                   className={cn(
                     'h-full transition-all duration-1000 ease-out rounded-full',
-                    checkResult.status === 'clean' ? 'bg-green-500' : 
+                    checkResult.status === 'clean' ? 'bg-green-500' :
                     checkResult.status === 'at-risk' ? 'bg-yellow-500' : 'bg-red-500'
                   )}
                   style={{ width: `${checkResult.riskScore}%` }}
@@ -267,7 +306,7 @@ export default function SpamCheckerPage() {
                       </form>
                     </Form>
                   ) : (
-                    <Button 
+                    <Button
                       className="w-full bg-blue-600"
                       onClick={() => setShowFullReport(true)}
                     >
@@ -289,21 +328,21 @@ export default function SpamCheckerPage() {
                       <TabsTrigger value="recommendations" className="flex-1">Fix It Now</TabsTrigger>
                       <TabsTrigger value="report" className="flex-1">Detailed Report</TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="carriers" className="space-y-4">
                       <h3 className="font-semibold">Carrier Reputation Status</h3>
                       <div className="space-y-3">
                         {checkResult.carriers.map((carrier: any, index: number) => (
                           <div key={index} className="flex justify-between items-center p-3 rounded-lg border">
                             <div className="flex items-center">
-                              <div className={cn("w-3 h-3 rounded-full mr-3", 
-                                carrier.status === 'clean' ? 'bg-green-500' : 
+                              <div className={cn("w-3 h-3 rounded-full mr-3",
+                                carrier.status === 'clean' ? 'bg-green-500' :
                                 carrier.status === 'at-risk' ? 'bg-yellow-500' : 'bg-red-500'
                               )}></div>
                               <span>{carrier.name}</span>
                             </div>
                             <span className="text-sm">
-                              {carrier.status === 'clean' ? 'Good Standing' : 
+                              {carrier.status === 'clean' ? 'Good Standing' :
                                carrier.status === 'at-risk' ? 'At Risk' : 'Flagged'}
                             </span>
                           </div>
@@ -315,7 +354,7 @@ export default function SpamCheckerPage() {
                         </p>
                       </div>
                     </TabsContent>
-                    
+
                     <TabsContent value="recommendations">
                       <div className="space-y-4">
                         <h3 className="font-semibold">Recommended Actions</h3>
@@ -329,7 +368,7 @@ export default function SpamCheckerPage() {
                             </li>
                           ))}
                         </ul>
-                        
+
                         <div className="p-5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-800 text-white mt-6">
                           <h4 className="font-bold text-lg mb-2">Ring4 Can Fix This For You</h4>
                           <p className="mb-4 text-white/90">
@@ -346,7 +385,7 @@ export default function SpamCheckerPage() {
                         </div>
                       </div>
                     </TabsContent>
-                    
+
                     <TabsContent value="report">
                       <div className="space-y-4">
                         <div className="flex justify-between items-center">
@@ -356,7 +395,7 @@ export default function SpamCheckerPage() {
                             Download PDF
                           </Button>
                         </div>
-                        
+
                         <div className="p-4 rounded-lg border space-y-3">
                           <div className="flex justify-between">
                             <span className="text-sm font-medium">Phone Number:</span>
@@ -374,15 +413,15 @@ export default function SpamCheckerPage() {
                             <span className="text-sm font-medium">Overall Status:</span>
                             <span className={cn(
                               'text-sm font-medium',
-                              checkResult.status === 'clean' ? 'text-green-600' : 
-                              checkResult.status === 'at-risk' ? 'text-yellow-600' : 
+                              checkResult.status === 'clean' ? 'text-green-600' :
+                              checkResult.status === 'at-risk' ? 'text-yellow-600' :
                               'text-red-600'
                             )}>
                               {getStatusText(checkResult.status)}
                             </span>
                           </div>
                         </div>
-                        
+
                         <div className="p-4 rounded-lg border">
                           <h4 className="font-medium mb-3">Business Impact</h4>
                           {checkResult.status === 'clean' ? (
@@ -407,9 +446,9 @@ export default function SpamCheckerPage() {
             </div>
           </CardContent>
         </Card>
-        
+
         {checkResult.status !== 'clean' && !leadCaptured && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
@@ -422,8 +461,8 @@ export default function SpamCheckerPage() {
               <div>
                 <h3 className="font-bold text-red-700 mb-1">Your Calls Are Being Filtered</h3>
                 <p className="text-gray-700 mb-3">
-                  With your current spam status, you could be losing up to 
-                  <span className="font-bold"> {checkResult.status === 'at-risk' ? '50%' : '80%'} </span> 
+                  With your current spam status, you could be losing up to
+                  <span className="font-bold"> {checkResult.status === 'at-risk' ? '50%' : '80%'} </span>
                   of potential connections. This directly impacts your revenue pipeline.
                 </p>
                 <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setLeadCaptured(true)}>
@@ -433,9 +472,9 @@ export default function SpamCheckerPage() {
             </div>
           </motion.div>
         )}
-        
+
         {checkResult.status === 'clean' && !leadCaptured && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.3 }}
@@ -464,10 +503,10 @@ export default function SpamCheckerPage() {
   // Helper function for formatting
   const formatPhoneNumber = (value: string) => {
     if (!value) return value
-    
+
     // Remove all non-digits
     const phoneNumber = value.replace(/\D/g, '')
-    
+
     // Format as (XXX) XXX-XXXX
     if (phoneNumber.length <= 3) {
       return phoneNumber
@@ -529,26 +568,29 @@ export default function SpamCheckerPage() {
                                 />
                               </FormControl>
                             </div>
-                            <Button 
-                              type="submit" 
-                              className="h-14 px-6 bg-[#0055FF]"
-                              disabled={isChecking || !form.formState.isValid}
-                            >
-                              {isChecking ? (
-                                <span className="flex items-center">
-                                  <LoaderCircle className="animate-spin mr-2 h-5 w-5" /> 
-                                  Checking...
-                                </span>
-                              ) : formSubmitted && checkResult ? (
-                                <span className="flex items-center">
-                                  Check Again
-                                </span>
-                              ) : (
-                                <span className="flex items-center">
-                                  Check Now <ArrowRight className="ml-2 h-5 w-5" />
-                                </span>
-                              )}
-                            </Button>
+                            <div className="relative">
+                              <Button
+                                type="submit"
+                                className="h-14 px-6 bg-[#0055FF]"
+                                disabled={isChecking || !form.formState.isValid}
+                              >
+                                {isChecking ? (
+                                  <span className="flex items-center">
+                                    <LoaderCircle className="animate-spin mr-2 h-5 w-5" />
+                                    Checking...
+                                  </span>
+                                ) : formSubmitted && checkResult ? (
+                                  <span className="flex items-center">
+                                    Check Again
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center">
+                                    Check Now <ArrowRight className="ml-2 h-5 w-5" />
+                                  </span>
+                                )}
+                              </Button>
+                              <Badge className="absolute -top-2 -right-2 bg-yellow-500 text-white">Coming Soon</Badge>
+                            </div>
                           </div>
                           <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                             <Phone className="h-6 w-6" />
@@ -622,7 +664,7 @@ export default function SpamCheckerPage() {
           </AnimatePresence>
 
           {!isChecking && checkResult && renderResults()}
-          
+
           {!isChecking && !checkResult && !formSubmitted && (
             <div className="max-w-5xl mx-auto mt-10">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -905,20 +947,58 @@ export default function SpamCheckerPage() {
           </div>
         </div>
       </section>
+
+      {/* Email Notification Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Get notified when we launch</DialogTitle>
+            <DialogDescription>
+              We're working hard to bring you these features. Enter your email to be notified as soon as they're available.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Form {...emailForm}>
+            <form onSubmit={emailForm.handleSubmit(onEmailNotificationSubmit)} className="space-y-4 py-4">
+              <FormField
+                control={emailForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <Input placeholder="Your email address" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter className="sm:justify-between">
+                <Button type="button" variant="outline" onClick={() => setShowEmailDialog(false)}>
+                  Maybe later
+                </Button>
+                <Button type="submit">
+                  Notify me
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
 
 // Extra components needed
 const Lock = ({ className }: { className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     className={className}
   >
     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -927,14 +1007,14 @@ const Lock = ({ className }: { className?: string }) => (
 )
 
 const Download = ({ className }: { className?: string }) => (
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    viewBox="0 0 24 24" 
-    fill="none" 
-    stroke="currentColor" 
-    strokeWidth="2" 
-    strokeLinecap="round" 
-    strokeLinejoin="round" 
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
     className={className}
   >
     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>

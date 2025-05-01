@@ -12,21 +12,21 @@ export default function HomePage() {
             <motion.div
               key={i}
               className="absolute rounded-full bg-blue-200 opacity-20"
-              initial={{ 
-                width: Math.random() * 300 + 100, 
-                height: Math.random() * 300 + 100, 
+              initial={{
+                width: Math.random() * 300 + 100,
+                height: Math.random() * 300 + 100,
                 x: Math.random() * 100 - 50,
                 y: Math.random() * 100 - 50,
                 opacity: 0.1,
               }}
-              animate={{ 
-                x: Math.random() * 10 - 5, 
+              animate={{
+                x: Math.random() * 10 - 5,
                 y: Math.random() * 10 - 5,
                 opacity: [0.1, 0.15, 0.1],
               }}
-              transition={{ 
-                duration: 8, 
-                repeat: Infinity, 
+              transition={{
+                duration: 8,
+                repeat: Infinity,
                 repeatType: "reverse",
                 delay: i * 0.5,
               }}
@@ -40,7 +40,7 @@ export default function HomePage() {
 
         <div className="container mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, ease: "easeOut" }}
@@ -55,40 +55,44 @@ export default function HomePage() {
                 Trusted by 500+ sales teams
               </motion.div>
 
-              <motion.h1 
+              <motion.h1
                 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-gray-900"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
-                Your Brand. Your Calls. <span className="text-[#0055FF]">Actually Answered.</span>
+                Low Connection Rates? Your Business Line Might Be Getting Flagged for Spam.
               </motion.h1>
-              
-              <motion.p 
+
+              <motion.p
                 className="text-lg md:text-xl text-gray-600"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
               >
-                Ring4 helps sales-driven businesses cut through spam filters, protect their reputation, and connect with more customers—through branded calls, smarter routing, and seamless team communication.
+                Don't let "Spam Likely" kill your connect rate. Get branded calls clients trust with instant caller ID repair.
               </motion.p>
-              
-              <motion.div 
+
+              <motion.div
                 className="flex flex-col sm:flex-row gap-4 pt-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7, duration: 0.6 }}
               >
-                <Button size="lg" className="bg-[#0055FF] hover:bg-[#003399] text-white font-medium relative overflow-hidden group">
-                  <span className="relative z-10">Try Ring4 Now</span>
+                <Button
+                  size="lg"
+                  className="bg-[#0055FF] hover:bg-[#003399] text-white font-medium relative overflow-hidden group"
+                  onClick={() => window.location.href = '/spam-checker'}
+                >
+                  <span className="relative z-10">Check My Number Now</span>
                   <span className="absolute inset-0 bg-[#003399] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
                 </Button>
                 <Button size="lg" variant="outline" className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50">
-                  Book a Demo
+                  Get Started
                 </Button>
               </motion.div>
-              
-              <motion.div 
+
+              <motion.div
                 className="pt-8 flex items-center space-x-2"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -104,7 +108,7 @@ export default function HomePage() {
                 <span className="text-sm text-gray-600">Join 10,000+ professionals using Ring4</span>
               </motion.div>
             </motion.div>
-            
+
             <motion.div
               className="relative flex justify-center md:justify-end"
               initial={{ opacity: 0 }}
@@ -116,7 +120,7 @@ export default function HomePage() {
                 className="relative z-10 w-full max-w-sm"
                 initial={{ y: 40, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ 
+                transition={{
                   delay: 0.4,
                   duration: 0.8,
                   type: "spring",
@@ -124,15 +128,15 @@ export default function HomePage() {
                 }}
               >
                 <div className="rounded-3xl overflow-hidden shadow-2xl">
-                  <img 
-                    src="https://www.ring4.com/hubfs/Ring4-panel-2-1.png" 
-                    alt="Ring4 Branded Calling Interface" 
+                  <img
+                    src="https://www.ring4.com/hubfs/Ring4-panel-2-1.png"
+                    alt="Ring4 Branded Calling Interface"
                     className="w-full h-auto"
                   />
                 </div>
-                
+
                 {/* Floating Elements */}
-                <motion.div 
+                <motion.div
                   className="absolute -left-8 top-20 bg-white p-3 rounded-lg shadow-lg"
                   initial={{ x: -30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
@@ -144,8 +148,8 @@ export default function HomePage() {
                     <span className="text-sm font-medium">Brand Verified</span>
                   </div>
                 </motion.div>
-                
-                <motion.div 
+
+                <motion.div
                   className="absolute -right-8 top-1/3 bg-white p-3 rounded-lg shadow-lg"
                   initial={{ x: 30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
@@ -157,8 +161,8 @@ export default function HomePage() {
                     <span className="text-sm font-medium">97% Answer Rate</span>
                   </div>
                 </motion.div>
-                
-                <motion.div 
+
+                <motion.div
                   className="absolute -left-12 bottom-1/4 bg-white p-3 rounded-lg shadow-lg"
                   initial={{ x: -30, opacity: 0 }}
                   animate={{ x: 0, opacity: 1 }}
@@ -172,24 +176,24 @@ export default function HomePage() {
                     <span className="text-sm font-medium">Team Collaboration</span>
                   </div>
                 </motion.div>
-                
+
                 {/* Glowing ring effect */}
                 <div className="absolute -inset-4 bg-blue-400/20 rounded-full blur-3xl -z-10 animate-pulse" style={{ animationDuration: '4s' }}></div>
               </motion.div>
-              
+
               {/* Background decorative elements */}
-              <motion.div 
+              <motion.div
                 className="absolute w-40 h-40 bg-blue-100 rounded-full -bottom-10 -left-10 -z-10"
-                animate={{ 
+                animate={{
                   scale: [1, 1.05, 1],
                   opacity: [0.3, 0.5, 0.3]
                 }}
                 transition={{ duration: 5, repeat: Infinity, repeatType: "reverse" }}
               ></motion.div>
-              
-              <motion.div 
+
+              <motion.div
                 className="absolute w-24 h-24 bg-blue-200 rounded-full top-20 right-10 -z-10"
-                animate={{ 
+                animate={{
                   scale: [1, 1.1, 1],
                   opacity: [0.2, 0.4, 0.2]
                 }}
@@ -197,16 +201,16 @@ export default function HomePage() {
               ></motion.div>
             </motion.div>
           </div>
-          
+
           {/* Floating trust indicators */}
-          <motion.div 
+          <motion.div
             className="mt-16 flex flex-wrap justify-center gap-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.8, duration: 0.6 }}
           >
             {['99.9% Uptime', 'Enterprise-Grade Security', 'Real-time Insights', '24/7 Support'].map((item, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full shadow-sm"
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
@@ -246,7 +250,7 @@ export default function HomePage() {
                 Even the most trusted brands are being filtered, flagged, and ignored. Here's why:
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
               {/* Left Column - Problems List */}
               <div className="space-y-10">
@@ -275,7 +279,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 </motion.div>
-                
+
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
@@ -301,7 +305,7 @@ export default function HomePage() {
                     </div>
                   </div>
                 </motion.div>
-                
+
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
@@ -328,7 +332,7 @@ export default function HomePage() {
                   </div>
                 </motion.div>
               </div>
-              
+
               {/* Right Column - Visual Comparison */}
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
@@ -369,7 +373,7 @@ export default function HomePage() {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Branded Call */}
                       <div className="bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-green-500 pb-4">
                         <div className="bg-green-800 text-white px-4 py-2 text-center font-bold">
@@ -400,48 +404,49 @@ export default function HomePage() {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="mt-6 bg-white/10 backdrop-blur-sm px-6 py-4 rounded-lg shadow-lg text-center mx-auto max-w-md">
                       <h3 className="font-bold text-xl md:text-2xl">
                         Same call. One gets answered. <span className="text-red-400">The other gets ignored.</span>
                       </h3>
                     </div>
                   </div>
-                  
+
                   {/* Decorative elements */}
-                  <motion.div 
+                  <motion.div
                     className="absolute -z-10 rounded-full w-48 h-48 bg-gradient-to-r from-red-600/30 to-red-900/20 blur-2xl"
                     style={{ top: '10%', left: '15%' }}
                     animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0.6, 0.4] }}
                     transition={{ duration: 8, repeat: Infinity, repeatType: "reverse" }}
                   />
-                  
-                  <motion.div 
+
+                  <motion.div
                     className="absolute -z-10 rounded-full w-64 h-64 bg-gradient-to-r from-green-600/20 to-blue-800/20 blur-3xl"
                     style={{ bottom: '10%', right: '15%' }}
                     animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.5, 0.3] }}
                     transition={{ duration: 10, repeat: Infinity, repeatType: "reverse" }}
                   />
                 </div>
-                
+
                 <div className="mt-8 p-5 rounded-lg bg-gradient-to-r from-gray-800/80 to-gray-900/80 border border-gray-700">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex-shrink-0 bg-white/10 px-3 py-1 rounded-full">
-                      <span className="text-white font-semibold text-sm">THE SOLUTION</span>
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold text-white mb-3">Ring4 rebuilds trust with branded calls</h3>
-                  <p className="text-gray-300">
-                    We make sure your company name appears on outgoing calls, verify your business with carriers, and provide unified inbox management so every call gets answered.
+                  <h3 className="text-xl font-bold text-white mb-3">Think your number's safe?</h3>
+                  <p className="text-gray-300 mb-3">
+                    We scanned 100 SMBs this week. 34 were flagged by at least one major carrier.
                   </p>
-                  <Button className="mt-4 bg-[#0055FF] hover:bg-[#003399] text-white">
-                    See How It Works
+                  <p className="text-gray-300 mb-4 font-medium">
+                    → Don't assume. Check yours.
+                  </p>
+                  <Button
+                    className="mt-2 bg-green-600 hover:bg-green-700 text-white"
+                    onClick={() => window.location.href = '/spam-checker'}
+                  >
+                    Check My Number
                   </Button>
                 </div>
               </motion.div>
             </div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.8 }}
@@ -457,7 +462,7 @@ export default function HomePage() {
                   <div className="text-blue-300">Increase in answered calls</div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-500 to-blue-700 flex items-center justify-center">
                   <span className="text-2xl">🛡️</span>
@@ -467,7 +472,7 @@ export default function HomePage() {
                   <div className="text-blue-300">Brand name verification</div>
                 </div>
               </div>
-              
+
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-500 to-blue-700 flex items-center justify-center">
                   <span className="text-2xl">⏱️</span>
@@ -502,9 +507,9 @@ export default function HomePage() {
               A modern phone system designed to get your calls answered, keep your team aligned, and make your brand look world-class.
             </p>
           </motion.div>
-          
+
           {/* Feature 1: Priority Inbox Notifications */}
-          <motion.div 
+          <motion.div
             className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-24"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -543,7 +548,7 @@ export default function HomePage() {
                 Learn More
               </Button>
             </div>
-            
+
             <div className="order-1 md:order-2 relative">
               <motion.div
                 className="relative mx-auto max-w-sm"
@@ -594,16 +599,16 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Decorative elements */}
                 <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-blue-100 rounded-full -z-10"></div>
                 <div className="absolute -top-4 -left-4 w-16 h-16 bg-yellow-100 rounded-full -z-10"></div>
               </motion.div>
             </div>
           </motion.div>
-          
+
           {/* Feature 2: Reputation Monitoring + Branded Caller ID */}
-          <motion.div 
+          <motion.div
             className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-24"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -616,18 +621,18 @@ export default function HomePage() {
                 whileHover={{ y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-                <img 
-                  src="https://www.ring4.com/hs-fs/hubfs/Screenshot%202024-11-06%20at%202.01.54%20PM.png?width=800&height=366&name=Screenshot%202024-11-06%20at%202.01.54%20PM.png" 
-                  alt="Spam vs. Branded Calls Comparison" 
+                <img
+                  src="https://www.ring4.com/hs-fs/hubfs/Screenshot%202024-11-06%20at%202.01.54%20PM.png?width=800&height=366&name=Screenshot%202024-11-06%20at%202.01.54%20PM.png"
+                  alt="Spam vs. Branded Calls Comparison"
                   className="rounded-xl shadow-xl z-10 relative"
                 />
-                
+
                 {/* Decorative elements */}
                 <div className="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-100 rounded-full -z-10"></div>
                 <div className="absolute -top-6 -left-6 w-24 h-24 bg-red-100 rounded-full -z-10"></div>
               </motion.div>
             </div>
-            
+
             <div>
               <div className="inline-flex items-center bg-green-100 px-3 py-1 rounded-full text-green-600 text-sm font-medium mb-4">
                 <span className="mr-2">📞</span>
@@ -661,9 +666,9 @@ export default function HomePage() {
               </Button>
             </div>
           </motion.div>
-          
+
           {/* Feature 3: Website Text Chat */}
-          <motion.div 
+          <motion.div
             className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-24"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -702,28 +707,28 @@ export default function HomePage() {
                 See It in Action
               </Button>
             </div>
-            
+
             <div className="order-1 md:order-2 relative">
               <motion.div
                 className="relative mx-auto max-w-md"
                 whileHover={{ y: -10 }}
                 transition={{ duration: 0.3 }}
               >
-                <img 
-                  src="https://www.ring4.com/hubfs/image-png-Nov-20-2024-11-28-42-2132-PM.png" 
-                  alt="Website Chat Widget" 
+                <img
+                  src="https://www.ring4.com/hubfs/image-png-Nov-20-2024-11-28-42-2132-PM.png"
+                  alt="Website Chat Widget"
                   className="rounded-xl shadow-xl z-10 relative"
                 />
-                
+
                 {/* Decorative elements */}
                 <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-indigo-100 rounded-full -z-10"></div>
                 <div className="absolute -top-6 -right-6 w-24 h-24 bg-teal-100 rounded-full -z-10"></div>
               </motion.div>
             </div>
           </motion.div>
-          
+
           {/* Feature 4: Transparent Billing */}
-          <motion.div 
+          <motion.div
             className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -745,7 +750,7 @@ export default function HomePage() {
                       <span className="text-2xl font-bold">$29</span>
                       <span className="text-gray-500">per user / month</span>
                     </div>
-                    
+
                     <ul className="space-y-4">
                       <li className="flex items-center space-x-3">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -775,7 +780,7 @@ export default function HomePage() {
                         </div>
                       </li>
                     </ul>
-                    
+
                     <div className="mt-8 pt-4 border-t">
                       <p className="text-center text-sm text-gray-500 mb-4">Try Risk-Free for 14 Days</p>
                       <Button className="w-full bg-[#0055FF] hover:bg-[#003399] text-white">
@@ -784,13 +789,13 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Decorative elements */}
                 <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-green-100 rounded-full -z-10"></div>
                 <div className="absolute -top-4 -right-4 w-16 h-16 bg-blue-100 rounded-full -z-10"></div>
               </motion.div>
             </div>
-            
+
             <div>
               <div className="inline-flex items-center bg-emerald-100 px-3 py-1 rounded-full text-emerald-600 text-sm font-medium mb-4">
                 <span className="mr-2">💸</span>
@@ -840,7 +845,7 @@ export default function HomePage() {
             <h2 className="text-3xl md:text-4xl font-bold mb-10 text-gray-900">
               We've helped hundreds of teams escape the spam label, rebuild trust, and actually connect.
             </h2>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <div className="flex items-center justify-center mb-4">
@@ -860,7 +865,7 @@ export default function HomePage() {
                   <p className="text-sm text-gray-500">Sales Director, TechSolutions Inc.</p>
                 </div>
               </div>
-              
+
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <div className="flex items-center justify-center mb-4">
                   <div className="flex">
@@ -879,7 +884,7 @@ export default function HomePage() {
                   <p className="text-sm text-gray-500">Operations Manager, Growth Partners</p>
                 </div>
               </div>
-              
+
               <div className="bg-white p-6 rounded-lg shadow-md">
                 <div className="flex items-center justify-center mb-4">
                   <div className="flex">
@@ -899,7 +904,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="py-8 border-t border-b border-gray-200">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                 <img src="https://placehold.co/200x80/ffffff/333333?text=Client+Logo" alt="Client Logo" className="h-10 w-auto mx-auto" />
@@ -908,7 +913,7 @@ export default function HomePage() {
                 <img src="https://placehold.co/200x80/ffffff/333333?text=Client+Logo" alt="Client Logo" className="h-10 w-auto mx-auto" />
               </div>
             </div>
-            
+
             <div className="mt-16">
               <h3 className="text-2xl font-bold mb-6">No guesswork, no duct tape. Just clear connected calls and a clean reputation</h3>
               <Button size="lg" className="bg-[#0055FF] hover:bg-[#003399] text-white font-medium">
@@ -944,7 +949,7 @@ export default function HomePage() {
                 </a>
               </div>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-bold mb-4">Product</h4>
               <ul className="space-y-2">
@@ -954,7 +959,7 @@ export default function HomePage() {
                 <li><a href="#" className="text-gray-300 hover:text-white">Integrations</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-bold mb-4">Company</h4>
               <ul className="space-y-2">
@@ -964,7 +969,7 @@ export default function HomePage() {
                 <li><a href="#" className="text-gray-300 hover:text-white">Contact</a></li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="text-lg font-bold mb-4">Resources</h4>
               <ul className="space-y-2">
@@ -975,7 +980,7 @@ export default function HomePage() {
               </ul>
             </div>
           </div>
-          
+
           <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
             <p>© 2025 Ring4. All rights reserved.</p>
           </div>

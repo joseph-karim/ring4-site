@@ -3,6 +3,7 @@ import { useState } from 'react'
 import HomePage from './components/HomePage'
 import SpamCheckerPage from './components/SpamCheckerPage'
 import { Button } from './components/ui/button'
+import { Toaster } from './components/ui/toaster'
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState<'home' | 'spam-checker'>('home')
@@ -15,14 +16,14 @@ export default function App() {
           <div className="container mx-auto px-4 py-4 flex justify-between items-center">
             <div className="font-bold text-xl text-blue-600">Ring4</div>
             <div className="flex space-x-4">
-              <Button 
-                variant={currentPage === 'home' ? 'default' : 'ghost'} 
+              <Button
+                variant={currentPage === 'home' ? 'default' : 'ghost'}
                 onClick={() => setCurrentPage('home')}
               >
                 Home
               </Button>
-              <Button 
-                variant={currentPage === 'spam-checker' ? 'default' : 'ghost'} 
+              <Button
+                variant={currentPage === 'spam-checker' ? 'default' : 'ghost'}
                 onClick={() => setCurrentPage('spam-checker')}
               >
                 Spam Checker
@@ -38,6 +39,7 @@ export default function App() {
           <SpamCheckerPage />
         )}
       </div>
+      <Toaster />
     </ThemeProvider>
   )
 }
