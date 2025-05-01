@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
+import { Link } from "react-router-dom"
 
 export default function HomePage() {
   return (
@@ -75,10 +76,12 @@ export default function HomePage() {
                 <Button
                   size="lg"
                   className="bg-[#0055FF] hover:bg-[#003399] text-white font-medium relative overflow-hidden group"
-                  onClick={() => window.location.href = '/spam-checker'}
+                  asChild
                 >
-                  <span className="relative z-10">Check My Number Now</span>
-                  <span className="absolute inset-0 bg-[#003399] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
+                  <Link to="/spam-checker">
+                    <span className="relative z-10">Check My Number Now</span>
+                    <span className="absolute inset-0 bg-[#003399] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
+                  </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50">
                   Get Started
@@ -412,9 +415,11 @@ export default function HomePage() {
                   </p>
                   <Button
                     className="mt-2 bg-green-600 hover:bg-green-700 text-white"
-                    onClick={() => window.location.href = '/spam-checker'}
+                    asChild
                   >
-                    Check My Number
+                    <Link to="/spam-checker">
+                      Check My Number
+                    </Link>
                   </Button>
                 </div>
               </motion.div>
