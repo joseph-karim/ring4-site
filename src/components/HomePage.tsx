@@ -833,26 +833,29 @@ export default function HomePage() {
               transition={{ duration: 0.2 }}
               className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md"
             >
-              <div className="p-4 flex items-center">
-                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
-                  <span className="text-xl">📞</span>
-                </div>
-                <div className="flex-grow">
-                  <h3 className="text-lg font-bold">Fix Spam-Labeled Calls</h3>
-                  <div className="flex flex-wrap items-center text-sm">
-                    <span className="text-gray-500 mr-1">Problem:</span>
-                    <span className="text-gray-700 mr-4">Your legitimate business calls get flagged as spam.</span>
+              <a href="/spam-checker" className="block">
+                <div className="p-4 flex items-center">
+                  <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
+                    <span className="text-xl">📞</span>
                   </div>
-                  <div className="flex flex-wrap items-center text-sm mt-1">
-                    <span className="text-blue-600 mr-1">Solution:</span>
-                    <span className="text-gray-700">Verified business caller ID increases answer rates by 70%.</span>
+                  <div className="flex-grow">
+                    <h3 className="text-lg font-bold">Fix Spam-Labeled Calls</h3>
+                    <div className="flex flex-wrap items-center text-sm">
+                      <span className="text-gray-500 mr-1">Problem:</span>
+                      <span className="text-gray-700 mr-4">Your legitimate business calls get flagged as spam.</span>
+                    </div>
+                    <div className="flex flex-wrap items-center text-sm mt-1">
+                      <span className="text-blue-600 mr-1">Solution:</span>
+                      <span className="text-gray-700">Branded caller ID and reputation monitoring.</span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 ml-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                    </svg>
                   </div>
                 </div>
-                <div className="flex-shrink-0 flex items-center space-x-2 ml-4">
-                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                </div>
-              </div>
+              </a>
             </motion.div>
 
             {/* Card 2: Separate Work & Personal */}
@@ -861,83 +864,87 @@ export default function HomePage() {
               transition={{ duration: 0.2 }}
               className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md"
             >
-              <div className="p-4 flex items-center">
-                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
-                  <span className="text-xl">🧘‍♂️</span>
-                </div>
-                <div className="flex-grow">
-                  <h3 className="text-lg font-bold">Separate Work & Personal</h3>
-                  <div className="flex flex-wrap items-center text-sm">
-                    <span className="text-gray-500 mr-1">Problem:</span>
-                    <span className="text-gray-700 mr-4">No boundaries between work and personal life.</span>
+              <Link to="/separate-work-line" className="block">
+                <div className="p-4 flex items-center">
+                  <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-purple-50 rounded-full mr-4">
+                    <span className="text-xl">🧘‍♂️</span>
                   </div>
-                  <div className="flex flex-wrap items-center text-sm mt-1">
-                    <span className="text-blue-600 mr-1">Solution:</span>
-                    <span className="text-gray-700">Dedicated business lines with scheduled availability.</span>
+                  <div className="flex-grow">
+                    <h3 className="text-lg font-bold">Separate Work From Life</h3>
+                    <div className="flex flex-wrap items-center text-sm">
+                      <span className="text-gray-500 mr-1">Problem:</span>
+                      <span className="text-gray-700 mr-4">No boundaries between work and personal life.</span>
+                    </div>
+                    <div className="flex flex-wrap items-center text-sm mt-1">
+                      <span className="text-purple-600 mr-1">Solution:</span>
+                      <span className="text-gray-700">Dedicated business lines with scheduled availability.</span>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 ml-4">
+                    <div className="flex items-center text-xs">
+                      <span className="text-blue-700">Work</span>
+                      <span className="mx-1 text-gray-400">|</span>
+                      <span className="text-purple-700">Personal</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex-shrink-0 ml-4">
-                  <div className="flex items-center text-xs">
-                    <span className="text-blue-700">Work</span>
-                    <span className="mx-1 text-gray-400">|</span>
-                    <span className="text-purple-700">Personal</span>
-                  </div>
-                </div>
-              </div>
+              </Link>
             </motion.div>
 
-            {/* Card 3: Convert Site Visitors via SMS */}
+            {/* Card 3: Convert Website Visitors via Text */}
             <motion.div
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.2 }}
               className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md"
             >
               <div className="p-4 flex items-center">
-                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
+                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-green-50 rounded-full mr-4">
                   <span className="text-xl">💬</span>
                 </div>
                 <div className="flex-grow">
-                  <h3 className="text-lg font-bold">Convert Site Visitors via SMS</h3>
+                  <h3 className="text-lg font-bold">Convert Website Visitors via Text</h3>
                   <div className="flex flex-wrap items-center text-sm">
                     <span className="text-gray-500 mr-1">Problem:</span>
-                    <span className="text-gray-700 mr-4">Website visitors leave before connecting.</span>
+                    <span className="text-gray-700 mr-4">Website visitors leave without engaging.</span>
                   </div>
                   <div className="flex flex-wrap items-center text-sm mt-1">
-                    <span className="text-blue-600 mr-1">Solution:</span>
-                    <span className="text-gray-700">One-click texting converts browsers to buyers.</span>
+                    <span className="text-green-600 mr-1">Solution:</span>
+                    <span className="text-gray-700">One-click texting widgets for your website.</span>
                   </div>
                 </div>
                 <div className="flex-shrink-0 ml-4">
-                  <div className="bg-blue-50 rounded-full px-2 py-1 text-xs text-blue-700">Text Us</div>
+                  <div className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                    Coming Soon
+                  </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Card 4: Unify Team Replies */}
+            {/* Card 4: Unify Team Texts in One Inbox */}
             <motion.div
               whileHover={{ scale: 1.01 }}
               transition={{ duration: 0.2 }}
               className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md"
             >
               <div className="p-4 flex items-center">
-                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
-                  <span className="text-xl">🤝</span>
+                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-yellow-50 rounded-full mr-4">
+                  <span className="text-xl">👥</span>
                 </div>
                 <div className="flex-grow">
-                  <h3 className="text-lg font-bold">Unify Team Replies</h3>
+                  <h3 className="text-lg font-bold">Unify Team Texts in One Inbox</h3>
                   <div className="flex flex-wrap items-center text-sm">
                     <span className="text-gray-500 mr-1">Problem:</span>
-                    <span className="text-gray-700 mr-4">Disconnected communications create customer confusion.</span>
+                    <span className="text-gray-700 mr-4">Customer messages get lost between team members.</span>
                   </div>
                   <div className="flex flex-wrap items-center text-sm mt-1">
-                    <span className="text-blue-600 mr-1">Solution:</span>
-                    <span className="text-gray-700">Shared inbox ensures consistent customer experience.</span>
+                    <span className="text-yellow-600 mr-1">Solution:</span>
+                    <span className="text-gray-700">Shared inbox with assignment and collaboration tools.</span>
                   </div>
                 </div>
-                <div className="flex-shrink-0 flex -space-x-2 ml-4">
-                  <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs border-2 border-white">S</div>
-                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs border-2 border-white">J</div>
-                  <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs border-2 border-white">M</div>
+                <div className="flex-shrink-0 ml-4">
+                  <div className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                    Coming Soon
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -949,23 +956,24 @@ export default function HomePage() {
               className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md"
             >
               <div className="p-4 flex items-center">
-                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
-                  <span className="text-xl">🌍</span>
+                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-red-50 rounded-full mr-4">
+                  <span className="text-xl">🌎</span>
                 </div>
                 <div className="flex-grow">
-                  <h3 className="text-lg font-bold">Expand Into New Regions</h3>
+                  <h3 className="text-lg font-bold">Expand Into New Regions with Local Numbers</h3>
                   <div className="flex flex-wrap items-center text-sm">
                     <span className="text-gray-500 mr-1">Problem:</span>
-                    <span className="text-gray-700 mr-4">Breaking into new markets requires local presence.</span>
+                    <span className="text-gray-700 mr-4">Customers prefer local area codes but you're not there.</span>
                   </div>
                   <div className="flex flex-wrap items-center text-sm mt-1">
-                    <span className="text-blue-600 mr-1">Solution:</span>
-                    <span className="text-gray-700">Instant local numbers anywhere your business grows.</span>
+                    <span className="text-red-600 mr-1">Solution:</span>
+                    <span className="text-gray-700">Local numbers in any area code, managed from one place.</span>
                   </div>
                 </div>
-                <div className="flex-shrink-0 flex items-center space-x-1 ml-4">
-                  <span className="px-1.5 py-0.5 bg-blue-100 rounded text-xs text-blue-700">212</span>
-                  <span className="px-1.5 py-0.5 bg-blue-100 rounded text-xs text-blue-700">415</span>
+                <div className="flex-shrink-0 ml-4">
+                  <div className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
+                    Coming Soon
+                  </div>
                 </div>
               </div>
             </motion.div>

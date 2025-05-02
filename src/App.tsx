@@ -49,13 +49,22 @@ export default function App() {
                     <Link to="/separate-work-line" className="w-full">Separate Work From Life</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="#" className="w-full">Convert Site Visitors via SMS</Link>
+                    <Link to="#" className="w-full flex items-center justify-between">
+                      <span>Convert Website Visitors via Text</span>
+                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full ml-2">Coming Soon</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="#" className="w-full">Unify Team Replies</Link>
+                    <Link to="#" className="w-full flex items-center justify-between">
+                      <span>Unify Team Texts in One Inbox</span>
+                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full ml-2">Coming Soon</span>
+                    </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
-                    <Link to="#" className="w-full">Expand Into New Regions</Link>
+                    <Link to="#" className="w-full flex items-center justify-between">
+                      <span>Expand Into New Regions</span>
+                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full ml-2">Coming Soon</span>
+                    </Link>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
