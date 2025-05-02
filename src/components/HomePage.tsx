@@ -55,7 +55,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 0.6 }}
               >
-                Low Connection Rates? Your Business Line Might Be Getting Flagged for Spam.
+                Get Your Business Calls Answered, Not Ignored
               </motion.h1>
 
               <motion.p
@@ -64,7 +64,7 @@ export default function HomePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
               >
-                Don't let "Spam Likely" kill your connect rate. Get branded calls clients trust with instant caller ID repair.
+                Look legit on every call. Ring4 helps solo pros and small teams connect faster with branded caller ID and a unified inbox.
               </motion.p>
 
               <motion.div
@@ -808,6 +808,168 @@ export default function HomePage() {
               </Button>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Ring4 Solutions: Use Cases Section */}
+      <section className="py-12 md:py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="text-center mb-8"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Ring4 Solutions: Use Cases
+            </h2>
+          </motion.div>
+
+          <div className="space-y-3 max-w-4xl mx-auto">
+            {/* Card 1: Fix Spam-Labeled Calls */}
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md"
+            >
+              <div className="p-4 flex items-center">
+                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
+                  <span className="text-xl">📞</span>
+                </div>
+                <div className="flex-grow">
+                  <h3 className="text-lg font-bold">Fix Spam-Labeled Calls</h3>
+                  <div className="flex flex-wrap items-center text-sm">
+                    <span className="text-gray-500 mr-1">Problem:</span>
+                    <span className="text-gray-700 mr-4">Your legitimate business calls get flagged as spam.</span>
+                  </div>
+                  <div className="flex flex-wrap items-center text-sm mt-1">
+                    <span className="text-blue-600 mr-1">Solution:</span>
+                    <span className="text-gray-700">Verified business caller ID increases answer rates by 70%.</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 flex items-center space-x-2 ml-4">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 2: Separate Work & Personal */}
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md"
+            >
+              <div className="p-4 flex items-center">
+                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
+                  <span className="text-xl">🧘‍♂️</span>
+                </div>
+                <div className="flex-grow">
+                  <h3 className="text-lg font-bold">Separate Work & Personal</h3>
+                  <div className="flex flex-wrap items-center text-sm">
+                    <span className="text-gray-500 mr-1">Problem:</span>
+                    <span className="text-gray-700 mr-4">No boundaries between work and personal life.</span>
+                  </div>
+                  <div className="flex flex-wrap items-center text-sm mt-1">
+                    <span className="text-blue-600 mr-1">Solution:</span>
+                    <span className="text-gray-700">Dedicated business lines with scheduled availability.</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 ml-4">
+                  <div className="flex items-center text-xs">
+                    <span className="text-blue-700">Work</span>
+                    <span className="mx-1 text-gray-400">|</span>
+                    <span className="text-purple-700">Personal</span>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 3: Convert Site Visitors via SMS */}
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md"
+            >
+              <div className="p-4 flex items-center">
+                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
+                  <span className="text-xl">💬</span>
+                </div>
+                <div className="flex-grow">
+                  <h3 className="text-lg font-bold">Convert Site Visitors via SMS</h3>
+                  <div className="flex flex-wrap items-center text-sm">
+                    <span className="text-gray-500 mr-1">Problem:</span>
+                    <span className="text-gray-700 mr-4">Website visitors leave before connecting.</span>
+                  </div>
+                  <div className="flex flex-wrap items-center text-sm mt-1">
+                    <span className="text-blue-600 mr-1">Solution:</span>
+                    <span className="text-gray-700">One-click texting converts browsers to buyers.</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 ml-4">
+                  <div className="bg-blue-50 rounded-full px-2 py-1 text-xs text-blue-700">Text Us</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 4: Unify Team Replies */}
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md"
+            >
+              <div className="p-4 flex items-center">
+                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
+                  <span className="text-xl">🤝</span>
+                </div>
+                <div className="flex-grow">
+                  <h3 className="text-lg font-bold">Unify Team Replies</h3>
+                  <div className="flex flex-wrap items-center text-sm">
+                    <span className="text-gray-500 mr-1">Problem:</span>
+                    <span className="text-gray-700 mr-4">Disconnected communications create customer confusion.</span>
+                  </div>
+                  <div className="flex flex-wrap items-center text-sm mt-1">
+                    <span className="text-blue-600 mr-1">Solution:</span>
+                    <span className="text-gray-700">Shared inbox ensures consistent customer experience.</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 flex -space-x-2 ml-4">
+                  <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs border-2 border-white">S</div>
+                  <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white text-xs border-2 border-white">J</div>
+                  <div className="w-6 h-6 rounded-full bg-purple-500 flex items-center justify-center text-white text-xs border-2 border-white">M</div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 5: Expand Into New Regions */}
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              transition={{ duration: 0.2 }}
+              className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md"
+            >
+              <div className="p-4 flex items-center">
+                <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 bg-blue-50 rounded-full mr-4">
+                  <span className="text-xl">🌍</span>
+                </div>
+                <div className="flex-grow">
+                  <h3 className="text-lg font-bold">Expand Into New Regions</h3>
+                  <div className="flex flex-wrap items-center text-sm">
+                    <span className="text-gray-500 mr-1">Problem:</span>
+                    <span className="text-gray-700 mr-4">Breaking into new markets requires local presence.</span>
+                  </div>
+                  <div className="flex flex-wrap items-center text-sm mt-1">
+                    <span className="text-blue-600 mr-1">Solution:</span>
+                    <span className="text-gray-700">Instant local numbers anywhere your business grows.</span>
+                  </div>
+                </div>
+                <div className="flex-shrink-0 flex items-center space-x-1 ml-4">
+                  <span className="px-1.5 py-0.5 bg-blue-100 rounded text-xs text-blue-700">212</span>
+                  <span className="px-1.5 py-0.5 bg-blue-100 rounded text-xs text-blue-700">415</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
