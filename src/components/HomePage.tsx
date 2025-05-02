@@ -999,11 +999,15 @@ export default function HomePage() {
                   </div>
                 </div>
                 <p className="text-gray-700 mb-4">
-                  "Ring4 transformed our sales process. Our answer rates increased by 38% in the first month, and our team never misses important calls now."
+                  "Solves the painful problem of business communication beautifully"
+                </p>
+                <p className="text-gray-700 mb-4">
+                  "Getting started with Ring4 takes 2 minutes tops. Zero to fully functioning. It gives clients the impression that you're always on top of your game 24/7, even when you're offline."
                 </p>
                 <div>
-                  <p className="font-medium">Sarah Johnson</p>
-                  <p className="text-sm text-gray-500">Sales Director, TechSolutions Inc.</p>
+                  <p className="font-medium">Verified User in Marketing</p>
+                  <p className="text-sm text-gray-500">Small Business (50 or fewer emp.)</p>
+                  <a href="https://www.g2.com/products/ring4/reviews/ring4-review-4755595" className="text-sm text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">Read on G2</a>
                 </div>
               </div>
 
@@ -1018,11 +1022,15 @@ export default function HomePage() {
                   </div>
                 </div>
                 <p className="text-gray-700 mb-4">
-                  "Having our brand displayed on outgoing calls made a huge difference. Customers recognize who's calling and actually pick up the phone."
+                  "The easiest way to manage multiple phone lines in one place"
+                </p>
+                <p className="text-gray-700 mb-4">
+                  "Ring4 is Google Voice on steroids. If you know how to use email, you know how to use Ring4. You can manage messages from all your phone lines in one place. It's very easy to use and they have a free plan to get you started."
                 </p>
                 <div>
-                  <p className="font-medium">Michael Chen</p>
-                  <p className="text-sm text-gray-500">Operations Manager, Growth Partners</p>
+                  <p className="font-medium">Zeke C.</p>
+                  <p className="text-sm text-gray-500">CEO, Small Business (50 or fewer emp.)</p>
+                  <a href="https://www.g2.com/products/ring4/reviews/ring4-review-4750627" className="text-sm text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">Read on G2</a>
                 </div>
               </div>
 
@@ -1037,23 +1045,20 @@ export default function HomePage() {
                   </div>
                 </div>
                 <p className="text-gray-700 mb-4">
-                  "The shared inbox and team messaging features have streamlined our communication. We've cut response times in half."
+                  "Smooth & Easy Setup"
+                </p>
+                <p className="text-gray-700 mb-4">
+                  "Signing up was so simple, I use the business solution and moving from google voice and a brief trial with 8x8 express it was a no brainer. The support was and is superb I expect it to only improve."
                 </p>
                 <div>
-                  <p className="font-medium">Alex Reynolds</p>
-                  <p className="text-sm text-gray-500">Customer Success Lead, Innovate AI</p>
+                  <p className="font-medium">Christopher B.</p>
+                  <p className="text-sm text-gray-500">Founder & CVO, Small Business (50 or fewer emp.)</p>
+                  <a href="https://www.g2.com/products/ring4/reviews" className="text-sm text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">Read on G2</a>
                 </div>
               </div>
             </div>
 
-            <div className="py-8 border-t border-b border-gray-200">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-                <img src="https://placehold.co/200x80/ffffff/333333?text=Client+Logo" alt="Client Logo" className="h-10 w-auto mx-auto" />
-                <img src="https://placehold.co/200x80/ffffff/333333?text=Client+Logo" alt="Client Logo" className="h-10 w-auto mx-auto" />
-                <img src="https://placehold.co/200x80/ffffff/333333?text=Client+Logo" alt="Client Logo" className="h-10 w-auto mx-auto" />
-                <img src="https://placehold.co/200x80/ffffff/333333?text=Client+Logo" alt="Client Logo" className="h-10 w-auto mx-auto" />
-              </div>
-            </div>
+
 
             <div className="mt-16">
               <h3 className="text-2xl font-bold mb-6">No guesswork, no duct tape. Just clear connected calls and a clean reputation</h3>
