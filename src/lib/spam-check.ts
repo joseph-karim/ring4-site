@@ -18,13 +18,14 @@ export const checkPhoneNumber = async (phoneNumber: string): Promise<SpamCheckRe
   await new Promise((resolve) => setTimeout(resolve, 2000))
 
   // Simple validation for US phone numbers (10 digits)
-  const isValidUS = /^\d{10}$/.test(phoneNumber.replace(/\D/g, ''))
+  const digitsOnly = phoneNumber.replace(/\D/g, '')
+  const isValidUS = /^\d{10}$/.test(digitsOnly)
   if (!isValidUS) {
     throw new Error('Please enter a valid 10-digit US phone number')
   }
 
   // For demo purposes, we'll return different results based on the last digit
-  const lastDigit = parseInt(phoneNumber.slice(-1))
+  const lastDigit = parseInt(digitsOnly.slice(-1))
 
   if (lastDigit >= 0 && lastDigit <= 3) {
     // Clean number
