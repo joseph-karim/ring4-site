@@ -7,7 +7,18 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "supabase:start": "./scripts/supabase-setup.sh start",
+    "supabase:stop": "./scripts/supabase-setup.sh stop",
+    "supabase:reset": "./scripts/supabase-setup.sh reset",
+    "supabase:types": "./scripts/supabase-setup.sh generate-types",
+    "supabase:push": "./scripts/supabase-setup.sh push-remote",
+    "supabase:pull": "./scripts/supabase-setup.sh pull-remote",
+    "dev:full": "npm run supabase:start && npm run dev",
+    "netlify": "netlify dev",
+    "netlify:build": "netlify build",
+    "netlify:deploy": "netlify deploy",
+    "dev:netlify": "npm run supabase:start && npm run netlify"
   },
   "dependencies": {
     "@hookform/resolvers": "^4.1.0",
@@ -59,6 +70,7 @@
     "sonner": "^1.7.4",
     "tailwind-merge": "^3.0.1",
     "tailwindcss-animate": "^1.0.7",
+    "twilio": "^5.6.1",
     "vaul": "^1.1.2",
     "zod": "^3.24.2"
   },
@@ -73,6 +85,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
+    "netlify-cli": "^21.5.0",
     "postcss": "^8.5.2",
     "prettier": "^3.5.1",
     "prettier-plugin-tailwindcss": "^0.6.11",

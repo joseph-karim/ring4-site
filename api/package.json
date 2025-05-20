@@ -1,0 +1,12 @@
+{
+  "name": "ring4-spam-checker-api",
+  "version": "1.0.0",
+  "description": "Serverless function for Ring4 spam checker using Twilio Lookup API",
+  "main": "check-spam.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "twilio": "^4.19.0"
+  }
+}

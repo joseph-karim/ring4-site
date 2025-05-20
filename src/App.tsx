@@ -4,6 +4,7 @@ import HomePage from './components/HomePage'
 import SpamCheckerPage from './components/SpamCheckerPage'
 import SeparateWorkLinePage from './components/SeparateWorkLinePage'
 import NeverMissAIPage from './components/NeverMissAIPage'
+
 import { Button } from './components/ui/button'
 import { Toaster } from './components/ui/toaster'
 import {
@@ -19,6 +20,7 @@ export default function App() {
   const isHome = location.pathname === '/' || location.pathname === '';
   const isSpamChecker = location.pathname === '/spam-checker';
   const isNeverMissAI = location.pathname === '/nevermiss-ai';
+
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="ring4-theme">
@@ -84,6 +86,8 @@ export default function App() {
               >
                 <Link to="/nevermiss-ai">NeverMiss AI</Link>
               </Button>
+
+
             </div>
           </div>
         </div>
@@ -94,6 +98,7 @@ export default function App() {
           <Route path="/spam-checker" element={<SpamCheckerPage />} />
           <Route path="/separate-work-line" element={<SeparateWorkLinePage />} />
           <Route path="/nevermiss-ai" element={<NeverMissAIPage />} />
+
         </Routes>
       </div>
       <Toaster />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
@@ -9,14 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { useToast } from '@/hooks/use-toast'
+
+import { SpamCheckHistory } from '@/components/SpamCheckHistory'
 import {
   AlertTriangle,
   ArrowRight,
   CheckCircle,
   ChevronRight,
-  Clock,
   LoaderCircle,
   Phone,
   Shield,
@@ -24,82 +23,60 @@ import {
   ShieldX,
 } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Badge } from '@/components/ui/badge'
 
 // Define the form schema using Zod
 const formSchema = z.object({
   phoneNumber: z.string().min(10, {
     message: 'Phone number must be at least 10 digits',
   }),
+  secondaryPhoneNumber: z.string().optional(),
 })
 
-// Define the lead capture form schema
-const leadFormSchema = z.object({
-  name: z.string().min(2, { message: 'Name is required' }),
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  company: z.string().optional(),
-})
 
-// Define the email notification form schema
-const emailNotificationSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-})
 
 type FormValues = z.infer<typeof formSchema>
-type LeadFormValues = z.infer<typeof leadFormSchema>
-type EmailNotificationFormValues = z.infer<typeof emailNotificationSchema>
 
 export default function SpamCheckerPage() {
   const [isChecking, setIsChecking] = useState(false)
   const [checkResult, setCheckResult] = useState<any>(null)
-  const [showFullReport, setShowFullReport] = useState(false)
   const [formSubmitted, setFormSubmitted] = useState(false)
-  const [leadCaptured, setLeadCaptured] = useState(false)
-  const [showEmailDialog, setShowEmailDialog] = useState(false)
-  const { toast } = useToast()
+  const resultsRef = useRef<HTMLDivElement>(null)
+
+  // Effect to scroll to results when they're available
+  useEffect(() => {
+    if (checkResult && !isChecking && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [checkResult, isChecking]);
+
 
   // Initialize form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       phoneNumber: '',
+      secondaryPhoneNumber: '',
     },
   })
 
-  // Initialize lead capture form
-  const leadForm = useForm<LeadFormValues>({
-    resolver: zodResolver(leadFormSchema),
-    defaultValues: {
-      name: '',
-      email: '',
-      company: '',
-    },
-  })
 
-  // Initialize email notification form
-  const emailForm = useForm<EmailNotificationFormValues>({
-    resolver: zodResolver(emailNotificationSchema),
-    defaultValues: {
-      email: '',
-    },
-  })
 
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
     setIsChecking(true)
     setFormSubmitted(true)
     setCheckResult(null)
-    setShowFullReport(false)
-    setLeadCaptured(false)
 
     try {
       // Format phone number to remove non-digits
       const formattedNumber = data.phoneNumber.replace(/\D/g, '')
 
+      // Format secondary phone number if provided
+      const formattedSecondaryNumber = data.secondaryPhoneNumber ?
+        data.secondaryPhoneNumber.replace(/\D/g, '') : undefined
+
       // Call the spam check service
-      const result = await checkPhoneNumber(formattedNumber)
+      const result = await checkPhoneNumber(formattedNumber, formattedSecondaryNumber)
       setCheckResult(result)
     } catch (error) {
       console.error('Error checking phone number:', error)
@@ -111,32 +88,9 @@ export default function SpamCheckerPage() {
     }
   }
 
-  // Handle lead capture form submission
-  const onLeadSubmit = (data: LeadFormValues) => {
-    console.log('Lead captured:', data)
-    setLeadCaptured(true)
-    setShowFullReport(true)
-  }
 
-  // Handle email notification form submission
-  const onEmailNotificationSubmit = (data: EmailNotificationFormValues) => {
-    console.log('Email notification subscription:', data)
-    setShowEmailDialog(false)
-    toast({
-      title: "Success!",
-      description: "You'll be notified when this feature becomes available.",
-    })
-    emailForm.reset()
-  }
 
-  // Show email dialog after a delay
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowEmailDialog(true)
-    }, 5000) // Show after 5 seconds
 
-    return () => clearTimeout(timer)
-  }, [])
 
   // Helper function to get status color
   const getStatusColor = (status: string) => {
@@ -251,203 +205,44 @@ export default function SpamCheckerPage() {
                 </p>
               )}
 
-              {!showFullReport && (
-                <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-                  <div className="flex items-center mb-3">
-                    <Lock className="h-5 w-5 mr-2 text-blue-600" />
-                    <h3 className="font-medium">Get Your Full Report</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    See which carriers are flagging your number and get a personalized action plan to fix or prevent spam labels.
-                  </p>
+              {/* Spam Check History from Supabase */}
+              <div className="mt-4 pt-4 border-t">
+                <SpamCheckHistory phoneNumber={form.getValues().phoneNumber} />
+              </div>
 
-                  {!leadCaptured ? (
-                    <Form {...leadForm}>
-                      <form onSubmit={leadForm.handleSubmit(onLeadSubmit)} className="space-y-4">
-                        <FormField
-                          control={leadForm.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input placeholder="Your Name" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={leadForm.control}
-                          name="email"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input placeholder="Work Email" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={leadForm.control}
-                          name="company"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormControl>
-                                <Input placeholder="Company Name (Optional)" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <Button type="submit" className="w-full bg-blue-600">
-                          Unlock Full Report
-                        </Button>
-                      </form>
-                    </Form>
-                  ) : (
-                    <Button
-                      className="w-full bg-blue-600"
-                      onClick={() => setShowFullReport(true)}
-                    >
-                      View Full Report
-                    </Button>
-                  )}
+              <div className="mt-6">
+                <h3 className="font-semibold mb-3">Recommended Actions</h3>
+                <ul className="space-y-3">
+                  {checkResult.recommendations.map((rec: string, index: number) => (
+                    <li key={index} className="flex items-start p-3 bg-gray-50 rounded-lg">
+                      <div className="flex-shrink-0 bg-blue-100 rounded-full p-1 mr-3">
+                        <CheckCircle className="h-5 w-5 text-blue-600" />
+                      </div>
+                      <span>{rec}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-800 text-white mt-6">
+                <h4 className="font-bold text-lg mb-2">Ring4 Can Fix This For You</h4>
+                <p className="mb-4 text-white/90">
+                  Our team specializes in removing spam flags and implementing verified business caller ID across all carriers.
+                </p>
+                <div className="space-y-2">
+                  <Button className="w-full bg-white text-blue-700 hover:bg-blue-50">
+                    Start Free Trial
+                  </Button>
+                  <Button className="w-full border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white">
+                    Book a Demo
+                  </Button>
                 </div>
-              )}
-
-              {showFullReport && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <Tabs defaultValue="carriers">
-                    <TabsList className="w-full mb-4">
-                      <TabsTrigger value="carriers" className="flex-1">Carrier Status</TabsTrigger>
-                      <TabsTrigger value="recommendations" className="flex-1">Fix It Now</TabsTrigger>
-                      <TabsTrigger value="report" className="flex-1">Detailed Report</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="carriers" className="space-y-4">
-                      <h3 className="font-semibold">Carrier Reputation Status</h3>
-                      <div className="space-y-3">
-                        {checkResult.carriers.map((carrier: any, index: number) => (
-                          <div key={index} className="flex justify-between items-center p-3 rounded-lg border">
-                            <div className="flex items-center">
-                              <div className={cn("w-3 h-3 rounded-full mr-3",
-                                carrier.status === 'clean' ? 'bg-green-500' :
-                                carrier.status === 'at-risk' ? 'bg-yellow-500' : 'bg-red-500'
-                              )}></div>
-                              <span>{carrier.name}</span>
-                            </div>
-                            <span className="text-sm">
-                              {carrier.status === 'clean' ? 'Good Standing' :
-                               carrier.status === 'at-risk' ? 'At Risk' : 'Flagged'}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
-                        <p className="text-sm text-blue-700">
-                          <span className="font-medium">Pro Tip:</span> Carrier status can change frequently. With Ring4, you'll get real-time alerts when your number's status changes.
-                        </p>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="recommendations">
-                      <div className="space-y-4">
-                        <h3 className="font-semibold">Recommended Actions</h3>
-                        <ul className="space-y-3">
-                          {checkResult.recommendations.map((rec: string, index: number) => (
-                            <li key={index} className="flex items-start p-3 bg-gray-50 rounded-lg">
-                              <div className="flex-shrink-0 bg-blue-100 rounded-full p-1 mr-3">
-                                <CheckCircle className="h-5 w-5 text-blue-600" />
-                              </div>
-                              <span>{rec}</span>
-                            </li>
-                          ))}
-                        </ul>
-
-                        <div className="p-5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-800 text-white mt-6">
-                          <h4 className="font-bold text-lg mb-2">Ring4 Can Fix This For You</h4>
-                          <p className="mb-4 text-white/90">
-                            Our team specializes in removing spam flags and implementing verified business caller ID across all carriers.
-                          </p>
-                          <div className="space-y-2">
-                            <Button className="w-full bg-white text-blue-700 hover:bg-blue-50">
-                              Start Free Trial
-                            </Button>
-                            <Button variant="outline" className="w-full border-white text-white hover:bg-blue-700">
-                              Book a Demo
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </TabsContent>
-
-                    <TabsContent value="report">
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <h3 className="font-semibold">Detailed Report</h3>
-                          <Button variant="outline" size="sm">
-                            <Download className="h-4 w-4 mr-2" />
-                            Download PDF
-                          </Button>
-                        </div>
-
-                        <div className="p-4 rounded-lg border space-y-3">
-                          <div className="flex justify-between">
-                            <span className="text-sm font-medium">Phone Number:</span>
-                            <span className="text-sm">{form.getValues().phoneNumber}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm font-medium">Scan Date:</span>
-                            <span className="text-sm">{new Date().toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm font-medium">Risk Score:</span>
-                            <span className="text-sm">{checkResult.riskScore}%</span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-sm font-medium">Overall Status:</span>
-                            <span className={cn(
-                              'text-sm font-medium',
-                              checkResult.status === 'clean' ? 'text-green-600' :
-                              checkResult.status === 'at-risk' ? 'text-yellow-600' :
-                              'text-red-600'
-                            )}>
-                              {getStatusText(checkResult.status)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="p-4 rounded-lg border">
-                          <h4 className="font-medium mb-3">Business Impact</h4>
-                          {checkResult.status === 'clean' ? (
-                            <p className="text-sm text-gray-600">
-                              Your current spam risk is low. However, without proper phone reputation management, businesses typically see a 30% drop in answer rates within 90 days of active calling campaigns.
-                            </p>
-                          ) : checkResult.status === 'at-risk' ? (
-                            <p className="text-sm text-gray-600">
-                              At your current risk level, you're likely experiencing a 30-50% decrease in answer rates compared to calls from trusted numbers. This directly impacts sales opportunities and revenue.
-                            </p>
-                          ) : (
-                            <p className="text-sm text-gray-600">
-                              With a flagged status, your calls are being screened or blocked by carriers, resulting in a 70-80% drop in answer rates. This is likely costing you significant sales opportunities and revenue.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </motion.div>
-              )}
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {checkResult.status !== 'clean' && !leadCaptured && (
+        {checkResult.status !== 'clean' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -465,7 +260,7 @@ export default function SpamCheckerPage() {
                   <span className="font-bold"> {checkResult.status === 'at-risk' ? '50%' : '80%'} </span>
                   of potential connections. This directly impacts your revenue pipeline.
                 </p>
-                <Button className="bg-red-600 hover:bg-red-700 text-white" onClick={() => setLeadCaptured(true)}>
+                <Button className="bg-red-600 hover:bg-red-700 text-white">
                   Fix This Now
                 </Button>
               </div>
@@ -473,7 +268,7 @@ export default function SpamCheckerPage() {
           </motion.div>
         )}
 
-        {checkResult.status === 'clean' && !leadCaptured && (
+        {checkResult.status === 'clean' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -489,7 +284,7 @@ export default function SpamCheckerPage() {
                 <p className="text-gray-700 mb-3">
                   Your number is currently in good standing, but spam labels can happen any time. Proactive protection ensures your calls always get through.
                 </p>
-                <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => setLeadCaptured(true)}>
+                <Button className="bg-green-600 hover:bg-green-700 text-white">
                   Keep It Protected
                 </Button>
               </div>
@@ -548,13 +343,13 @@ export default function SpamCheckerPage() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                   <div className="relative">
-                    <FormField
-                      control={form.control}
-                      name="phoneNumber"
-                      render={({ field }) => (
-                        <FormItem className="w-full">
-                          <div className="flex space-x-2">
-                            <div className="flex-1">
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="phoneNumber"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
+                            <div className="relative">
                               <FormControl>
                                 <Input
                                   placeholder="(555) 123-4567"
@@ -567,38 +362,71 @@ export default function SpamCheckerPage() {
                                   disabled={isChecking}
                                 />
                               </FormControl>
+                              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <Phone className="h-6 w-6" />
+                              </div>
+                              <FormMessage />
                             </div>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="secondaryPhoneNumber"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
                             <div className="relative">
-                              <Button
-                                type="submit"
-                                className="h-14 px-6 bg-[#0055FF]"
-                                disabled={isChecking || !form.formState.isValid}
-                              >
-                                {isChecking ? (
-                                  <span className="flex items-center">
-                                    <LoaderCircle className="animate-spin mr-2 h-5 w-5" />
-                                    Checking...
-                                  </span>
-                                ) : formSubmitted && checkResult ? (
-                                  <span className="flex items-center">
-                                    Check Again
-                                  </span>
-                                ) : (
-                                  <span className="flex items-center">
-                                    Check Now <ArrowRight className="ml-2 h-5 w-5" />
-                                  </span>
-                                )}
-                              </Button>
-                              <Badge className="absolute -top-2 -right-2 bg-yellow-500 text-white">Coming Soon</Badge>
+                              <FormControl>
+                                <Input
+                                  placeholder="Secondary Number (Optional)"
+                                  className="h-14 pl-12 text-black text-lg"
+                                  {...field}
+                                  onChange={(e) => {
+                                    const formattedValue = formatPhoneNumber(e.target.value)
+                                    field.onChange(formattedValue)
+                                  }}
+                                  disabled={isChecking}
+                                />
+                              </FormControl>
+                              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <Phone className="h-6 w-6" />
+                              </div>
+                              <FormMessage />
+                              <p className="text-xs text-blue-200 mt-1">
+                                Adding a secondary number improves spam detection accuracy
+                              </p>
                             </div>
-                          </div>
-                          <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                            <Phone className="h-6 w-6" />
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex justify-end">
+                        <div className="relative">
+                          <Button
+                            type="submit"
+                            className="h-14 px-6 bg-[#0055FF]"
+                            disabled={isChecking || !form.formState.isValid}
+                          >
+                            {isChecking ? (
+                              <span className="flex items-center">
+                                <LoaderCircle className="animate-spin mr-2 h-5 w-5" />
+                                Checking...
+                              </span>
+                            ) : formSubmitted && checkResult ? (
+                              <span className="flex items-center">
+                                Check Again
+                              </span>
+                            ) : (
+                              <span className="flex items-center">
+                                Check Now <ArrowRight className="ml-2 h-5 w-5" />
+                              </span>
+                            )}
+                          </Button>
+
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div className="text-blue-200 text-sm">
                     Only US-based numbers supported at the moment
@@ -631,7 +459,7 @@ export default function SpamCheckerPage() {
       </section>
 
       {/* Result Section */}
-      <section className="py-10 md:py-16">
+      <section className="py-10 md:py-16" ref={resultsRef}>
         <div className="container mx-auto px-4">
           <AnimatePresence>
             {isChecking && (
@@ -722,71 +550,7 @@ export default function SpamCheckerPage() {
             </div>
           )}
 
-          {leadCaptured && checkResult && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="max-w-2xl mx-auto mt-8 bg-white p-6 rounded-xl shadow-lg border border-blue-100"
-            >
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="bg-blue-100 rounded-full p-3">
-                  <Clock className="h-6 w-6 text-blue-600" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-xl">Next Steps</h3>
-                  <p className="text-gray-600">Here's how to protect your number with Ring4</p>
-                </div>
-              </div>
-              <Separator className="my-4" />
-              <div className="space-y-4">
-                <div className="flex">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center mr-4">
-                    1
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Start Your Free Trial</h4>
-                    <p className="text-sm text-gray-600">
-                      Begin with a 14-day free trial of Ring4's complete business phone system with spam protection.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center mr-4">
-                    2
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Set Up Your Business Profile</h4>
-                    <p className="text-sm text-gray-600">
-                      Our team will help you register your business details with carriers to improve your reputation.
-                    </p>
-                  </div>
-                </div>
-                <div className="flex">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center mr-4">
-                    3
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Activate Branded Caller ID</h4>
-                    <p className="text-sm text-gray-600">
-                      We'll implement our proprietary caller ID system so your business name appears on outgoing calls.
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-6 flex flex-col sm:flex-row gap-4">
-                  <Button className="flex-1 bg-blue-600 hover:bg-blue-700">
-                    Start Free Trial
-                  </Button>
-                  <Button variant="outline" className="flex-1">
-                    Book a Demo First
-                  </Button>
-                </div>
-                <p className="text-sm text-center text-gray-500 mt-2">
-                  No credit card required. Cancel anytime.
-                </p>
-              </div>
-            </motion.div>
-          )}
+
         </div>
       </section>
 
@@ -885,7 +649,7 @@ export default function SpamCheckerPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600">
-                    Our tool provides a best-effort estimation based on available carrier data and known spam detection sources. While no tool can provide 100% accurate results across all regions and carriers, our check gives you a good indication of your number's reputation status.
+                    Our tool provides a best-effort estimation based on available carrier data and known spam detection sources. While no tool can provide 100% accurate results across all regions and carriers, our check gives you a good indication of your number's reputation status. For improved accuracy, you can provide a secondary phone number that you frequently call, which helps our system better analyze your calling patterns.
                   </p>
                 </CardContent>
               </Card>
@@ -911,6 +675,17 @@ export default function SpamCheckerPage() {
                   </p>
                 </CardContent>
               </Card>
+
+              <Card>
+                <CardHeader className="cursor-pointer">
+                  <CardTitle className="text-lg">Why should I provide a secondary phone number?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-600">
+                    Adding a secondary phone number that you frequently call improves the accuracy of our spam detection. The Nomorobo Spam Score system uses this additional signal to better analyze your calling patterns and provide more precise results. This is especially helpful if you're checking a business number that makes outbound calls to specific numbers regularly.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
@@ -927,12 +702,18 @@ export default function SpamCheckerPage() {
               Join thousands of businesses who've protected their caller reputation and increased answer rates by up to 80% with Ring4.
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50">
-                Start Free Trial
-              </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-blue-700">
-                Book a Demo
-              </Button>
+              <div className="relative">
+                <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50">
+                  Start Free Trial
+                </Button>
+
+              </div>
+              <div className="relative">
+                <Button size="lg" className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white">
+                  Book a Demo
+                </Button>
+
+              </div>
             </div>
             <div className="mt-8 flex justify-center items-center space-x-2 text-blue-100">
               <CheckCircle className="h-5 w-5" />
@@ -948,77 +729,7 @@ export default function SpamCheckerPage() {
         </div>
       </section>
 
-      {/* Email Notification Dialog */}
-      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Get notified when we launch</DialogTitle>
-            <DialogDescription>
-              We're working hard to bring you these features. Enter your email to be notified as soon as they're available.
-            </DialogDescription>
-          </DialogHeader>
 
-          <Form {...emailForm}>
-            <form onSubmit={emailForm.handleSubmit(onEmailNotificationSubmit)} className="space-y-4 py-4">
-              <FormField
-                control={emailForm.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Input placeholder="Your email address" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <DialogFooter className="sm:justify-between">
-                <Button type="button" variant="outline" onClick={() => setShowEmailDialog(false)}>
-                  Maybe later
-                </Button>
-                <Button type="submit">
-                  Notify me
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
-
-// Extra components needed
-const Lock = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-  </svg>
-)
-
-const Download = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-    <polyline points="7 10 12 15 17 10"></polyline>
-    <line x1="12" y1="15" x2="12" y2="3"></line>
-  </svg>
-)

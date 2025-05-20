@@ -1,0 +1,9 @@
+{
+  "name": "ring4-netlify-functions",
+  "version": "1.0.0",
+  "description": "Netlify functions for Ring4 site",
+  "main": "index.js",
+  "dependencies": {
+    "twilio": "^4.23.0"
+  }
+}
