@@ -11,9 +11,9 @@ SET search_path = public
 AS $$
 DECLARE
   result JSONB;
-  twilio_account_sid TEXT := 'AC1122b3207e35e21162e277551dfd5191';
-  twilio_auth_token TEXT := '389de81902c5b29cf6d9e0b506d08d84';
-  nomorobo_addon_sid TEXT := 'XE3e2d5ca759ed15c838f7b39fd0b81346';
+  twilio_account_sid TEXT;
+  twilio_auth_token TEXT;
+  nomorobo_addon_sid TEXT;
   api_url TEXT;
   api_response JSONB;
   auth_header TEXT;
@@ -32,7 +32,7 @@ BEGIN
 
   -- Format phone number to E.164 format
   phone_number := '+1' || regexp_replace(phone_number, '[^0-9]', '', 'g');
-  
+
   -- Format secondary phone number if provided
   IF secondary_phone_number IS NOT NULL AND length(regexp_replace(secondary_phone_number, '[^0-9]', '', 'g')) = 10 THEN
     secondary_phone_number := '+1' || regexp_replace(secondary_phone_number, '[^0-9]', '', 'g');
@@ -43,10 +43,10 @@ BEGIN
   -- For development/testing, return mock data based on the last digit of the phone number
   -- In production, this would call the actual Twilio API
   -- This is a placeholder for the actual API call
-  
+
   -- Get the last digit of the phone number
   spam_score := (substring(phone_number from length(phone_number) for 1))::NUMERIC % 10;
-  
+
   -- Determine status and risk score based on the last digit
   IF spam_score >= 7 THEN
     status := 'flagged';
@@ -98,7 +98,7 @@ BEGIN
     'timeChecked', to_char(now(), 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
     'recommendations', recommendations,
     'rawData', jsonb_build_object(
-      'nomoroboScore', CASE 
+      'nomoroboScore', CASE
         WHEN status = 'flagged' THEN 1
         WHEN status = 'at-risk' THEN 0.5
         ELSE 0

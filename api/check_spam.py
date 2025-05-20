@@ -33,9 +33,9 @@ def handler(event, context):
             }
 
         # Initialize Twilio client with environment variables
-        account_sid = os.environ.get('TWILIO_ACCOUNT_SID', 'AC1122b3207e35e21162e277551dfd5191')
-        auth_token = os.environ.get('TWILIO_AUTH_TOKEN', '389de81902c5b29cf6d9e0b506d08d84')
-        nomorobo_addon_sid = os.environ.get('NOMOROBO_ADDON_SID', 'XE3e2d5ca759ed15c838f7b39fd0b81346')
+        account_sid = os.environ.get('TWILIO_ACCOUNT_SID')
+        auth_token = os.environ.get('TWILIO_AUTH_TOKEN')
+        nomorobo_addon_sid = os.environ.get('NOMOROBO_ADDON_SID')
 
         if not account_sid or not auth_token:
             return {

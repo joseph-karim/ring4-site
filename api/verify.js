@@ -34,8 +34,8 @@ exports.handler = async function(event, context) {
     }
 
     // Initialize Twilio client with environment variables
-    const accountSid = process.env.TWILIO_ACCOUNT_SID || 'AC1122b3207e35e21162e277551dfd5191';
-    const authToken = process.env.TWILIO_AUTH_TOKEN || '389de81902c5b29cf6d9e0b506d08d84';
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
     const verifySid = process.env.TWILIO_VERIFY_SERVICE_SID;
 
     if (!accountSid || !authToken || !verifySid) {

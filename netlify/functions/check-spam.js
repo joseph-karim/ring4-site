@@ -32,10 +32,10 @@ exports.handler = async function(event, context) {
     }
 
     // Initialize Twilio client with environment variables
-    const accountSid = process.env.TWILIO_ACCOUNT_SID || 'AC1122b3207e35e21162e277551dfd5191';
-    const authToken = process.env.TWILIO_AUTH_TOKEN || '389de81902c5b29cf6d9e0b506d08d84';
-    const nomoroboAddOnSid = process.env.NOMOROBO_ADDON_SID || 'XE3e2d5ca759ed15c838f7b39fd0b81346';
-    
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const nomoroboAddOnSid = process.env.NOMOROBO_ADDON_SID;
+
     if (!accountSid || !authToken) {
       return {
         statusCode: 500,
@@ -61,11 +61,11 @@ exports.handler = async function(event, context) {
     try {
       // Call Twilio Lookup API with Nomorobo Spam Score Add-on
       const phoneNumberLookup = await client.lookups.v1.phoneNumbers(phoneNumber).fetch(lookupOptions);
-      
+
       // Process the response
       // Get the results using the Add-on SID
       const nomoroboResult = phoneNumberLookup.addOns?.results?.[nomoroboAddOnSid];
-      
+
       if (!nomoroboResult || nomoroboResult.status !== 'successful') {
         return {
           statusCode: 500,
@@ -76,14 +76,14 @@ exports.handler = async function(event, context) {
           })
         };
       }
-      
+
       // Get the spam score from the result
       const spamScore = nomoroboResult.result?.score;
-      
+
       // Map the Nomorobo score to our application's format
       let status = 'clean';
       let riskScore = 0;
-      
+
       if (spamScore === 1) {
         status = 'flagged';
         riskScore = 85;  // High risk score for confirmed spam
@@ -96,7 +96,7 @@ exports.handler = async function(event, context) {
         status = 'clean';
         riskScore = 10;  // Low risk score for non-spam
       }
-      
+
       // Return the formatted result
       return {
         statusCode: 200,
@@ -131,16 +131,16 @@ exports.handler = async function(event, context) {
       };
     } catch (twilioError) {
       console.error('Twilio API error:', twilioError);
-      
+
       // For development/testing, return mock data if Twilio API fails
       if (process.env.NODE_ENV !== 'production') {
         console.log('Returning mock data for development');
-        
+
         // Generate a deterministic result based on the phone number
         // This ensures the same phone number always gets the same result during testing
         const lastDigit = parseInt(phoneNumber.slice(-1));
         let mockStatus, mockRiskScore;
-        
+
         if (lastDigit >= 7) {
           mockStatus = 'flagged';
           mockRiskScore = 85;
@@ -151,7 +151,7 @@ exports.handler = async function(event, context) {
           mockStatus = 'clean';
           mockRiskScore = 10;
         }
-        
+
         return {
           statusCode: 200,
           headers,
@@ -185,7 +185,7 @@ exports.handler = async function(event, context) {
           })
         };
       }
-      
+
       return {
         statusCode: 400,
         headers,
@@ -197,7 +197,7 @@ exports.handler = async function(event, context) {
     }
   } catch (error) {
     console.error('Error processing request:', error);
-    
+
     return {
       statusCode: 500,
       headers,

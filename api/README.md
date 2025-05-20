@@ -16,9 +16,9 @@ The API is available in both JavaScript (`check-spam.js`) and Python (`check_spa
    ```
 
 2. Set up environment variables:
-   - `TWILIO_ACCOUNT_SID`: Your Twilio account SID (default: AC1122b3207e35e21162e277551dfd5191)
-   - `TWILIO_AUTH_TOKEN`: Your Twilio auth token (default: 389de81902c5b29cf6d9e0b506d08d84)
-   - `NOMOROBO_ADDON_SID`: Your Nomorobo Add-on SID (default: XE3e2d5ca759ed15c838f7b39fd0b81346)
+   - `TWILIO_ACCOUNT_SID`: Your Twilio account SID
+   - `TWILIO_AUTH_TOKEN`: Your Twilio auth token
+   - `NOMOROBO_ADDON_SID`: Your Nomorobo Add-on SID
 
 3. Deploy the function to your preferred serverless platform:
    - Netlify Functions
