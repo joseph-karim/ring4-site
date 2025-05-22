@@ -1195,7 +1195,7 @@ export default function NeverMissAIPage() {
               <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50">
                 🔊 Hear it in Action
               </Button>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-blue-800 border-2">
+              <Button size="lg" className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white">
                 Start Free → Fix My Missed Calls
               </Button>
             </motion.div>

@@ -34,9 +34,9 @@ exports.handler = async function(event, context) {
     }
 
     // Initialize Twilio client with environment variables
-    const accountSid = process.env.TWILIO_ACCOUNT_SID || 'AC1122b3207e35e21162e277551dfd5191';
-    const authToken = process.env.TWILIO_AUTH_TOKEN || '389de81902c5b29cf6d9e0b506d08d84';
-    const nomoroboAddOnSid = process.env.NOMOROBO_ADDON_SID || 'XE3e2d5ca759ed15c838f7b39fd0b81346';
+    const accountSid = process.env.TWILIO_ACCOUNT_SID;
+    const authToken = process.env.TWILIO_AUTH_TOKEN;
+    const nomoroboAddOnSid = process.env.NOMOROBO_ADDON_SID;
 
     if (!accountSid || !authToken) {
       return {

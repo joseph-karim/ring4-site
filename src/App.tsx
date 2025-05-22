@@ -4,6 +4,7 @@ import HomePage from './components/HomePage'
 import SpamCheckerPage from './components/SpamCheckerPage'
 import SeparateWorkLinePage from './components/SeparateWorkLinePage'
 import NeverMissAIPage from './components/NeverMissAIPage'
+import RealEstateAgentsPage from './components/RealEstateAgentsPage'
 
 import { Button } from './components/ui/button'
 import { Toaster } from './components/ui/toaster'
@@ -20,6 +21,7 @@ export default function App() {
   const isHome = location.pathname === '/' || location.pathname === '';
   const isSpamChecker = location.pathname === '/spam-checker';
   const isNeverMissAI = location.pathname === '/nevermiss-ai';
+  const isRealEstateAgents = location.pathname === '/real-estate-agents';
 
 
   return (
@@ -87,6 +89,40 @@ export default function App() {
                 <Link to="/nevermiss-ai">NeverMiss AI</Link>
               </Button>
 
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant={isRealEstateAgents ? 'default' : 'ghost'}
+                    className="flex items-center gap-1"
+                  >
+                    Who We Serve <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <Link to="/real-estate-agents" className="w-full">Real Estate Agents</Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="#" className="w-full flex items-center justify-between">
+                      <span>Legal Professionals</span>
+                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full ml-2">Coming Soon</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="#" className="w-full flex items-center justify-between">
+                      <span>Insurance Agents</span>
+                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full ml-2">Coming Soon</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="#" className="w-full flex items-center justify-between">
+                      <span>Financial Advisors</span>
+                      <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs rounded-full ml-2">Coming Soon</span>
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
 
             </div>
           </div>
@@ -98,7 +134,7 @@ export default function App() {
           <Route path="/spam-checker" element={<SpamCheckerPage />} />
           <Route path="/separate-work-line" element={<SeparateWorkLinePage />} />
           <Route path="/nevermiss-ai" element={<NeverMissAIPage />} />
-
+          <Route path="/real-estate-agents" element={<RealEstateAgentsPage />} />
         </Routes>
       </div>
       <Toaster />
