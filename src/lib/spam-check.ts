@@ -47,9 +47,41 @@ export const checkPhoneNumber = async (phoneNumber: string, secondaryPhoneNumber
       console.log(`With secondary number: ${e164SecondaryNumber}`)
     }
 
-    // For now, always use mock data since we're having Supabase connection issues
-    console.log('Using mock data for spam check')
-    return getMockResult(formattedNumber);
+    // Check if we should use the real API
+    const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
+
+    if (useRealApi) {
+      console.log('Using real Netlify function for spam check');
+
+      // Call the Netlify function to check the phone number
+      const apiUrl = '/.netlify/functions/check-spam';
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phoneNumber: e164Number,
+          secondaryPhoneNumber: e164SecondaryNumber
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API error:', errorText);
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('Spam check result:', data);
+
+      return data as SpamCheckResult;
+    } else {
+      // Fall back to mock data
+      console.log('Using mock data for spam check');
+      return getMockResult(formattedNumber);
+    }
 
     /* Commented out until Supabase connection is fixed
     // Call the Supabase function to check the phone number
@@ -75,9 +107,17 @@ export const checkPhoneNumber = async (phoneNumber: string, secondaryPhoneNumber
   } catch (error) {
     console.error('Error checking phone number:', error);
 
-    // Always fall back to mock data on any error
-    console.warn('Falling back to mock data due to error');
-    return getMockResult(formattedNumber);
+    // Check if we should use the real API and show real errors
+    const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
+
+    if (useRealApi && import.meta.env.DEV) {
+      // In development with real API, show the actual error
+      throw error;
+    } else {
+      // In production or when using mock data, fall back to mock data
+      console.warn('Falling back to mock data due to error');
+      return getMockResult(formattedNumber);
+    }
   }
 }
 

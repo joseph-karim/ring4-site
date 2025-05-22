@@ -48,13 +48,13 @@ exports.handler = async function(event, context) {
 
     // Prepare options for Twilio Lookup API
     const lookupOptions = {
-      addOns: nomoroboAddOnSid
+      addOns: 'nomorobo_spamscore'
     };
 
     // Add secondary_address if provided
     if (secondaryPhoneNumber) {
-      // Format the parameter name using the Add-on SID
-      const paramName = `addOns.${nomoroboAddOnSid}.secondary_address`;
+      // Format the parameter name using the Add-on name
+      const paramName = 'addOns.nomorobo_spamscore.secondary_address';
       lookupOptions[paramName] = secondaryPhoneNumber;
     }
 
@@ -63,8 +63,8 @@ exports.handler = async function(event, context) {
       const phoneNumberLookup = await client.lookups.v1.phoneNumbers(phoneNumber).fetch(lookupOptions);
 
       // Process the response
-      // Get the results using the Add-on SID
-      const nomoroboResult = phoneNumberLookup.addOns?.results?.[nomoroboAddOnSid];
+      // Get the results using the Add-on name
+      const nomoroboResult = phoneNumberLookup.addOns?.results?.nomorobo_spamscore;
 
       if (!nomoroboResult || nomoroboResult.status !== 'successful') {
         return {
