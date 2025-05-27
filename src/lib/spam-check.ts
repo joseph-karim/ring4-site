@@ -1,5 +1,5 @@
 // This file provides mock spam check functionality
-import { getLatestSpamCheckResult, getSpamCheckHistory } from './spam-check-storage'
+import { getLatestSpamCheckResult } from './spam-check-storage'
 
 type SpamCheckResult = {
   status: 'clean' | 'at-risk' | 'flagged'
@@ -118,26 +118,6 @@ export const checkPhoneNumber = async (phoneNumber: string, secondaryPhoneNumber
       console.warn('Falling back to mock data due to error');
       return getMockResult(formattedNumber);
     }
-  }
-}
-
-/**
- * Get the spam check history for a phone number
- *
- * @param phoneNumber - The phone number to get history for
- * @returns An array of spam check records
- */
-export const getPhoneNumberHistory = async (phoneNumber: string) => {
-  try {
-    // Format the phone number
-    const formattedNumber = phoneNumber.replace(/\D/g, '')
-    const e164Number = `+1${formattedNumber}`
-
-    // Get the history from Supabase
-    return await getSpamCheckHistory(e164Number)
-  } catch (error) {
-    console.error('Error getting spam check history:', error)
-    throw error
   }
 }
 

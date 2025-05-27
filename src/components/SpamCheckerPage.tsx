@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-import { SpamCheckHistory } from '@/components/SpamCheckHistory'
 import {
   AlertTriangle,
   ArrowRight,
@@ -32,8 +31,6 @@ const formSchema = z.object({
   secondaryPhoneNumber: z.string().optional(),
 })
 
-
-
 type FormValues = z.infer<typeof formSchema>
 
 export default function SpamCheckerPage() {
@@ -49,7 +46,6 @@ export default function SpamCheckerPage() {
     }
   }, [checkResult, isChecking]);
 
-
   // Initialize form
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -58,8 +54,6 @@ export default function SpamCheckerPage() {
       secondaryPhoneNumber: '',
     },
   })
-
-
 
   // Handle form submission
   const onSubmit = async (data: FormValues) => {
@@ -87,10 +81,6 @@ export default function SpamCheckerPage() {
       setIsChecking(false)
     }
   }
-
-
-
-
 
   // Helper function to get status color
   const getStatusColor = (status: string) => {
@@ -204,11 +194,6 @@ export default function SpamCheckerPage() {
                   Your number is currently being flagged as spam by major carriers. This means your calls are likely being blocked or ignored, resulting in up to 80% fewer answered calls.
                 </p>
               )}
-
-              {/* Spam Check History from Supabase */}
-              <div className="mt-4 pt-4 border-t">
-                <SpamCheckHistory phoneNumber={form.getValues().phoneNumber} />
-              </div>
 
               <div className="mt-6">
                 <h3 className="font-semibold mb-3">Recommended Actions</h3>
