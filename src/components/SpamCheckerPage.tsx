@@ -96,20 +96,6 @@ export default function SpamCheckerPage() {
     }
   }
 
-  // Helper function to get status text
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'clean':
-        return 'Good Standing'
-      case 'at-risk':
-        return 'At Risk'
-      case 'flagged':
-        return 'Flagged as Spam'
-      default:
-        return 'Unknown'
-    }
-  }
-
   // Helper function to get status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
