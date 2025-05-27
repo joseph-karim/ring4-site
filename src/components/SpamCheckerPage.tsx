@@ -128,6 +128,9 @@ export default function SpamCheckerPage() {
   const renderResults = () => {
     if (!checkResult) return null
 
+    // Get the formatted phone number from the form
+    const phoneNumber = form.getValues().phoneNumber
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -141,8 +144,8 @@ export default function SpamCheckerPage() {
               <div className="flex items-center space-x-3">
                 {getStatusIcon(checkResult.status)}
                 <div>
-                  <CardTitle className="text-white">
-                    {getStatusText(checkResult.status)}
+                  <CardTitle className="text-white text-xl">
+                    Your Number <span className="font-bold">{phoneNumber}</span> {checkResult.status === 'flagged' ? 'Is Flagged as Spam' : checkResult.status === 'at-risk' ? 'Is At Risk' : 'Is Clean'}
                   </CardTitle>
                   <CardDescription className="text-white/80">
                     {checkResult.status === 'clean'
