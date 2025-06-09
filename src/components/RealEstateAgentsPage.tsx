@@ -51,10 +51,10 @@ export default function RealEstateAgentsPage() {
                 Real Estate Agents
               </div>
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-                Your Calls Should Build Trust, Not Get Ignored
+                Never Miss a High-Intent Buyer Call Again
               </h1>
               <p className="text-xl text-gray-600 mb-8">
-                Ring4 helps real estate agents and mortgage pros get their calls answered, stay in sync with their team, and never miss a lead. Even when they're with a client.
+                Even when you're showing a property, on another call, or off the clock — Ring4's AI receptionist captures the lead, confirms their intent, and texts you the summary so you can follow up fast.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
@@ -62,7 +62,7 @@ export default function RealEstateAgentsPage() {
                   <Link to="/spam-checker">🔍 Check My Number for Spam</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="border-[#0055FF] text-[#0055FF]">
-                  <Link to="#">🚀 Start Free 7-Day Trial</Link>
+                  <Link to="#">🤖 Claim My AI Receptionist</Link>
                 </Button>
               </div>
 
@@ -72,7 +72,7 @@ export default function RealEstateAgentsPage() {
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="mt-8 text-sm text-gray-500"
               >
-                <span className="block mb-2">Includes Concierge Beta Access</span>
+                <span className="block mb-2">✅ 4.7 stars · Free Concierge Setup Included</span>
                 <a href="https://www.g2.com/products/ring4/reviews" target="_blank" rel="noopener noreferrer" className="inline-flex items-center">
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
@@ -127,10 +127,10 @@ export default function RealEstateAgentsPage() {
           >
 
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              The Leads You're Losing (Silently)
+              You're Not Getting Ghosted — They Just Don't Know It's You
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              You Can't Build Relationships If They Don't Answer
+              The Silent Lead Loss
             </p>
           </motion.div>
 
@@ -148,13 +148,13 @@ export default function RealEstateAgentsPage() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                    <span className="text-gray-700">If your number shows up as "Spam Likely," even warm leads ignore you</span>
+                    <span className="text-gray-700">If your number shows up as "Spam Likely" or "Unknown," even warm leads ignore the call</span>
                   </li>
                   <li className="flex items-start space-x-3">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                    <span className="text-gray-700">87% of callers won't leave a voicemail</span>
+                    <span className="text-gray-700">87% of buyers don't leave voicemails — they just move on</span>
                   </li>
                 </ul>
               </motion.div>
@@ -171,13 +171,13 @@ export default function RealEstateAgentsPage() {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                    <span className="text-gray-700">Personal phones and Google Voice don't show who followed up</span>
+                    <span className="text-gray-700">And if they call you while you're busy? That lead could vanish for good</span>
                   </li>
                   <li className="flex items-start space-x-3">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                    <span className="text-gray-700">Missing one call can mean missing one deal</span>
+                    <span className="text-gray-700">Missed calls during showings or other calls mean lost opportunities</span>
                   </li>
                 </ul>
               </motion.div>
@@ -198,10 +198,10 @@ export default function RealEstateAgentsPage() {
           >
 
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              The Communication Stack for People Who Close
+              What You Get With Ring4
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Show Up Like a Professional, Even When You're Not on the Line
+              Everything you need to capture and convert more leads
             </p>
           </motion.div>
 
@@ -209,7 +209,7 @@ export default function RealEstateAgentsPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center mb-24">
             <div className="order-2 md:order-1">
               <h3 className="text-2xl md:text-3xl font-bold text-gray-900 mb-6">
-                What You Get:
+                Your Complete Solution:
               </h3>
               <ul className="space-y-6 mb-8">
                 <li className="flex items-start space-x-4">
@@ -217,8 +217,8 @@ export default function RealEstateAgentsPage() {
                     <span className="text-xl">📞</span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-lg text-gray-900">Caller ID that shows your name</h4>
-                    <p className="text-gray-600">Not a random number that gets ignored</p>
+                    <h4 className="font-semibold text-lg text-gray-900">Branded Caller ID</h4>
+                    <p className="text-gray-600">So you show up as "Sarah @ Compass," not a random number</p>
                   </div>
                 </li>
                 <li className="flex items-start space-x-4">
@@ -226,8 +226,8 @@ export default function RealEstateAgentsPage() {
                     <span className="text-xl">🧼</span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-lg text-gray-900">Spam score check and cleanup</h4>
-                    <p className="text-gray-600">Across major carriers so your calls get through</p>
+                    <h4 className="font-semibold text-lg text-gray-900">Spam Score Cleanup</h4>
+                    <p className="text-gray-600">Fix your number's reputation across major carriers</p>
                   </div>
                 </li>
                 <li className="flex items-start space-x-4">
@@ -235,8 +235,8 @@ export default function RealEstateAgentsPage() {
                     <span className="text-xl">📲</span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-lg text-gray-900">Shared inbox</h4>
-                    <p className="text-gray-600">So your team stays on the same page</p>
+                    <h4 className="font-semibold text-lg text-gray-900">Shared Inbox</h4>
+                    <p className="text-gray-600">So you and your assistant always know who said what, when</p>
                   </div>
                 </li>
                 <li className="flex items-start space-x-4">
@@ -244,25 +244,29 @@ export default function RealEstateAgentsPage() {
                     <span className="text-xl">🤖</span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-lg text-gray-900">NeverMiss AI answers</h4>
-                    <p className="text-gray-600">When you can't and sends a call summary</p>
+                    <h4 className="font-semibold text-lg text-gray-900">NeverMiss AI Receptionist</h4>
+                    <p className="text-gray-600">Answers for you, sounds human, captures lead info</p>
+                  </div>
+                </li>
+                <li className="flex items-start space-x-4">
+                  <div className="flex-shrink-0 w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <span className="text-xl">📲</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-lg text-gray-900">Instant Call Summaries</h4>
+                    <p className="text-gray-600">Get lead intent, timeline, and contact info right to your phone</p>
                   </div>
                 </li>
                 <li className="flex items-start space-x-4">
                   <div className="flex-shrink-0 w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                    <span className="text-xl">🧑</span>
+                    <span className="text-xl">🧑‍💻</span>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-lg text-gray-900">Concierge setup</h4>
-                    <p className="text-gray-600">To configure everything with zero hassle</p>
+                    <h4 className="font-semibold text-lg text-gray-900">Concierge Setup</h4>
+                    <p className="text-gray-600">We'll configure everything so you're live in minutes</p>
                   </div>
                 </li>
               </ul>
-              <div className="p-6 bg-blue-50 rounded-lg border border-blue-100">
-                <p className="text-gray-700 italic">
-                  "You only get one chance to make a first impression. Make sure your first call feels like it matters."
-                </p>
-              </div>
             </div>
 
             <div className="order-1 md:order-2 relative">
@@ -384,23 +388,10 @@ export default function RealEstateAgentsPage() {
             </motion.div>
           </div>
 
-          <div className="max-w-4xl mx-auto bg-gray-800 rounded-xl p-8 shadow-lg border border-gray-700">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="flex-shrink-0 w-16 h-16 bg-blue-900/30 rounded-full flex items-center justify-center">
-                <span className="text-3xl">💬</span>
-              </div>
-              <div>
-                <p className="text-xl italic text-blue-100 mb-4">
-                  "It's like having someone I trust take care of the call until I can follow up."
-                </p>
-                <p className="text-blue-300">– Sarah, Independent Agent</p>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
-      {/* RISK REVERSAL Section */}
+      {/* PROOF Section */}
       <section className="py-16 md:py-24 bg-gray-50">
         <div className="container mx-auto px-4">
           <motion.div
@@ -410,12 +401,11 @@ export default function RealEstateAgentsPage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-              Get Set Up in Minutes or Let Us Do It
+              Real Results from Agents Like You
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              No Hardware. No Hassle. Just More Conversations.
+              Stop losing leads to spam filters and missed calls
             </p>
           </motion.div>
 
@@ -429,10 +419,10 @@ export default function RealEstateAgentsPage() {
                 className="bg-white p-8 rounded-lg shadow-md text-center"
               >
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">🎁</span>
+                  <span className="text-2xl">🔒</span>
                 </div>
-                <h3 className="text-xl font-bold mb-3">Free 7-Day Trial</h3>
-                <p className="text-gray-600">No credit card required to get started</p>
+                <h3 className="text-xl font-bold mb-3">97% Answer Rate</h3>
+                <p className="text-gray-600">With Branded Caller ID</p>
               </motion.div>
 
               <motion.div
@@ -442,11 +432,11 @@ export default function RealEstateAgentsPage() {
                 viewport={{ once: true }}
                 className="bg-white p-8 rounded-lg shadow-md text-center"
               >
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">👨‍💼</span>
+                <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">💬</span>
                 </div>
-                <h3 className="text-xl font-bold mb-3">Concierge Setup</h3>
-                <p className="text-gray-600">Optional $97 setup for caller ID + AI configuration</p>
+                <h3 className="text-xl font-bold mb-3">$126K/year</h3>
+                <p className="text-gray-600">Avg. lost revenue from missed calls</p>
               </motion.div>
 
               <motion.div
@@ -457,33 +447,75 @@ export default function RealEstateAgentsPage() {
                 className="bg-white p-8 rounded-lg shadow-md text-center"
               >
                 <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">🔄</span>
+                  <span className="text-2xl">🧠</span>
                 </div>
-                <h3 className="text-xl font-bold mb-3">Cancel Anytime</h3>
-                <p className="text-gray-600">No long-term contracts or commitments</p>
+                <h3 className="text-xl font-bold mb-3">3-5 Qualified Leads</h3>
+                <p className="text-gray-600">Captured monthly via NeverMiss AI</p>
               </motion.div>
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-              viewport={{ once: true }}
-              className="mt-12 bg-white p-8 rounded-lg shadow-md"
-            >
-              <div className="flex flex-col md:flex-row items-center gap-6">
-                <div className="flex-shrink-0 w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
-                  <span className="text-3xl">💬</span>
-                </div>
-                <div>
-                  <p className="text-xl italic text-gray-700 mb-2">
-                    "This isn't about tools. It's about knowing I won't lose the call that makes my month."
-                  </p>
-                  <p className="text-gray-500">– Verified Loan Officer</p>
-                </div>
-              </div>
-            </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Simple Offer Section */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto text-center"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-12">
+              Simple, Transparent Pricing
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                viewport={{ once: true }}
+                className="bg-gray-50 p-8 rounded-lg"
+              >
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🎁</span>
+                </div>
+                <h3 className="text-xl font-bold mb-3">Free 14-Day Trial</h3>
+                <p className="text-gray-600">No credit card required</p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="bg-gray-50 p-8 rounded-lg"
+              >
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🧑‍💻</span>
+                </div>
+                <h3 className="text-xl font-bold mb-3">Concierge Onboarding</h3>
+                <p className="text-gray-600">We set everything up for you</p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                viewport={{ once: true }}
+                className="bg-gray-50 p-8 rounded-lg"
+              >
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🔄</span>
+                </div>
+                <h3 className="text-xl font-bold mb-3">Cancel Anytime</h3>
+                <p className="text-gray-600">No contracts or commitments</p>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -498,21 +530,18 @@ export default function RealEstateAgentsPage() {
             className="max-w-4xl mx-auto text-center"
           >
             <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Be the Professional They Trust, Not the Missed Call They Ignore
+              Start Catching Missed Calls Today
             </h2>
             <p className="text-xl mb-8 text-blue-100">
-              The Call Can't Go Unanswered
+              Free 14-day trial — no card required · Concierge onboarding included · Cancel anytime
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="bg-white text-blue-700 hover:bg-blue-50">
-                <Link to="/spam-checker">🔍 Check My Caller ID</Link>
+                <Link to="/spam-checker">🎯 Check My Spam Score</Link>
               </Button>
               <Button asChild size="lg" className="bg-blue-800 text-white border border-white hover:bg-blue-700">
-                <Link to="#">📅 Book My Setup</Link>
+                <Link to="#">🤖 Claim My AI Receptionist Now</Link>
               </Button>
-            </div>
-            <div className="mt-8 inline-block px-4 py-2 bg-blue-800/50 rounded-full text-sm font-medium">
-              Includes early access to NeverMiss AI for qualified agents and solo pros
             </div>
           </motion.div>
         </div>
