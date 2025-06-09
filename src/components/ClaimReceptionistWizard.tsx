@@ -24,7 +24,6 @@ import {
 import { BusinessInfo } from '../lib/website-crawler'
 import { generateSonicNovaConfig } from '../lib/sonic-nova-config'
 import { saveAIReceptionist, saveDemoCallTranscript } from '../lib/ai-receptionist-storage'
-import { supabase } from '../lib/supabase'
 import { createSmartDefaultVoiceAgent, formatUrl, validateUrl, FALLBACK_MESSAGES } from '../lib/default-voice-agent'
 
 type WizardStep = 'intro' | 'website' | 'analyzing' | 'preview' | 'test-call' | 'claim'
@@ -57,6 +56,7 @@ export default function ClaimReceptionistWizard() {
     try {
       let info: BusinessInfo
       let fallbackType = 'GENERIC'
+      let crawlMetadata: any = null
       
       // Format and validate URL first
       const formattedUrl = formatUrl(websiteUrl)
@@ -66,27 +66,49 @@ export default function ClaimReceptionistWizard() {
         fallbackType = 'INVALID_URL'
         info = createSmartDefaultVoiceAgent(websiteUrl)
       } else {
-        // Try to use Supabase Edge Function to crawl website
+        // Use real Crawl4AI-based Netlify function for website crawling
         try {
-          const { data, error } = await supabase.functions.invoke('crawl-website-simple', {
-            body: { url: formattedUrl }
+          console.log(`🚀 Starting real crawl for: ${formattedUrl}`)
+          
+          const response = await fetch('/.netlify/functions/crawl-website-real', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: formattedUrl })
           })
           
-          if (error || !data) {
-            throw new Error('Edge function failed')
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+          }
+          
+          const data = await response.json()
+          
+          if (!data.success || !data.businessInfo) {
+            throw new Error('Crawling failed or returned invalid data')
           }
           
           info = data.businessInfo as BusinessInfo
-          console.log('Successfully crawled website:', info.name)
-        } catch (edgeError) {
-          console.warn('Edge function failed, using smart fallback:', edgeError)
+          crawlMetadata = data.crawlMetadata
+          
+          // Check if fallback was used in the backend
+          if (crawlMetadata?.usedFallback) {
+            setIsUsingFallback(true)
+            fallbackType = 'CRAWL_FAILED'
+            console.log('✅ Crawling completed with fallback:', info.name)
+          } else {
+            console.log('✅ Successfully crawled website with Crawl4AI:', info.name)
+          }
+          
+        } catch (crawlError) {
+          console.warn('Crawl4AI function failed, using smart fallback:', crawlError)
           setIsUsingFallback(true)
           
           // Determine fallback type based on error
-          if (edgeError instanceof Error) {
-            if (edgeError.message.includes('timeout')) {
+          if (crawlError instanceof Error) {
+            if (crawlError.message.includes('timeout')) {
               fallbackType = 'TIMEOUT'
-            } else if (edgeError.message.includes('network')) {
+            } else if (crawlError.message.includes('network')) {
               fallbackType = 'NETWORK_ERROR'
             } else {
               fallbackType = 'CRAWL_FAILED'
@@ -105,8 +127,8 @@ export default function ClaimReceptionistWizard() {
       
       setBusinessInfo(info)
       
-      // Generate AI configuration
-      const config = generateSonicNovaConfig(info)
+      // Generate AI configuration with crawl metadata for enhanced context
+      const config = generateSonicNovaConfig(info, crawlMetadata)
       setAiConfig(config)
       
       // Save to Supabase (with fallback flag)
