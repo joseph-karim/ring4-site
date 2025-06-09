@@ -219,7 +219,7 @@ export default function ClaimReceptionistWizard() {
         setNovaSonicClient(client)
         
         // Set up event handlers
-        client.onStatus((status, type) => {
+        client.onStatus((status) => {
           setVoiceStatus(status)
         })
         

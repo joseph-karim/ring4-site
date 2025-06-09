@@ -287,7 +287,9 @@ export class NovaSonicClient {
 
 // Helper function to check if Nova Sonic is available
 export function isNovaSonicAvailable(): boolean {
-  return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.AudioContext);
+  const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  const hasAudioContext = !!(typeof AudioContext !== 'undefined' || typeof (window as any).webkitAudioContext !== 'undefined');
+  return hasMediaDevices && hasAudioContext;
 }
 
 // Helper function to test Nova Sonic connection
