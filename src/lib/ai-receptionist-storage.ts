@@ -16,6 +16,8 @@ export interface AIReceptionistRecord {
   updatedAt?: string
   userId?: string
   status: 'demo' | 'claimed' | 'active'
+  isUsingFallback?: boolean
+  fallbackType?: string
 }
 
 // Save AI receptionist configuration
@@ -23,6 +25,8 @@ export async function saveAIReceptionist(data: {
   websiteUrl: string
   businessInfo: BusinessInfo
   aiConfig: SonicNovaConfig
+  isUsingFallback?: boolean
+  fallbackType?: string
 }): Promise<AIReceptionistRecord | null> {
   try {
     const { data: result, error } = await supabase
@@ -31,7 +35,9 @@ export async function saveAIReceptionist(data: {
         website_url: data.websiteUrl,
         business_info: data.businessInfo as any,
         ai_config: data.aiConfig as any,
-        status: 'demo'
+        status: 'demo',
+        is_using_fallback: data.isUsingFallback || false,
+        fallback_type: data.fallbackType || null
       })
       .select()
       .single()

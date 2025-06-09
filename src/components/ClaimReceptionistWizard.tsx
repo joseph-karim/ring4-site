@@ -25,6 +25,7 @@ import { BusinessInfo } from '../lib/website-crawler'
 import { generateSonicNovaConfig } from '../lib/sonic-nova-config'
 import { saveAIReceptionist, saveDemoCallTranscript } from '../lib/ai-receptionist-storage'
 import { supabase } from '../lib/supabase'
+import { createSmartDefaultVoiceAgent, formatUrl, validateUrl, FALLBACK_MESSAGES } from '../lib/default-voice-agent'
 
 type WizardStep = 'intro' | 'website' | 'analyzing' | 'preview' | 'test-call' | 'claim'
 
@@ -40,6 +41,7 @@ export default function ClaimReceptionistWizard() {
   const [callDuration, setCallDuration] = useState(0)
   const [transcript, setTranscript] = useState<string[]>([])
   const [isUsingFallback, setIsUsingFallback] = useState(false)
+  const [fallbackMessage, setFallbackMessage] = useState<string>('')
 
   // Progress calculation
   const stepOrder: WizardStep[] = ['intro', 'website', 'analyzing', 'preview', 'test-call', 'claim']
@@ -54,59 +56,51 @@ export default function ClaimReceptionistWizard() {
     
     try {
       let info: BusinessInfo
+      let fallbackType = 'GENERIC'
       
-      // Try to use Supabase Edge Function to crawl website
-      const { data, error } = await supabase.functions.invoke('crawl-website-simple', {
-        body: { url: websiteUrl }
-      })
-      
-      if (error) {
-        console.warn('Edge function failed, using general chatbot fallback:', error)
+      // Format and validate URL first
+      const formattedUrl = formatUrl(websiteUrl)
+      if (!validateUrl(formattedUrl)) {
+        console.warn('Invalid URL provided:', websiteUrl)
         setIsUsingFallback(true)
-        // Fallback to general business assistant instead of fake specific data
-        info = {
-          name: "Your Business",
-          description: "A professional business providing quality services to customers.",
-          services: [
-            "Customer inquiries",
-            "Appointment scheduling",
-            "General information",
-            "Lead qualification",
-            "Call routing"
-          ],
-          hours: {
-            "Monday-Friday": "9:00 AM - 5:00 PM",
-            "Saturday": "By appointment",
-            "Sunday": "Closed"
-          },
-          contact: {
-            phone: "Your business phone",
-            email: "Your business email",
-            address: "Your business address"
-          },
-          specialties: [
-            "Professional service",
-            "Customer-focused approach",
-            "Quick response times"
-          ],
-          values: [
-            "Quality service",
-            "Customer satisfaction",
-            "Professional communication"
-          ],
-          faqs: [
-            {
-              question: "How can I help you today?",
-              answer: "I'm here to assist with your inquiries and connect you with the right person."
-            },
-            {
-              question: "What are your business hours?",
-              answer: "We're typically available Monday through Friday, 9 AM to 5 PM."
-            }
-          ]
-        }
+        fallbackType = 'INVALID_URL'
+        info = createSmartDefaultVoiceAgent(websiteUrl)
       } else {
-        info = data.businessInfo as BusinessInfo
+        // Try to use Supabase Edge Function to crawl website
+        try {
+          const { data, error } = await supabase.functions.invoke('crawl-website-simple', {
+            body: { url: formattedUrl }
+          })
+          
+          if (error || !data) {
+            throw new Error('Edge function failed')
+          }
+          
+          info = data.businessInfo as BusinessInfo
+          console.log('Successfully crawled website:', info.name)
+        } catch (edgeError) {
+          console.warn('Edge function failed, using smart fallback:', edgeError)
+          setIsUsingFallback(true)
+          
+          // Determine fallback type based on error
+          if (edgeError instanceof Error) {
+            if (edgeError.message.includes('timeout')) {
+              fallbackType = 'TIMEOUT'
+            } else if (edgeError.message.includes('network')) {
+              fallbackType = 'NETWORK_ERROR'
+            } else {
+              fallbackType = 'CRAWL_FAILED'
+            }
+          }
+          
+          // Use smart default that adapts to business type
+          info = createSmartDefaultVoiceAgent(formattedUrl)
+        }
+      }
+      
+      // Set fallback message if using fallback
+      if (isUsingFallback) {
+        setFallbackMessage(FALLBACK_MESSAGES[fallbackType as keyof typeof FALLBACK_MESSAGES])
       }
       
       setBusinessInfo(info)
@@ -115,15 +109,21 @@ export default function ClaimReceptionistWizard() {
       const config = generateSonicNovaConfig(info)
       setAiConfig(config)
       
-      // Save to Supabase
-      const savedReceptionist = await saveAIReceptionist({
-        websiteUrl,
-        businessInfo: info,
-        aiConfig: config
-      })
-      
-      if (savedReceptionist) {
-        setReceptionistId(savedReceptionist.id!)
+      // Save to Supabase (with fallback flag)
+      try {
+        const savedReceptionist = await saveAIReceptionist({
+          websiteUrl: formattedUrl,
+          businessInfo: info,
+          aiConfig: config,
+          isUsingFallback,
+          fallbackType
+        })
+        
+        if (savedReceptionist) {
+          setReceptionistId(savedReceptionist.id!)
+        }
+      } catch (saveError) {
+        console.warn('Failed to save to Supabase, continuing with local data:', saveError)
       }
       
       // Wait a bit to show analyzing animation
@@ -132,7 +132,14 @@ export default function ClaimReceptionistWizard() {
       setCurrentStep('preview')
     } catch (error) {
       console.error('Error analyzing website:', error)
-      // Still proceed to preview with mock data
+      // Still proceed to preview with fallback data
+      setIsUsingFallback(true)
+      setFallbackMessage(FALLBACK_MESSAGES.GENERIC)
+      
+      const fallbackInfo = createSmartDefaultVoiceAgent(websiteUrl)
+      setBusinessInfo(fallbackInfo)
+      setAiConfig(generateSonicNovaConfig(fallbackInfo))
+      
       setCurrentStep('preview')
     } finally {
       setIsLoading(false)
@@ -278,7 +285,7 @@ export default function ClaimReceptionistWizard() {
                     <Globe className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                     <Input
                       type="url"
-                      placeholder="https://your-business-website.com"
+                      placeholder="your-business.com (we'll format it automatically)"
                       value={websiteUrl}
                       onChange={(e) => setWebsiteUrl(e.target.value)}
                       className="pl-10 h-12 text-lg"
@@ -379,20 +386,19 @@ export default function ClaimReceptionistWizard() {
               <h2 className="text-3xl font-bold">Meet Your AI Receptionist</h2>
               <p className="text-gray-600">
                 {isUsingFallback 
-                  ? "General business assistant template - will be customized for your specific business"
+                  ? "Smart business assistant - ready to handle your calls professionally"
                   : "Trained on your business and ready to handle calls professionally"
                 }
               </p>
+              {isUsingFallback && fallbackMessage && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                  <p className="text-blue-800 text-sm">{fallbackMessage}</p>
+                  <p className="text-blue-600 text-sm mt-2 font-medium">
+                    {FALLBACK_MESSAGES.SETUP_HELP}
+                  </p>
+                </div>
+              )}
             </div>
-            
-            {isUsingFallback && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
-                <p className="text-blue-800 text-sm">
-                  <strong>Note:</strong> We're showing a general template since we couldn't analyze your website. 
-                  During setup, we'll customize this AI receptionist specifically for your business.
-                </p>
-              </div>
-            )}
             
             <div className="grid md:grid-cols-2 gap-6">
               {/* AI Personality Card */}

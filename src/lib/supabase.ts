@@ -3,7 +3,7 @@ import type { Database } from './database.types'
 
 // Initialize the Supabase client with environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://kbtidlqxhgynacijtooa.supabase.co'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtidGlkbHF4aGd5bmFjaWp0b29hIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0Nzc2NzkxOSwiZXhwIjoyMDYzMzQzOTE5fQ.yVmGw0XSe-TxDNxC7ueUyCTKIxYi0Y9EbHe_ig9VrBU'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtidGlkbHF4aGd5bmFjaWp0b29hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc3Njc5MTksImV4cCI6MjA2MzM0MzkxOX0.BROEgZyel7zFGtbFRybTHzGxaF8y0aJY5856a1UIAYM'
 
 // Create a single supabase client for interacting with your database
 // No authentication required - using the anonymous key for public access
