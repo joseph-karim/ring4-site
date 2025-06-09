@@ -242,7 +242,7 @@ function extractSpecialties(html: string): string[] {
   
   // Look for credentials, certifications, awards
   const patterns = [
-    /(?:certified|licensed|accredited|award[^>]*>([^<]+)/gi,
+    /(?:certified|licensed|accredited|award)[^>]*>([^<]+)/gi,
     /(?:specializ(?:e|ing)|expert)[^>]*>([^<]+)/gi
   ]
   
