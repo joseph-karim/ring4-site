@@ -17,10 +17,9 @@ type SpamCheckResult = {
  * Checks a phone number for spam risk using Supabase function that calls Twilio's Lookup API
  *
  * @param phoneNumber - The phone number to check (should be in E.164 format or 10-digit US number)
- * @param secondaryPhoneNumber - Optional secondary phone number for additional spam detection signal
  * @returns A SpamCheckResult object with the spam check results
  */
-export const checkPhoneNumber = async (phoneNumber: string, secondaryPhoneNumber?: string): Promise<SpamCheckResult> => {
+export const checkPhoneNumber = async (phoneNumber: string): Promise<SpamCheckResult> => {
   // Simple validation for US phone numbers (10 digits)
   const formattedNumber = phoneNumber.replace(/\D/g, '')
   const isValidUS = /^\d{10}$/.test(formattedNumber)
@@ -32,20 +31,8 @@ export const checkPhoneNumber = async (phoneNumber: string, secondaryPhoneNumber
   // Format to E.164 for Twilio API
   const e164Number = `+1${formattedNumber}`
 
-  // Format secondary phone number if provided
-  let e164SecondaryNumber: string | undefined
-  if (secondaryPhoneNumber) {
-    const formattedSecondary = secondaryPhoneNumber.replace(/\D/g, '')
-    if (/^\d{10}$/.test(formattedSecondary)) {
-      e164SecondaryNumber = `+1${formattedSecondary}`
-    }
-  }
-
   try {
     console.log(`Checking phone number: ${e164Number}`)
-    if (e164SecondaryNumber) {
-      console.log(`With secondary number: ${e164SecondaryNumber}`)
-    }
 
     // Check if we should use the real API
     const useRealApi = import.meta.env.VITE_USE_REAL_API === 'true';
@@ -62,8 +49,7 @@ export const checkPhoneNumber = async (phoneNumber: string, secondaryPhoneNumber
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          phoneNumber: e164Number,
-          secondaryPhoneNumber: e164SecondaryNumber
+          phoneNumber: e164Number
         }),
       });
 

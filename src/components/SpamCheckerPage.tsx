@@ -28,7 +28,6 @@ const formSchema = z.object({
   phoneNumber: z.string().min(10, {
     message: 'Phone number must be at least 10 digits',
   }),
-  secondaryPhoneNumber: z.string().optional(),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -51,7 +50,6 @@ export default function SpamCheckerPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       phoneNumber: '',
-      secondaryPhoneNumber: '',
     },
   })
 
@@ -65,12 +63,8 @@ export default function SpamCheckerPage() {
       // Format phone number to remove non-digits
       const formattedNumber = data.phoneNumber.replace(/\D/g, '')
 
-      // Format secondary phone number if provided
-      const formattedSecondaryNumber = data.secondaryPhoneNumber ?
-        data.secondaryPhoneNumber.replace(/\D/g, '') : undefined
-
       // Call the spam check service
-      const result = await checkPhoneNumber(formattedNumber, formattedSecondaryNumber)
+      const result = await checkPhoneNumber(formattedNumber)
       setCheckResult(result)
     } catch (error) {
       console.error('Error checking phone number:', error)
@@ -345,35 +339,6 @@ export default function SpamCheckerPage() {
                         )}
                       />
 
-                      <FormField
-                        control={form.control}
-                        name="secondaryPhoneNumber"
-                        render={({ field }) => (
-                          <FormItem className="w-full">
-                            <div className="relative">
-                              <FormControl>
-                                <Input
-                                  placeholder="Secondary Number (Optional)"
-                                  className="h-14 pl-12 text-black text-lg"
-                                  {...field}
-                                  onChange={(e) => {
-                                    const formattedValue = formatPhoneNumber(e.target.value)
-                                    field.onChange(formattedValue)
-                                  }}
-                                  disabled={isChecking}
-                                />
-                              </FormControl>
-                              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                <Phone className="h-6 w-6" />
-                              </div>
-                              <FormMessage />
-                              <p className="text-xs text-blue-200 mt-1">
-                                Adding a secondary number improves spam detection accuracy
-                              </p>
-                            </div>
-                          </FormItem>
-                        )}
-                      />
 
                       <div className="flex justify-end">
                         <div className="relative">
@@ -623,7 +588,7 @@ export default function SpamCheckerPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-gray-600">
-                    Our tool provides a best-effort estimation based on available carrier data and known spam detection sources. While no tool can provide 100% accurate results across all regions and carriers, our check gives you a good indication of your number's reputation status. For improved accuracy, you can provide a secondary phone number that you frequently call, which helps our system better analyze your calling patterns.
+                    Our tool provides a best-effort estimation based on available carrier data and known spam detection sources. While no tool can provide 100% accurate results across all regions and carriers, our check gives you a good indication of your number's reputation status.
                   </p>
                 </CardContent>
               </Card>
@@ -650,16 +615,6 @@ export default function SpamCheckerPage() {
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader className="cursor-pointer">
-                  <CardTitle className="text-lg">Why should I provide a secondary phone number?</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600">
-                    Adding a secondary phone number that you frequently call improves the accuracy of our spam detection. The Nomorobo Spam Score system uses this additional signal to better analyze your calling patterns and provide more precise results. This is especially helpful if you're checking a business number that makes outbound calls to specific numbers regularly.
-                  </p>
-                </CardContent>
-              </Card>
             </div>
           </div>
         </div>
