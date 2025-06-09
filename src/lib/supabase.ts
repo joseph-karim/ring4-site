@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Database } from '../types/supabase'
+import type { Database } from './database.types'
 
 // Initialize the Supabase client with environment variables
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ytncuhnmauogozwvakhh.supabase.co'
@@ -31,7 +31,7 @@ export const handleSupabaseError = (error: any): string => {
 /**
  * Generic type-safe functions for Supabase tables
  */
-type TableNames = 'spam_check_results' | 'verification_attempts'
+type TableNames = 'spam_check_results' | 'verification_attempts' | 'ai_receptionists' | 'demo_calls'
 
 /**
  * Fetch data from Supabase

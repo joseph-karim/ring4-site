@@ -5,6 +5,7 @@ import SpamCheckerPage from './components/SpamCheckerPage'
 import SeparateWorkLinePage from './components/SeparateWorkLinePage'
 import NeverMissAIPage from './components/NeverMissAIPage'
 import RealEstateAgentsPage from './components/RealEstateAgentsPage'
+import ClaimReceptionistWizard from './components/ClaimReceptionistWizard'
 
 import { Button } from './components/ui/button'
 import { Toaster } from './components/ui/toaster'
@@ -135,6 +136,7 @@ export default function App() {
           <Route path="/separate-work-line" element={<SeparateWorkLinePage />} />
           <Route path="/nevermiss-ai" element={<NeverMissAIPage />} />
           <Route path="/real-estate-agents" element={<RealEstateAgentsPage />} />
+          <Route path="/claim-receptionist" element={<ClaimReceptionistWizard />} />
         </Routes>
       </div>
       <Toaster />

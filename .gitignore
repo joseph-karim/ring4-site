@@ -34,3 +34,6 @@ local-tools/
 
 # Local Netlify folder
 .netlify
+
+# Browser profiles
+browser_profile/

@@ -59,10 +59,10 @@ export default function RealEstateAgentsPage() {
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
                 <Button asChild size="lg" className="bg-[#0055FF] hover:bg-[#003399] text-white">
-                  <Link to="/spam-checker">🔍 Check My Number for Spam</Link>
+                  <Link to="/claim-receptionist">🤖 Claim My AI Receptionist</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="border-[#0055FF] text-[#0055FF]">
-                  <Link to="#">🤖 Claim My AI Receptionist</Link>
+                  <Link to="/spam-checker">🔍 Check My Number for Spam</Link>
                 </Button>
               </div>
 
@@ -540,7 +540,7 @@ export default function RealEstateAgentsPage() {
                 <Link to="/spam-checker">🎯 Check My Spam Score</Link>
               </Button>
               <Button asChild size="lg" className="bg-blue-800 text-white border border-white hover:bg-blue-700">
-                <Link to="#">🤖 Claim My AI Receptionist Now</Link>
+                <Link to="/claim-receptionist">🤖 Claim My AI Receptionist Now</Link>
               </Button>
             </div>
           </motion.div>
