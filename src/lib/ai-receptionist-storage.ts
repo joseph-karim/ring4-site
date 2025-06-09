@@ -35,9 +35,8 @@ export async function saveAIReceptionist(data: {
         website_url: data.websiteUrl,
         business_info: data.businessInfo as any,
         ai_config: data.aiConfig as any,
-        status: 'demo',
-        is_using_fallback: data.isUsingFallback || false,
-        fallback_type: data.fallbackType || null
+        status: 'demo'
+        // TODO: Add fallback columns after migration: is_using_fallback, fallback_type
       })
       .select()
       .single()
