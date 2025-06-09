@@ -18,6 +18,8 @@
     "netlify": "netlify dev",
     "netlify:build": "netlify build",
     "netlify:deploy": "netlify deploy",
+    "nova-sonic": "./start-nova-sonic.sh",
+    "dev:voice": "concurrently \"npm run dev\" \"npm run nova-sonic\"",
     "dev:netlify": "npm run supabase:start && npm run netlify"
   },
   "dependencies": {

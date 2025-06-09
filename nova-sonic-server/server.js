@@ -457,7 +457,7 @@ async function processResponseStream(stream, socket, sessionManager) {
 }
 
 // Start the server
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 server.listen(PORT, () => {
     console.log(`🚀 Nova Sonic server running on port ${PORT}`);
     console.log(`🎯 WebSocket endpoint: ws://localhost:${PORT}`);

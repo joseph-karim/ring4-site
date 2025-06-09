@@ -35,7 +35,7 @@ export class NovaSonicClient {
   private onAudioResponseCallback?: (audio: AudioResponse) => void;
   private onStatusCallback?: (status: string, type?: 'connected' | 'recording' | 'processing' | 'error') => void;
 
-  constructor(serverUrl: string = 'http://localhost:3001') {
+  constructor(serverUrl: string = 'http://localhost:3002') {
     this.socket = io(serverUrl, {
       transports: ['websocket', 'polling'],
       autoConnect: true
