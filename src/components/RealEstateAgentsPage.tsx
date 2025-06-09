@@ -39,7 +39,7 @@ export default function RealEstateAgentsPage() {
           ))}
         </div>
 
-        <div className="container mx-auto">
+        <div className="container mx-auto relative z-10">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <motion.div
               className="text-center md:text-left"
@@ -57,7 +57,7 @@ export default function RealEstateAgentsPage() {
                 Even when you're showing a property, on another call, or off the clock — Ring4's AI receptionist captures the lead, confirms their intent, and texts you the summary so you can follow up fast.
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start relative z-20">
                 <Button asChild size="lg" className="bg-[#0055FF] hover:bg-[#003399] text-white">
                   <Link to="/claim-receptionist">🤖 Claim My AI Receptionist</Link>
                 </Button>
@@ -535,7 +535,7 @@ export default function RealEstateAgentsPage() {
             <p className="text-xl mb-8 text-blue-100">
               Free 14-day trial — no card required · Concierge onboarding included · Cancel anytime
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center relative z-20">
               <Button asChild size="lg" className="bg-white text-blue-700 hover:bg-blue-50">
                 <Link to="/spam-checker">🎯 Check My Spam Score</Link>
               </Button>

@@ -75,12 +75,11 @@ export default function HomePage() {
               >
                 <Button
                   size="lg"
-                  className="bg-[#0055FF] hover:bg-[#003399] text-white font-medium relative overflow-hidden group"
+                  className="bg-[#0055FF] hover:bg-[#003399] text-white font-medium relative z-20"
                   asChild
                 >
                   <Link to="/spam-checker">
-                    <span className="relative z-10">Check My Number Now</span>
-                    <span className="absolute inset-0 bg-[#003399] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
+                    Check My Number Now
                   </Link>
                 </Button>
                 <Button size="lg" variant="outline" className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50">
