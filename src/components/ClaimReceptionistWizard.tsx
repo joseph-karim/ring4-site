@@ -216,42 +216,22 @@ export default function ClaimReceptionistWizard() {
       
       // Initialize Nova Sonic client if not already done
       if (!novaSonicClient) {
-        // Use HTTP client in production for better compatibility
-        const useHttpClient = !import.meta.env.DEV || !window.location.hostname.includes('localhost')
+        // Always use WebSocket client now that we'll deploy the server properly
+        const wsClient = new NovaSonicClient()
         
-        if (useHttpClient) {
-          // Production: Use HTTP-based client with Supabase Edge Functions
-          const httpClient = new NovaSonicHttpClient()
-          
-          httpClient.onStatus((status) => {
-            setVoiceStatus(status)
-          })
-          
-          httpClient.onTranscript((message) => {
-            setTranscript(prev => [...prev, message])
-          })
-          
-          const sessionConfig = NovaSonicHttpClient.createFromBusinessConfig(aiConfig)
-          await httpClient.initializeSession(sessionConfig)
-          
-          setNovaSonicClient(httpClient)
-        } else {
-          // Development: Use WebSocket client with local server
-          const wsClient = new NovaSonicClient()
-          
-          wsClient.onStatus((status) => {
-            setVoiceStatus(status)
-          })
-          
-          wsClient.onTranscript((message) => {
-            setTranscript(prev => [...prev, message])
-          })
-          
-          const sessionConfig = NovaSonicClient.createFromBusinessConfig(aiConfig)
-          await wsClient.initializeSession(sessionConfig)
-          
-          setNovaSonicClient(wsClient)
-        }
+        wsClient.onStatus((status) => {
+          setVoiceStatus(status)
+        })
+        
+        wsClient.onTranscript((message) => {
+          setTranscript(prev => [...prev, message])
+        })
+        
+        // Initialize session with business context
+        const sessionConfig = NovaSonicClient.createFromBusinessConfig(aiConfig)
+        await wsClient.initializeSession(sessionConfig)
+        
+        setNovaSonicClient(wsClient)
       }
       
       // Start call timer
@@ -281,11 +261,8 @@ export default function ClaimReceptionistWizard() {
       // Start recording
       if (novaSonicClient instanceof NovaSonicClient) {
         novaSonicClient.startRecording()
-      } else if (novaSonicClient instanceof NovaSonicHttpClient) {
-        // For HTTP client, record for 5 seconds then send
-        await novaSonicClient.recordAndSendAudio(5000)
+        setIsRecording(true)
       }
-      setIsRecording(true)
     }
   }
   

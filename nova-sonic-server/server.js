@@ -24,8 +24,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:5173", "https://ring4.netlify.app"],
-    methods: ["GET", "POST"]
+    origin: ["http://localhost:3000", "http://localhost:5173", "https://ring4.netlify.app", "https://ring4.com"],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
@@ -458,10 +459,11 @@ async function processResponseStream(stream, socket, sessionManager) {
 
 // Start the server
 const PORT = process.env.PORT || 3002;
-server.listen(PORT, () => {
+const HOST = '0.0.0.0'; // Important for Railway
+server.listen(PORT, HOST, () => {
     console.log(`🚀 Nova Sonic server running on port ${PORT}`);
-    console.log(`🎯 WebSocket endpoint: ws://localhost:${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    console.log(`🎯 WebSocket endpoint: ws://${HOST}:${PORT}`);
+    console.log(`📊 Health check: http://${HOST}:${PORT}/health`);
     
     if (!process.env.AWS_ACCESS_KEY_ID) {
         console.warn('⚠️  AWS credentials not configured - Nova Sonic will not work');

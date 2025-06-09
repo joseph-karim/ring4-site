@@ -36,10 +36,8 @@ export class NovaSonicClient {
   private onStatusCallback?: (status: string, type?: 'connected' | 'recording' | 'processing' | 'error') => void;
 
   constructor(serverUrl?: string) {
-    // Use local server in development, Supabase Edge Function in production
-    const defaultUrl = import.meta.env.DEV 
-      ? 'http://localhost:3002' 
-      : `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/nova-sonic-voice`;
+    // Use environment variable or fallback to localhost
+    const defaultUrl = import.meta.env.VITE_NOVA_SONIC_URL || 'http://localhost:3002';
     
     this.socket = io(serverUrl || defaultUrl, {
       transports: ['websocket', 'polling'],
