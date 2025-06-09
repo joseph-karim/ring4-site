@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -19,12 +19,15 @@ import {
   Loader2,
   Play,
   PhoneCall,
-  User
+  User,
+  Mic,
+  MicOff
 } from 'lucide-react'
 import { BusinessInfo } from '../lib/website-crawler'
 import { generateSonicNovaConfig } from '../lib/sonic-nova-config'
 import { saveAIReceptionist, saveDemoCallTranscript } from '../lib/ai-receptionist-storage'
 import { createSmartDefaultVoiceAgent, formatUrl, validateUrl, FALLBACK_MESSAGES } from '../lib/default-voice-agent'
+import { NovaSonicClient, TranscriptMessage, isNovaSonicAvailable } from '../lib/nova-sonic-client'
 
 type WizardStep = 'intro' | 'website' | 'analyzing' | 'preview' | 'test-call' | 'claim'
 
@@ -38,14 +41,36 @@ export default function ClaimReceptionistWizard() {
   const [callStatus, setCallStatus] = useState<'idle' | 'countdown' | 'calling' | 'ended'>('idle')
   const [callCountdown, setCallCountdown] = useState(3)
   const [callDuration, setCallDuration] = useState(0)
-  const [transcript, setTranscript] = useState<string[]>([])
+  const [transcript, setTranscript] = useState<TranscriptMessage[]>([])
   const [isUsingFallback, setIsUsingFallback] = useState(false)
   const [fallbackMessage, setFallbackMessage] = useState<string>('')
+  const [novaSonicClient, setNovaSonicClient] = useState<NovaSonicClient | null>(null)
+  const [isRecording, setIsRecording] = useState(false)
+  const [voiceStatus, setVoiceStatus] = useState<string>('Initializing...')
+  const [isNovaSonicSupported, setIsNovaSonicSupported] = useState(false)
+  const callTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Progress calculation
   const stepOrder: WizardStep[] = ['intro', 'website', 'analyzing', 'preview', 'test-call', 'claim']
   const currentStepIndex = stepOrder.indexOf(currentStep)
   const progress = ((currentStepIndex + 1) / stepOrder.length) * 100
+
+  // Check Nova Sonic support on component mount
+  useEffect(() => {
+    setIsNovaSonicSupported(isNovaSonicAvailable())
+  }, [])
+
+  // Cleanup Nova Sonic client on unmount
+  useEffect(() => {
+    return () => {
+      if (novaSonicClient) {
+        novaSonicClient.disconnect()
+      }
+      if (callTimerRef.current) {
+        clearInterval(callTimerRef.current)
+      }
+    }
+  }, [novaSonicClient])
 
   const handleAnalyzeWebsite = async () => {
     if (!websiteUrl) return
@@ -169,60 +194,92 @@ export default function ClaimReceptionistWizard() {
   }
 
   const startTestCall = async () => {
-    setCallStatus('countdown')
-    setCallCountdown(3)
+    if (!isNovaSonicSupported) {
+      setVoiceStatus('Voice features not supported in this browser')
+      return
+    }
+
+    try {
+      setCallStatus('countdown')
+      setCallCountdown(3)
+      
+      // Countdown
+      for (let i = 3; i > 0; i--) {
+        setCallCountdown(i)
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+      
+      setCallStatus('calling')
+      setCallDuration(0)
+      setTranscript([])
+      
+      // Initialize Nova Sonic client if not already done
+      if (!novaSonicClient) {
+        const client = new NovaSonicClient()
+        setNovaSonicClient(client)
+        
+        // Set up event handlers
+        client.onStatus((status, type) => {
+          setVoiceStatus(status)
+        })
+        
+        client.onTranscript((message) => {
+          setTranscript(prev => [...prev, message])
+        })
+        
+        // Initialize session with business context
+        const sessionConfig = NovaSonicClient.createFromBusinessConfig(aiConfig)
+        await client.initializeSession(sessionConfig)
+        
+        setNovaSonicClient(client)
+      }
+      
+      // Start call timer
+      callTimerRef.current = setInterval(() => {
+        setCallDuration(prev => prev + 1)
+      }, 1000)
+      
+      setVoiceStatus('Ready to speak - click the microphone button')
+      
+    } catch (error) {
+      console.error('Error starting voice call:', error)
+      setVoiceStatus('Error starting voice session')
+      setCallStatus('ended')
+    }
+  }
+  
+  const toggleRecording = () => {
+    if (!novaSonicClient) return
     
-    // Countdown
-    for (let i = 3; i > 0; i--) {
-      setCallCountdown(i)
-      await new Promise(resolve => setTimeout(resolve, 1000))
+    if (isRecording) {
+      novaSonicClient.stopRecording()
+      setIsRecording(false)
+    } else {
+      novaSonicClient.startRecording()
+      setIsRecording(true)
+    }
+  }
+  
+  const endCall = () => {
+    if (novaSonicClient) {
+      novaSonicClient.disconnect()
+      setNovaSonicClient(null)
     }
     
-    setCallStatus('calling')
-    setCallDuration(0)
-    setTranscript([])
-    
-    // Simulate call progress - use different transcript based on whether we're using fallback
-    const sampleTranscript = isUsingFallback ? [
-      { speaker: 'AI', text: `Good afternoon, thank you for calling ${businessInfo?.name || 'Your Business'}. This is Emma, how may I assist you today?` },
-      { speaker: 'Caller', text: "Hi, I'm calling to inquire about your services." },
-      { speaker: 'AI', text: "I'd be happy to help you with that! What type of service are you interested in learning more about?" },
-      { speaker: 'Caller', text: "I'd like to know more about what you offer and pricing." },
-      { speaker: 'AI', text: "Excellent! I can provide you with information about our services and pricing. Would you like me to connect you with one of our specialists who can give you detailed information and answer any specific questions?" },
-      { speaker: 'Caller', text: "Yes, that would be helpful." },
-      { speaker: 'AI', text: "Perfect! I'll need just a few details. May I have your name and the best phone number to reach you?" },
-      { speaker: 'Caller', text: "It's Sarah Johnson, and my number is 555-0456." },
-      { speaker: 'AI', text: "Thank you, Ms. Johnson. I've noted your interest in learning more about our services. One of our specialists will call you within the next 2 hours. Is there anything else I can help you with today?" },
-      { speaker: 'Caller', text: "No, that covers everything. Thank you!" },
-      { speaker: 'AI', text: "You're welcome! We look forward to speaking with you soon. Have a wonderful day!" }
-    ] : [
-      { speaker: 'AI', text: `Good afternoon, thank you for calling ${businessInfo?.name || 'Sunrise Realty'}. This is Emma, how may I assist you today?` },
-      { speaker: 'Caller', text: "Hi, I'm looking for information about homes in the area." },
-      { speaker: 'AI', text: "I'd be happy to help you with that! Are you looking to buy or rent, and do you have a specific area in mind?" },
-      { speaker: 'Caller', text: "I'm looking to buy, preferably in the downtown area." },
-      { speaker: 'AI', text: "Excellent! Our agents specialize in downtown properties. Would you like me to schedule a consultation with one of our expert agents who can show you available properties in that area?" },
-      { speaker: 'Caller', text: "Yes, that would be great." },
-      { speaker: 'AI', text: "Perfect! I'll need just a few details. May I have your name and the best phone number to reach you?" },
-      { speaker: 'Caller', text: "It's John Smith, and my number is 555-0123." },
-      { speaker: 'AI', text: "Thank you, Mr. Smith. I've noted that you're interested in buying property in the downtown area. One of our agents will call you within the next 2 hours. Is there anything else I can help you with today?" },
-      { speaker: 'Caller', text: "No, that's all. Thank you!" },
-      { speaker: 'AI', text: "You're welcome! We look forward to helping you find your perfect home. Have a wonderful day!" }
-    ]
-    
-    // Simulate transcript appearing over time
-    for (let i = 0; i < sampleTranscript.length; i++) {
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      setTranscript(prev => [...prev, `${sampleTranscript[i].speaker}: ${sampleTranscript[i].text}`])
-      setCallDuration(prev => prev + 2)
+    if (callTimerRef.current) {
+      clearInterval(callTimerRef.current)
+      callTimerRef.current = null
     }
     
+    setIsRecording(false)
     setCallStatus('ended')
+    setVoiceStatus('Call ended')
     
     // Save transcript
-    if (receptionistId) {
-      await saveDemoCallTranscript({
+    if (receptionistId && transcript.length > 0) {
+      saveDemoCallTranscript({
         receptionistId,
-        transcript,
+        transcript: transcript.map(t => `${t.role}: ${t.content}`),
         duration: callDuration
       })
     }
@@ -607,24 +664,48 @@ export default function ClaimReceptionistWizard() {
                           }`} />
                         </div>
                         <div>
-                          <p className="font-semibold">Demo Call</p>
+                          <p className="font-semibold">Live Voice Call with Nova Sonic</p>
                           <p className="text-sm text-gray-600">
                             {callStatus === 'calling' ? 'In Progress' : 'Ended'} • {callDuration}s
                           </p>
                         </div>
                       </div>
                       {callStatus === 'calling' && (
-                        <div className="flex items-center space-x-2">
-                          <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                          <span className="text-sm text-gray-600">Recording</span>
+                        <div className="flex items-center space-x-4">
+                          <Button
+                            onClick={toggleRecording}
+                            className={`p-3 rounded-full ${
+                              isRecording 
+                                ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+                                : 'bg-blue-500 hover:bg-blue-600'
+                            }`}
+                          >
+                            {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+                          </Button>
+                          <Button
+                            onClick={endCall}
+                            variant="outline"
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                          >
+                            End Call
+                          </Button>
                         </div>
+                      )}
+                    </div>
+
+                    <div className="bg-blue-50 p-3 rounded-lg">
+                      <p className="text-sm text-blue-800 font-medium">Status: {voiceStatus}</p>
+                      {!isNovaSonicSupported && (
+                        <p className="text-sm text-red-600 mt-1">
+                          Voice features require a modern browser with microphone support.
+                        </p>
                       )}
                     </div>
 
                     <ScrollArea className="h-96 w-full rounded-lg border bg-gray-50 p-4">
                       <div className="space-y-4">
-                        {transcript.map((line, idx) => {
-                          const isAI = line.startsWith('AI:')
+                        {transcript.map((message, idx) => {
+                          const isAI = message.role === 'assistant'
                           return (
                             <motion.div
                               key={idx}
@@ -634,24 +715,44 @@ export default function ClaimReceptionistWizard() {
                             >
                               <div className={`max-w-[80%] p-3 rounded-lg ${
                                 isAI 
-                                  ? 'bg-white text-gray-800 shadow-sm' 
+                                  ? 'bg-white text-gray-800 shadow-sm border-l-4 border-blue-500' 
                                   : 'bg-blue-600 text-white'
                               }`}>
-                                <p className="text-sm">{line.replace(/^(AI:|Caller:)\s*/, '')}</p>
+                                <p className="text-xs font-medium mb-1 opacity-75">
+                                  {isAI ? 'AI Receptionist' : 'You'}
+                                </p>
+                                <p className="text-sm">{message.content}</p>
                               </div>
                             </motion.div>
                           )
                         })}
+                        {transcript.length === 0 && callStatus === 'calling' && (
+                          <div className="text-center text-gray-500 py-8">
+                            <Mic className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                            <p>Click the microphone button and start speaking...</p>
+                          </div>
+                        )}
                       </div>
                     </ScrollArea>
 
-                    {callStatus === 'ended' && (
+                    {callStatus === 'ended' && transcript.length > 0 && (
                       <div className="bg-green-50 p-4 rounded-lg">
                         <p className="text-green-800 font-medium mb-2">
-                          ✅ Call completed successfully!
+                          ✅ Live voice call completed successfully!
                         </p>
                         <p className="text-sm text-green-700">
-                          Your AI receptionist captured the lead information and would send you an instant text summary.
+                          Your AI receptionist used real voice AI technology powered by Amazon Nova Sonic to have a natural conversation.
+                        </p>
+                      </div>
+                    )}
+                    
+                    {callStatus === 'ended' && transcript.length === 0 && (
+                      <div className="bg-yellow-50 p-4 rounded-lg">
+                        <p className="text-yellow-800 font-medium mb-2">
+                          No conversation detected
+                        </p>
+                        <p className="text-sm text-yellow-700">
+                          The call ended without recording any conversation. Try starting a new call and speaking into your microphone.
                         </p>
                       </div>
                     )}

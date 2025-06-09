@@ -126,6 +126,11 @@ NOMOROBO_ADDON_SID=your_nomorobo_addon_sid
   - Check if phone numbers are flagged as spam
   - Uses Twilio Lookup API with Nomorobo Spam Score Add-on
   - Stores results in the database for historical tracking
+- 🤖 **AI Receptionist with Real Voice** 
+  - Powered by Amazon Nova Sonic for natural speech-to-speech conversations
+  - Intelligent website crawling for business context
+  - Real-time voice interaction with WebSocket integration
+  - Professional voice synthesis and business-specific knowledge
 - 🎨 Modern UI with Tailwind CSS and Radix UI
 - 🚀 Fast Development with Vite
 - 🔄 Data Fetching with TanStack Query
@@ -136,7 +141,7 @@ NOMOROBO_ADDON_SID=your_nomorobo_addon_sid
 ## Project Structure
 
 ```
-codeguide-vite-supabase/
+ring4-site/
 ├── src/                # Source files
 │   ├── components/    # React components
 │   ├── lib/          # Utility functions
@@ -146,6 +151,12 @@ codeguide-vite-supabase/
 ├── supabase/          # Supabase configuration
 │   ├── migrations/   # Database migrations
 │   └── seed.sql      # Seed data
+├── nova-sonic-server/ # Real voice AI server
+│   ├── server.js     # Nova Sonic WebSocket server
+│   ├── package.json  # Server dependencies
+│   └── README.md     # Voice server setup guide
+├── netlify/           # Netlify Functions
+│   └── functions/    # Serverless functions
 ├── scripts/           # Utility scripts
 └── documentation/     # Generated documentation from CodeGuide
 ```

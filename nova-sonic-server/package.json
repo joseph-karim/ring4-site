@@ -1,0 +1,27 @@
+{
+  "name": "ring4-nova-sonic-server",
+  "version": "1.0.0",
+  "description": "Nova Sonic Voice Server for Ring4 AI Receptionist",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.785.0",
+    "@smithy/node-http-handler": "^4.0.6",
+    "dotenv": "^16.3.1",
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  },
+  "keywords": [
+    "aws",
+    "bedrock",
+    "nova-sonic",
+    "voice",
+    "agent",
+    "ring4"
+  ],
+  "author": "Ring4",
+  "license": "ISC"
+}
