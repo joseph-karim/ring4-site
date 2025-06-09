@@ -28,6 +28,7 @@ import { generateSonicNovaConfig } from '../lib/sonic-nova-config'
 import { saveAIReceptionist, saveDemoCallTranscript } from '../lib/ai-receptionist-storage'
 import { createSmartDefaultVoiceAgent, formatUrl, validateUrl, FALLBACK_MESSAGES } from '../lib/default-voice-agent'
 import { NovaSonicClient, TranscriptMessage, isNovaSonicAvailable } from '../lib/nova-sonic-client'
+import { NovaSonicHttpClient } from '../lib/nova-sonic-http-client'
 
 type WizardStep = 'intro' | 'website' | 'analyzing' | 'preview' | 'test-call' | 'claim'
 
@@ -44,7 +45,7 @@ export default function ClaimReceptionistWizard() {
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([])
   const [isUsingFallback, setIsUsingFallback] = useState(false)
   const [fallbackMessage, setFallbackMessage] = useState<string>('')
-  const [novaSonicClient, setNovaSonicClient] = useState<NovaSonicClient | null>(null)
+  const [novaSonicClient, setNovaSonicClient] = useState<NovaSonicClient | NovaSonicHttpClient | null>(null)
   const [isRecording, setIsRecording] = useState(false)
   const [voiceStatus, setVoiceStatus] = useState<string>('Initializing...')
   const [isNovaSonicSupported, setIsNovaSonicSupported] = useState(false)
@@ -215,23 +216,42 @@ export default function ClaimReceptionistWizard() {
       
       // Initialize Nova Sonic client if not already done
       if (!novaSonicClient) {
-        const client = new NovaSonicClient()
-        setNovaSonicClient(client)
+        // Use HTTP client in production for better compatibility
+        const useHttpClient = !import.meta.env.DEV || !window.location.hostname.includes('localhost')
         
-        // Set up event handlers
-        client.onStatus((status) => {
-          setVoiceStatus(status)
-        })
-        
-        client.onTranscript((message) => {
-          setTranscript(prev => [...prev, message])
-        })
-        
-        // Initialize session with business context
-        const sessionConfig = NovaSonicClient.createFromBusinessConfig(aiConfig)
-        await client.initializeSession(sessionConfig)
-        
-        setNovaSonicClient(client)
+        if (useHttpClient) {
+          // Production: Use HTTP-based client with Supabase Edge Functions
+          const httpClient = new NovaSonicHttpClient()
+          
+          httpClient.onStatus((status) => {
+            setVoiceStatus(status)
+          })
+          
+          httpClient.onTranscript((message) => {
+            setTranscript(prev => [...prev, message])
+          })
+          
+          const sessionConfig = NovaSonicHttpClient.createFromBusinessConfig(aiConfig)
+          await httpClient.initializeSession(sessionConfig)
+          
+          setNovaSonicClient(httpClient)
+        } else {
+          // Development: Use WebSocket client with local server
+          const wsClient = new NovaSonicClient()
+          
+          wsClient.onStatus((status) => {
+            setVoiceStatus(status)
+          })
+          
+          wsClient.onTranscript((message) => {
+            setTranscript(prev => [...prev, message])
+          })
+          
+          const sessionConfig = NovaSonicClient.createFromBusinessConfig(aiConfig)
+          await wsClient.initializeSession(sessionConfig)
+          
+          setNovaSonicClient(wsClient)
+        }
       }
       
       // Start call timer
@@ -248,14 +268,23 @@ export default function ClaimReceptionistWizard() {
     }
   }
   
-  const toggleRecording = () => {
+  const toggleRecording = async () => {
     if (!novaSonicClient) return
     
     if (isRecording) {
-      novaSonicClient.stopRecording()
+      // Stop recording
+      if (novaSonicClient instanceof NovaSonicClient) {
+        novaSonicClient.stopRecording()
+      }
       setIsRecording(false)
     } else {
-      novaSonicClient.startRecording()
+      // Start recording
+      if (novaSonicClient instanceof NovaSonicClient) {
+        novaSonicClient.startRecording()
+      } else if (novaSonicClient instanceof NovaSonicHttpClient) {
+        // For HTTP client, record for 5 seconds then send
+        await novaSonicClient.recordAndSendAudio(5000)
+      }
       setIsRecording(true)
     }
   }
