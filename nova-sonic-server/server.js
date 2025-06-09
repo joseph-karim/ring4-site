@@ -24,7 +24,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:5173", "https://ring4.netlify.app", "https://ring4.com"],
+    origin: ["http://localhost:3000", "http://localhost:5173", "https://ring4.netlify.app", "https://ring4.com", "https://ring4-site-production.up.railway.app"],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -166,7 +166,10 @@ app.get('/health', (req, res) => {
     res.json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
-        novaSonicReady: !!process.env.AWS_ACCESS_KEY_ID
+        novaSonicReady: !!process.env.AWS_ACCESS_KEY_ID,
+        port: process.env.PORT || 3002,
+        nodeVersion: process.version,
+        environment: process.env.NODE_ENV || 'development'
     });
 });
 
@@ -458,12 +461,17 @@ async function processResponseStream(stream, socket, sessionManager) {
 }
 
 // Start the server
-const PORT = process.env.PORT || 3002;
-const HOST = '0.0.0.0'; // Important for Railway
+const PORT = parseInt(process.env.PORT || '3002', 10);
+// For Railway, we need to listen on all interfaces including IPv6
+const HOST = process.env.RAILWAY_STATIC_URL ? '::' : '0.0.0.0';
+
 server.listen(PORT, HOST, () => {
     console.log(`🚀 Nova Sonic server running on port ${PORT}`);
-    console.log(`🎯 WebSocket endpoint: ws://${HOST}:${PORT}`);
-    console.log(`📊 Health check: http://${HOST}:${PORT}/health`);
+    console.log(`🎯 WebSocket endpoint: ws://${HOST === '::' ? 'localhost' : HOST}:${PORT}`);
+    console.log(`📊 Health check: http://${HOST === '::' ? 'localhost' : HOST}:${PORT}/health`);
+    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`🚉 Railway PORT: ${process.env.PORT}`);
+    console.log(`🌐 Listening on: ${HOST}`);
     
     if (!process.env.AWS_ACCESS_KEY_ID) {
         console.warn('⚠️  AWS credentials not configured - Nova Sonic will not work');
@@ -472,12 +480,18 @@ server.listen(PORT, HOST, () => {
     }
 });
 
+// Handle server errors
+server.on('error', (error) => {
+    console.error('❌ Server error:', error);
+    process.exit(1);
+});
+
 // Graceful shutdown
 process.on('SIGTERM', async () => {
     console.log('📥 SIGTERM received, shutting down gracefully');
     
     // Close all active sessions
-    for (const [clientId, sessionManager] of activeSessions) {
+    for (const [, sessionManager] of activeSessions) {
         await sessionManager.endSession();
     }
     activeSessions.clear();
