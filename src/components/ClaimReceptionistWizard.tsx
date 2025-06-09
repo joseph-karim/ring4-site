@@ -39,6 +39,7 @@ export default function ClaimReceptionistWizard() {
   const [callCountdown, setCallCountdown] = useState(3)
   const [callDuration, setCallDuration] = useState(0)
   const [transcript, setTranscript] = useState<string[]>([])
+  const [isUsingFallback, setIsUsingFallback] = useState(false)
 
   // Progress calculation
   const stepOrder: WizardStep[] = ['intro', 'website', 'analyzing', 'preview', 'test-call', 'claim']
@@ -60,10 +61,50 @@ export default function ClaimReceptionistWizard() {
       })
       
       if (error) {
-        console.warn('Edge function failed, using local mock:', error)
-        // Fallback to local mock for development/demo
-        const { crawlWebsite } = await import('../lib/website-crawler')
-        info = await crawlWebsite(websiteUrl)
+        console.warn('Edge function failed, using general chatbot fallback:', error)
+        setIsUsingFallback(true)
+        // Fallback to general business assistant instead of fake specific data
+        info = {
+          name: "Your Business",
+          description: "A professional business providing quality services to customers.",
+          services: [
+            "Customer inquiries",
+            "Appointment scheduling",
+            "General information",
+            "Lead qualification",
+            "Call routing"
+          ],
+          hours: {
+            "Monday-Friday": "9:00 AM - 5:00 PM",
+            "Saturday": "By appointment",
+            "Sunday": "Closed"
+          },
+          contact: {
+            phone: "Your business phone",
+            email: "Your business email",
+            address: "Your business address"
+          },
+          specialties: [
+            "Professional service",
+            "Customer-focused approach",
+            "Quick response times"
+          ],
+          values: [
+            "Quality service",
+            "Customer satisfaction",
+            "Professional communication"
+          ],
+          faqs: [
+            {
+              question: "How can I help you today?",
+              answer: "I'm here to assist with your inquiries and connect you with the right person."
+            },
+            {
+              question: "What are your business hours?",
+              answer: "We're typically available Monday through Friday, 9 AM to 5 PM."
+            }
+          ]
+        }
       } else {
         info = data.businessInfo as BusinessInfo
       }
@@ -112,8 +153,20 @@ export default function ClaimReceptionistWizard() {
     setCallDuration(0)
     setTranscript([])
     
-    // Simulate call progress
-    const sampleTranscript = [
+    // Simulate call progress - use different transcript based on whether we're using fallback
+    const sampleTranscript = isUsingFallback ? [
+      { speaker: 'AI', text: `Good afternoon, thank you for calling ${businessInfo?.name || 'Your Business'}. This is Emma, how may I assist you today?` },
+      { speaker: 'Caller', text: "Hi, I'm calling to inquire about your services." },
+      { speaker: 'AI', text: "I'd be happy to help you with that! What type of service are you interested in learning more about?" },
+      { speaker: 'Caller', text: "I'd like to know more about what you offer and pricing." },
+      { speaker: 'AI', text: "Excellent! I can provide you with information about our services and pricing. Would you like me to connect you with one of our specialists who can give you detailed information and answer any specific questions?" },
+      { speaker: 'Caller', text: "Yes, that would be helpful." },
+      { speaker: 'AI', text: "Perfect! I'll need just a few details. May I have your name and the best phone number to reach you?" },
+      { speaker: 'Caller', text: "It's Sarah Johnson, and my number is 555-0456." },
+      { speaker: 'AI', text: "Thank you, Ms. Johnson. I've noted your interest in learning more about our services. One of our specialists will call you within the next 2 hours. Is there anything else I can help you with today?" },
+      { speaker: 'Caller', text: "No, that covers everything. Thank you!" },
+      { speaker: 'AI', text: "You're welcome! We look forward to speaking with you soon. Have a wonderful day!" }
+    ] : [
       { speaker: 'AI', text: `Good afternoon, thank you for calling ${businessInfo?.name || 'Sunrise Realty'}. This is Emma, how may I assist you today?` },
       { speaker: 'Caller', text: "Hi, I'm looking for information about homes in the area." },
       { speaker: 'AI', text: "I'd be happy to help you with that! Are you looking to buy or rent, and do you have a specific area in mind?" },
@@ -325,9 +378,21 @@ export default function ClaimReceptionistWizard() {
             <div className="text-center space-y-2">
               <h2 className="text-3xl font-bold">Meet Your AI Receptionist</h2>
               <p className="text-gray-600">
-                Trained on your business and ready to handle calls professionally
+                {isUsingFallback 
+                  ? "General business assistant template - will be customized for your specific business"
+                  : "Trained on your business and ready to handle calls professionally"
+                }
               </p>
             </div>
+            
+            {isUsingFallback && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <p className="text-blue-800 text-sm">
+                  <strong>Note:</strong> We're showing a general template since we couldn't analyze your website. 
+                  During setup, we'll customize this AI receptionist specifically for your business.
+                </p>
+              </div>
+            )}
             
             <div className="grid md:grid-cols-2 gap-6">
               {/* AI Personality Card */}
