@@ -29,6 +29,13 @@ console.log('   RAILWAY_PROJECT_ID:', process.env.RAILWAY_PROJECT_ID);
 
 // Create Express app and HTTP server
 const app = express();
+
+// Add middleware to log all requests
+app.use((req, res, next) => {
+    console.log(`📥 ${req.method} ${req.url} from ${req.ip}`);
+    next();
+});
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -169,15 +176,28 @@ class NovaSessionManager {
 // Store active sessions
 const activeSessions = new Map();
 
+// Root endpoint
+app.get('/', (req, res) => {
+    res.json({
+        service: 'Nova Sonic Voice Server',
+        status: 'running',
+        endpoints: {
+            health: '/health',
+            websocket: '/socket.io'
+        }
+    });
+});
+
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ 
         status: 'ok', 
         timestamp: new Date().toISOString(),
         novaSonicReady: !!process.env.AWS_ACCESS_KEY_ID,
-        port: process.env.PORT || 3002,
+        port: process.env.PORT || 3000,
         nodeVersion: process.version,
-        environment: process.env.NODE_ENV || 'development'
+        environment: process.env.NODE_ENV || 'development',
+        headers: req.headers
     });
 });
 
@@ -471,29 +491,45 @@ async function processResponseStream(stream, socket, sessionManager) {
 // Start the server
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-// Listen on :: to support both IPv4 and IPv6
-// :: binds to all addresses (both IPv4 and IPv6) which Railway requires
-server.listen(PORT, '::', () => {
-    console.log(`🚀 Nova Sonic server running on port ${PORT}`);
-    console.log(`🎯 WebSocket endpoint: ws://localhost:${PORT}`);
-    console.log(`📊 Health check: http://localhost:${PORT}/health`);
-    console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🚉 PORT from env: ${process.env.PORT || 'not set (using 3000)'}`);
-    console.log(`🌐 Listening on :: (all interfaces - dual stack IPv4/IPv6)`);
-    console.log(`🚄 Railway can connect via IPv6: [::]:${PORT}`);
-    
-    if (!process.env.AWS_ACCESS_KEY_ID) {
-        console.warn('⚠️  AWS credentials not configured - Nova Sonic will not work');
-    } else {
-        console.log('✅ AWS credentials configured');
-    }
-});
+// Try different binding strategies based on environment
+// Railway needs special handling for IPv6
+const startServer = () => {
+    // First try without specifying host (Node.js default behavior)
+    // This often works best for cloud platforms
+    server.listen(PORT, () => {
+        console.log(`🚀 Nova Sonic server running on port ${PORT}`);
+        console.log(`🎯 WebSocket endpoint: ws://localhost:${PORT}`);
+        console.log(`📊 Health check: http://localhost:${PORT}/health`);
+        console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`🚉 PORT from env: ${process.env.PORT || 'not set (using 3000)'}`);
+        console.log(`🌐 Listening on all available network interfaces`);
+        console.log(`🚄 Server started successfully!`);
+        
+        // Get actual address info
+        const address = server.address();
+        console.log(`📍 Actual binding:`, address);
+        
+        if (!process.env.AWS_ACCESS_KEY_ID) {
+            console.warn('⚠️  AWS credentials not configured - Nova Sonic will not work');
+        } else {
+            console.log('✅ AWS credentials configured');
+        }
+    });
+};
 
 // Handle server errors
 server.on('error', (error) => {
     console.error('❌ Server error:', error);
+    if (error.code === 'EADDRINUSE') {
+        console.error(`Port ${PORT} is already in use`);
+    } else if (error.code === 'EACCES') {
+        console.error(`No permission to use port ${PORT}`);
+    }
     process.exit(1);
 });
+
+// Start the server
+startServer();
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
