@@ -22,18 +22,18 @@ const {
 const { randomUUID } = require('crypto');
 
 // Load environment variables
-// Railway sets environment variables directly, don't need .env file in production
+// Cloud platforms set environment variables directly, don't need .env file in production
 if (process.env.NODE_ENV !== 'production') {
     config();
 }
 
-// Debug Railway environment
+// Debug server environment
 console.log('🔍 Starting Nova Sonic Server...');
 console.log('🔍 Environment variables:');
 console.log('   NODE_ENV:', process.env.NODE_ENV);
 console.log('   PORT:', process.env.PORT);
-console.log('   RAILWAY_ENVIRONMENT:', process.env.RAILWAY_ENVIRONMENT);
-console.log('   RAILWAY_PROJECT_ID:', process.env.RAILWAY_PROJECT_ID);
+console.log('   RENDER_SERVICE_NAME:', process.env.RENDER_SERVICE_NAME);
+console.log('   RENDER_INSTANCE_ID:', process.env.RENDER_INSTANCE_ID);
 
 // Create Express app and HTTP server
 const app = express();
@@ -491,6 +491,10 @@ io.on('connection', (socket) => {
         console.log('👋 Client disconnected:', socket.id);
         const sessionManager = activeSessions.get(socket.id);
         if (sessionManager) {
+            // If there's an active stream handler, end it first
+            if (sessionManager.streamHandler) {
+                sessionManager.streamHandler.endStream();
+            }
             await sessionManager.endSession();
             activeSessions.delete(socket.id);
         }
