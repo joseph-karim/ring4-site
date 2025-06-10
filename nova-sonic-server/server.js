@@ -551,12 +551,18 @@ INSTRUCTIONS:
 - Use the business knowledge to provide accurate information
 - Always be professional and represent the business well
 - If you don't know something specific, offer to connect them with someone who can help
-- Keep responses conversational and concise`;
+- Keep responses conversational and concise
+- IMPORTANT: Provide complete responses in a single statement. Do not split your response into multiple parts.
+- When greeting, include everything in one sentence (e.g., "Hello, thank you for calling [business], I'm your AI receptionist, how can I help you today?")`;
 }
 
 
 // Process response stream from Nova Sonic
 async function processResponseStream(stream, socket, sessionManager) {
+    let currentAudioContentId = null;
+    let currentTextContentId = null;
+    let audioChunkCount = 0;
+    
     try {
         for await (const event of stream) {
             if (event.chunk?.bytes) {
@@ -566,38 +572,69 @@ async function processResponseStream(stream, socket, sessionManager) {
 
                     // Nova Sonic responses have an "event" wrapper
                     if (jsonResponse.event) {
-                        console.log('📨 Nova Sonic event type:', Object.keys(jsonResponse.event)[0]);
+                        const eventType = Object.keys(jsonResponse.event)[0];
+                        console.log('📨 Nova Sonic event type:', eventType);
                         
-                        // Handle audio output event
-                        if (jsonResponse.event.audioOutput) {
-                            console.log('🔊 Nova Sonic audio output received, sending to client');
-                            const audioBase64 = jsonResponse.event.audioOutput.content;
-                            socket.emit('audioResponse', audioBase64);
-                        }
-                        // Handle text output event
-                        else if (jsonResponse.event.textOutput) {
-                            const content = jsonResponse.event.textOutput.content;
-                            console.log('💬 Nova Sonic text:', content);
-                            
-                            // Only emit non-empty content
-                            if (content && content.trim()) {
-                                socket.emit('transcript', {
-                                    role: 'assistant',
-                                    content: content
-                                });
-                            }
-                        }
-                        // Handle content start event
-                        else if (jsonResponse.event.contentStart) {
+                        // Handle content start event - track content IDs
+                        if (jsonResponse.event.contentStart) {
                             const contentStart = jsonResponse.event.contentStart;
                             console.log('📝 Nova Sonic content start:', {
+                                contentId: contentStart.contentId,
+                                type: contentStart.type,
                                 role: contentStart.role,
                                 additionalFields: contentStart.additionalModelFields
                             });
+                            
+                            // Track audio content ID
+                            if (contentStart.type === 'AUDIO') {
+                                currentAudioContentId = contentStart.contentId;
+                                audioChunkCount = 0;
+                            }
+                            // Track text content ID
+                            else if (contentStart.type === 'TEXT') {
+                                currentTextContentId = contentStart.contentId;
+                            }
+                        }
+                        // Handle audio output event
+                        else if (jsonResponse.event.audioOutput) {
+                            const audioOutput = jsonResponse.event.audioOutput;
+                            audioChunkCount++;
+                            console.log(`🔊 Nova Sonic audio chunk #${audioChunkCount} for content ${audioOutput.contentId}`);
+                            
+                            // Only emit audio if it's from the current audio content
+                            if (!currentAudioContentId || audioOutput.contentId === currentAudioContentId) {
+                                socket.emit('audioResponse', audioOutput.content);
+                            }
+                        }
+                        // Handle text output event
+                        else if (jsonResponse.event.textOutput) {
+                            const textOutput = jsonResponse.event.textOutput;
+                            const content = textOutput.content;
+                            console.log(`💬 Nova Sonic text for content ${textOutput.contentId}:`, content);
+                            
+                            // Only emit non-empty content and check generationStage
+                            if (content && content.trim()) {
+                                socket.emit('transcript', {
+                                    role: 'assistant',
+                                    content: content,
+                                    contentId: textOutput.contentId
+                                });
+                            }
                         }
                         // Handle content end event
                         else if (jsonResponse.event.contentEnd) {
-                            console.log('📝 Nova Sonic content end');
+                            const contentEnd = jsonResponse.event.contentEnd;
+                            console.log('📝 Nova Sonic content end:', {
+                                contentId: contentEnd.contentId,
+                                type: contentEnd.type,
+                                stopReason: contentEnd.stopReason
+                            });
+                            
+                            // Reset tracking when audio content ends
+                            if (contentEnd.contentId === currentAudioContentId) {
+                                currentAudioContentId = null;
+                                console.log(`🔊 Total audio chunks sent: ${audioChunkCount}`);
+                            }
                         }
                         // Handle completion end event
                         else if (jsonResponse.event.completionEnd) {

@@ -280,16 +280,21 @@ export class NovaSonicClient {
     
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
+      this.mediaStream = null;
     }
     
-    if (this.audioContext) {
+    if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close();
+      this.audioContext = null;
     }
     
     if (this.socket) {
       this.socket.disconnect();
+      this.socket = null;
     }
 
+    this.audioSource = null;
+    this.processor = null;
     this.isSessionActive = false;
     console.log('🧹 Nova Sonic client disconnected and cleaned up');
   }
