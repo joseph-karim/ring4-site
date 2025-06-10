@@ -573,11 +573,21 @@ async function processResponseStream(stream, socket, sessionManager) {
                         // Handle content start event - tells us what type of content is coming
                         if (jsonResponse.event.contentStart) {
                             const contentStart = jsonResponse.event.contentStart;
-                            console.log('📝 Content start:', contentStart.type, contentStart.role);
+                            let stage = 'unknown';
+                            try {
+                                if (contentStart.additionalModelFields) {
+                                    const fields = JSON.parse(contentStart.additionalModelFields);
+                                    stage = fields.generationStage || 'unknown';
+                                }
+                            } catch (e) {}
+                            
+                            console.log(`📝 Content start: ${contentStart.type} | role: ${contentStart.role} | stage: ${stage} | contentId: ${contentStart.contentId || contentStart.contentName}`);
                             
                             // Remember the role for text outputs
                             if (contentStart.type === 'TEXT') {
                                 currentContentRole = contentStart.role?.toLowerCase() || 'assistant';
+                                // Store the contentStart for checking generation stage
+                                sessionManager.lastContentStart = contentStart;
                             }
                         }
                         // Handle audio output event (AI speaking)
@@ -590,13 +600,26 @@ async function processResponseStream(stream, socket, sessionManager) {
                             const content = jsonResponse.event.textOutput.content;
                             const role = currentContentRole === 'user' ? 'user' : 'assistant';
                             
-                            console.log(`💬 ${role}:`, content);
+                            // Check if we have generation stage info from the last contentStart
+                            let generationStage = 'unknown';
+                            if (sessionManager.lastContentStart && sessionManager.lastContentStart.additionalModelFields) {
+                                try {
+                                    const fields = JSON.parse(sessionManager.lastContentStart.additionalModelFields);
+                                    generationStage = fields.generationStage || 'unknown';
+                                } catch (e) {}
+                            }
                             
+                            console.log(`💬 ${role} (${generationStage}):`, content);
+                            
+                            // For assistant responses, only show FINAL text to avoid duplicates
+                            // For user transcriptions, always show them
                             if (content && content.trim()) {
-                                socket.emit('transcript', {
-                                    role: role,
-                                    content: content
-                                });
+                                if (role === 'user' || generationStage === 'FINAL' || generationStage === 'unknown') {
+                                    socket.emit('transcript', {
+                                        role: role,
+                                        content: content
+                                    });
+                                }
                             }
                         }
                         // Log other events
