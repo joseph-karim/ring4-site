@@ -163,8 +163,10 @@ class NovaSessionManager {
         console.log(`Nova Sonic session ended: ${this.sessionId}`);
         this.sessionId = null;
         
-        if (this.stream) {
-            this.stream = null;
+        // End the stream handler if it exists
+        if (this.streamHandler) {
+            this.streamHandler.endStream();
+            this.streamHandler = null;
         }
     }
 
@@ -187,6 +189,176 @@ class NovaSessionManager {
 
 // Store active sessions
 const activeSessions = new Map();
+
+// Bidirectional Stream Handler for Nova Sonic
+class BidirectionalStreamHandler {
+    constructor(sessionManager, systemPrompt) {
+        this.sessionManager = sessionManager;
+        this.systemPrompt = systemPrompt;
+        this.inputQueue = [];
+        this.isStreamActive = true;
+    }
+
+    // Get the input stream generator for AWS SDK
+    async *getInputStream() {
+        try {
+            const promptId = this.sessionManager.getPromptId();
+            const contentId = this.sessionManager.getContentId();
+            const audioContentId = randomUUID();
+
+            // 1. Session Start Event
+            yield {
+                chunk: {
+                    bytes: new TextEncoder().encode(JSON.stringify({
+                        sessionStart: {
+                            inferenceConfiguration: {
+                                maxTokens: 1024,
+                                topP: 0.9,
+                                temperature: 0.7
+                            }
+                        }
+                    }))
+                }
+            };
+
+            // 2. Prompt Start Event
+            yield {
+                chunk: {
+                    bytes: new TextEncoder().encode(JSON.stringify({
+                        promptStart: {
+                            promptId: promptId,
+                            textOutputConfiguration: {
+                                mediaType: "text/plain"
+                            },
+                            audioOutputConfiguration: {
+                                mediaType: "audio/lpcm",
+                                sampleRateHertz: 24000,
+                                sampleSizeBits: 16,
+                                channelCount: 1,
+                                voiceId: "matthew",
+                                encoding: "base64",
+                                audioType: "SPEECH"
+                            }
+                        }
+                    }))
+                }
+            };
+
+            // 3. System Content Start Event
+            yield {
+                chunk: {
+                    bytes: new TextEncoder().encode(JSON.stringify({
+                        contentStart: {
+                            promptId: promptId,
+                            contentId: contentId,
+                            type: "TEXT",
+                            interactive: true,
+                            role: "SYSTEM",
+                            textInputConfiguration: {
+                                mediaType: "text/plain"
+                            }
+                        }
+                    }))
+                }
+            };
+
+            // 4. Send system prompt
+            yield {
+                chunk: {
+                    bytes: new TextEncoder().encode(JSON.stringify({
+                        textInput: {
+                            promptId: promptId,
+                            contentId: contentId,
+                            content: this.systemPrompt
+                        }
+                    }))
+                }
+            };
+
+            // 5. End system content
+            yield {
+                chunk: {
+                    bytes: new TextEncoder().encode(JSON.stringify({
+                        contentEnd: {
+                            promptId: promptId,
+                            contentId: contentId
+                        }
+                    }))
+                }
+            };
+
+            // 6. Start Audio Content (Interactive - stays open for audio input)
+            yield {
+                chunk: {
+                    bytes: new TextEncoder().encode(JSON.stringify({
+                        contentStart: {
+                            promptId: promptId,
+                            contentId: audioContentId,
+                            type: "AUDIO",
+                            interactive: true,
+                            role: "USER",
+                            audioInputConfiguration: {
+                                mediaType: "audio/lpcm",
+                                sampleRateHertz: 16000,
+                                sampleSizeBits: 16,
+                                channelCount: 1,
+                                encoding: "base64"
+                            }
+                        }
+                    }))
+                }
+            };
+
+            console.log('✅ Nova Sonic session setup completed - ready for audio input');
+            
+            // Store audio content ID for later use
+            this.sessionManager.audioContentId = audioContentId;
+            
+            // Keep the stream alive and process queued audio input
+            while (this.isStreamActive) {
+                // Check for queued audio input
+                if (this.inputQueue.length > 0) {
+                    const audioEvent = this.inputQueue.shift();
+                    yield audioEvent;
+                }
+                
+                // Small delay to prevent busy waiting
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+            
+        } catch (error) {
+            console.error('❌ Error in Nova Sonic event stream:', error);
+            await this.sessionManager.endSession();
+            throw error;
+        }
+    }
+
+    // Add audio input to the queue
+    sendAudioInput(audioBase64) {
+        if (!this.isStreamActive) {
+            throw new Error('Stream is not active');
+        }
+
+        const audioEvent = {
+            chunk: {
+                bytes: new TextEncoder().encode(JSON.stringify({
+                    audioInput: {
+                        promptId: this.sessionManager.getPromptId(),
+                        contentId: this.sessionManager.audioContentId,
+                        content: audioBase64
+                    }
+                }))
+            }
+        };
+
+        this.inputQueue.push(audioEvent);
+    }
+
+    // End the stream
+    endStream() {
+        this.isStreamActive = false;
+    }
+}
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -234,17 +406,20 @@ io.on('connection', (socket) => {
             // Configure system prompt with business context
             const systemPrompt = createBusinessSystemPrompt(data);
 
+            // Create a bidirectional stream handler
+            const streamHandler = new BidirectionalStreamHandler(sessionManager, systemPrompt);
+            
             // Create the bidirectional streaming command
             const command = new InvokeModelWithBidirectionalStreamCommand({
                 modelId: "amazon.nova-sonic-v1:0",
-                body: createEventStream(sessionManager, systemPrompt)
+                body: streamHandler.getInputStream()
             });
 
             // Start streaming
             const response = await bedrockClient.send(command);
             
-            // Store the stream for audio input
-            sessionManager.stream = response;
+            // Store the stream handler for audio input
+            sessionManager.streamHandler = streamHandler;
             
             if (response.body) {
                 processResponseStream(response.body, socket, sessionManager);
@@ -264,7 +439,7 @@ io.on('connection', (socket) => {
     socket.on('audio_input', async (audioBase64) => {
         try {
             const sessionManager = activeSessions.get(socket.id);
-            if (!sessionManager || !sessionManager.isActive() || !sessionManager.audioContentName) {
+            if (!sessionManager || !sessionManager.isActive() || !sessionManager.streamHandler) {
                 socket.emit('error', { message: 'No active voice session or audio stream' });
                 return;
             }
@@ -281,27 +456,8 @@ io.on('connection', (socket) => {
             
             console.log(`🎤 Processing audio for ${socket.id} - Level: ${level}% (${samples.length} samples)`);
             
-            // Send audio input event to Nova Sonic stream (correct format)
-            if (sessionManager.stream) {
-                const audioEvent = {
-                    event: {
-                        audioInput: {
-                            promptName: sessionManager.getPromptId(),
-                            contentName: sessionManager.audioContentName,
-                            content: audioBase64
-                        }
-                    }
-                };
-                
-                // Add to input queue for streaming
-                if (sessionManager.inputQueue) {
-                    sessionManager.inputQueue.push({
-                        chunk: {
-                            bytes: new TextEncoder().encode(JSON.stringify(audioEvent))
-                        }
-                    });
-                }
-            }
+            // Send audio input through the bidirectional stream handler
+            sessionManager.streamHandler.sendAudioInput(audioBase64);
             
         } catch (error) {
             console.error('❌ Error processing audio input:', error);
@@ -345,141 +501,6 @@ INSTRUCTIONS:
 - Keep responses conversational and concise`;
 }
 
-// Create event stream with correct AWS Nova Sonic format
-async function* createEventStream(sessionManager, systemPrompt) {
-    try {
-        const promptName = sessionManager.getPromptId();
-        const contentName = sessionManager.getContentId();
-        const audioContentName = randomUUID();
-
-        // 1. Session Start Event (correct format)
-        yield {
-            chunk: {
-                bytes: new TextEncoder().encode(JSON.stringify({
-                    event: {
-                        sessionStart: {
-                            inferenceConfiguration: {
-                                maxTokens: 1024,
-                                topP: 0.9,
-                                temperature: 0.7
-                            }
-                        }
-                    }
-                }))
-            }
-        };
-
-        // 2. Prompt Start Event (correct format)
-        yield {
-            chunk: {
-                bytes: new TextEncoder().encode(JSON.stringify({
-                    event: {
-                        promptStart: {
-                            promptName: promptName,
-                            textOutputConfiguration: {
-                                mediaType: "text/plain"
-                            },
-                            audioOutputConfiguration: {
-                                mediaType: "audio/lpcm",
-                                sampleRateHertz: 24000,
-                                sampleSizeBits: 16,
-                                channelCount: 1,
-                                voiceId: "matthew",
-                                encoding: "base64",
-                                audioType: "SPEECH"
-                            }
-                        }
-                    }
-                }))
-            }
-        };
-
-        // 3. System Content Start Event
-        yield {
-            chunk: {
-                bytes: new TextEncoder().encode(JSON.stringify({
-                    event: {
-                        contentStart: {
-                            promptName: promptName,
-                            contentName: contentName,
-                            type: "TEXT",
-                            interactive: true,
-                            role: "SYSTEM",
-                            textInputConfiguration: {
-                                mediaType: "text/plain"
-                            }
-                        }
-                    }
-                }))
-            }
-        };
-
-        // 4. Send system prompt
-        yield {
-            chunk: {
-                bytes: new TextEncoder().encode(JSON.stringify({
-                    event: {
-                        textInput: {
-                            promptName: promptName,
-                            contentName: contentName,
-                            content: systemPrompt
-                        }
-                    }
-                }))
-            }
-        };
-
-        // 5. End system content
-        yield {
-            chunk: {
-                bytes: new TextEncoder().encode(JSON.stringify({
-                    event: {
-                        contentEnd: {
-                            promptName: promptName,
-                            contentName: contentName
-                        }
-                    }
-                }))
-            }
-        };
-
-        // 6. Start Audio Content (Interactive - stays open for audio input)
-        yield {
-            chunk: {
-                bytes: new TextEncoder().encode(JSON.stringify({
-                    event: {
-                        contentStart: {
-                            promptName: promptName,
-                            contentName: audioContentName,
-                            type: "AUDIO",
-                            interactive: true,
-                            role: "USER",
-                            audioInputConfiguration: {
-                                mediaType: "audio/lpcm",
-                                sampleRateHertz: 16000,
-                                sampleSizeBits: 16,
-                                channelCount: 1,
-                                encoding: "base64"
-                            }
-                        }
-                    }
-                }))
-            }
-        };
-
-        console.log('✅ Nova Sonic session setup completed - ready for audio input');
-        
-        // Store audio content name for later use
-        sessionManager.audioContentName = audioContentName;
-        
-        // Keep the stream alive for ongoing audio interaction
-        
-    } catch (error) {
-        console.error('❌ Error in Nova Sonic event stream:', error);
-        await sessionManager.endSession();
-        throw error;
-    }
-}
 
 // Process response stream from Nova Sonic
 async function processResponseStream(stream, socket, sessionManager) {
