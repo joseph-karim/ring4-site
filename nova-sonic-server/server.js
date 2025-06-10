@@ -2,6 +2,11 @@
 // This runs as a separate Node.js server to handle WebSocket connections
 // Based on the working Nova Sonic implementation
 
+console.log('🏁 Nova Sonic Server script loaded');
+console.log('🏁 Node version:', process.version);
+console.log('🏁 Current directory:', __dirname);
+console.log('🏁 Process ID:', process.pid);
+
 const express = require('express');
 const http = require('http');
 const path = require('path');
@@ -17,7 +22,10 @@ const {
 const { randomUUID } = require('crypto');
 
 // Load environment variables
-config();
+// Railway sets environment variables directly, don't need .env file in production
+if (process.env.NODE_ENV !== 'production') {
+    config();
+}
 
 // Debug Railway environment
 console.log('🔍 Starting Nova Sonic Server...');

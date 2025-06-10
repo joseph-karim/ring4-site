@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "test": "node test-server.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.785.0",
