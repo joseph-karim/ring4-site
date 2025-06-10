@@ -206,82 +206,92 @@ class BidirectionalStreamHandler {
             const contentId = this.sessionManager.getContentId();
             const audioContentId = randomUUID();
 
-            // 1. Session Start Event
+            // 1. Session Start Event (with event wrapper)
             yield {
                 chunk: {
                     bytes: new TextEncoder().encode(JSON.stringify({
-                        sessionStart: {
-                            inferenceConfiguration: {
-                                maxTokens: 1024,
-                                topP: 0.9,
-                                temperature: 0.7
+                        event: {
+                            sessionStart: {
+                                inferenceConfiguration: {
+                                    maxTokens: 1024,
+                                    topP: 0.9,
+                                    temperature: 0.7
+                                }
                             }
                         }
                     }))
                 }
             };
 
-            // 2. Prompt Start Event
+            // 2. Prompt Start Event (with event wrapper)
             yield {
                 chunk: {
                     bytes: new TextEncoder().encode(JSON.stringify({
-                        promptStart: {
-                            promptId: promptId,
-                            textOutputConfiguration: {
-                                mediaType: "text/plain"
-                            },
-                            audioOutputConfiguration: {
-                                mediaType: "audio/lpcm",
-                                sampleRateHertz: 24000,
-                                sampleSizeBits: 16,
-                                channelCount: 1,
-                                voiceId: "matthew",
-                                encoding: "base64",
-                                audioType: "SPEECH"
+                        event: {
+                            promptStart: {
+                                promptId: promptId,
+                                textOutputConfiguration: {
+                                    mediaType: "text/plain"
+                                },
+                                audioOutputConfiguration: {
+                                    mediaType: "audio/lpcm",
+                                    sampleRateHertz: 24000,
+                                    sampleSizeBits: 16,
+                                    channelCount: 1,
+                                    voiceId: "matthew",
+                                    encoding: "base64",
+                                    audioType: "SPEECH"
+                                }
                             }
                         }
                     }))
                 }
             };
 
-            // 3. System Content Start Event
+            // 3. System Content Start Event (with event wrapper)
             yield {
                 chunk: {
                     bytes: new TextEncoder().encode(JSON.stringify({
-                        contentStart: {
-                            promptId: promptId,
-                            contentId: contentId,
-                            type: "TEXT",
-                            interactive: true,
-                            role: "SYSTEM",
-                            textInputConfiguration: {
-                                mediaType: "text/plain"
+                        event: {
+                            contentStart: {
+                                promptId: promptId,
+                                contentId: contentId,
+                                type: "TEXT",
+                                interactive: true,
+                                role: "SYSTEM",
+                                textInputConfiguration: {
+                                    mediaType: "text/plain"
+                                }
                             }
                         }
                     }))
                 }
             };
 
-            // 4. Send system prompt
+            // 4. Send system prompt (with event wrapper)
             yield {
                 chunk: {
                     bytes: new TextEncoder().encode(JSON.stringify({
-                        textInput: {
-                            promptId: promptId,
-                            contentId: contentId,
-                            content: this.systemPrompt
+                        event: {
+                            textInput: {
+                                promptId: promptId,
+                                contentId: contentId,
+                                content: this.systemPrompt
+                            }
                         }
                     }))
                 }
             };
 
-            // 5. End system content
+            // 5. End system content (with event wrapper)
             yield {
                 chunk: {
                     bytes: new TextEncoder().encode(JSON.stringify({
-                        contentEnd: {
-                            promptId: promptId,
-                            contentId: contentId
+                        event: {
+                            contentEnd: {
+                                promptId: promptId,
+                                contentId: contentId
+                            }
                         }
                     }))
                 }
@@ -291,18 +301,20 @@ class BidirectionalStreamHandler {
             yield {
                 chunk: {
                     bytes: new TextEncoder().encode(JSON.stringify({
-                        contentStart: {
-                            promptId: promptId,
-                            contentId: audioContentId,
-                            type: "AUDIO",
-                            interactive: true,
-                            role: "USER",
-                            audioInputConfiguration: {
-                                mediaType: "audio/lpcm",
-                                sampleRateHertz: 16000,
-                                sampleSizeBits: 16,
-                                channelCount: 1,
-                                encoding: "base64"
+                        event: {
+                            contentStart: {
+                                promptId: promptId,
+                                contentId: audioContentId,
+                                type: "AUDIO",
+                                interactive: true,
+                                role: "USER",
+                                audioInputConfiguration: {
+                                    mediaType: "audio/lpcm",
+                                    sampleRateHertz: 16000,
+                                    sampleSizeBits: 16,
+                                    channelCount: 1,
+                                    encoding: "base64"
+                                }
                             }
                         }
                     }))
@@ -342,10 +354,12 @@ class BidirectionalStreamHandler {
         const audioEvent = {
             chunk: {
                 bytes: new TextEncoder().encode(JSON.stringify({
-                    audioInput: {
-                        promptId: this.sessionManager.getPromptId(),
-                        contentId: this.sessionManager.audioContentId,
-                        content: audioBase64
+                    event: {
+                        audioInput: {
+                            promptId: this.sessionManager.getPromptId(),
+                            contentId: this.sessionManager.audioContentId,
+                            content: audioBase64
+                        }
                     }
                 }))
             }
