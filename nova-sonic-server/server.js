@@ -559,6 +559,8 @@ INSTRUCTIONS:
 
 // Process response stream from Nova Sonic
 async function processResponseStream(stream, socket, sessionManager) {
+    let currentTextRole = 'assistant'; // Track the role for text outputs
+    
     try {
         for await (const event of stream) {
             if (event.chunk?.bytes) {
@@ -570,8 +572,18 @@ async function processResponseStream(stream, socket, sessionManager) {
                     if (jsonResponse.event) {
                         const eventType = Object.keys(jsonResponse.event)[0];
                         
+                        // Handle content start to track role
+                        if (jsonResponse.event.contentStart) {
+                            const contentStart = jsonResponse.event.contentStart;
+                            if (contentStart.type === 'TEXT') {
+                                currentTextRole = contentStart.role === 'USER' ? 'user' : 'assistant';
+                                const stage = contentStart.additionalModelFields ? 
+                                    JSON.parse(contentStart.additionalModelFields).generationStage : 'unknown';
+                                console.log(`📝 Text content starting - role: ${currentTextRole}, stage: ${stage}`);
+                            }
+                        }
                         // Handle audio output event
-                        if (jsonResponse.event.audioOutput) {
+                        else if (jsonResponse.event.audioOutput) {
                             console.log('🔊 Nova Sonic audio output received');
                             const audioBase64 = jsonResponse.event.audioOutput.content;
                             socket.emit('audioResponse', audioBase64);
@@ -579,12 +591,12 @@ async function processResponseStream(stream, socket, sessionManager) {
                         // Handle text output event
                         else if (jsonResponse.event.textOutput) {
                             const content = jsonResponse.event.textOutput.content;
-                            console.log('💬 Nova Sonic text:', content);
+                            console.log(`💬 Nova Sonic ${currentTextRole} text:`, content);
                             
                             // Only emit non-empty content
                             if (content && content.trim()) {
                                 socket.emit('transcript', {
-                                    role: 'assistant',
+                                    role: currentTextRole,
                                     content: content
                                 });
                             }
