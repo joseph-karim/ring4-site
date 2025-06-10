@@ -409,17 +409,18 @@ io.on('connection', (socket) => {
             // Create a bidirectional stream handler
             const streamHandler = new BidirectionalStreamHandler(sessionManager, systemPrompt);
             
-            // Create the bidirectional streaming command
+            // Store the stream handler for audio input
+            sessionManager.streamHandler = streamHandler;
+            
+            // Create the bidirectional streaming command with the input stream
+            const inputStream = streamHandler.getInputStream();
             const command = new InvokeModelWithBidirectionalStreamCommand({
                 modelId: "amazon.nova-sonic-v1:0",
-                body: streamHandler.getInputStream()
+                body: inputStream
             });
 
             // Start streaming
             const response = await bedrockClient.send(command);
-            
-            // Store the stream handler for audio input
-            sessionManager.streamHandler = streamHandler;
             
             if (response.body) {
                 processResponseStream(response.body, socket, sessionManager);
@@ -430,6 +431,12 @@ io.on('connection', (socket) => {
             
         } catch (error) {
             console.error('❌ Error starting Nova Sonic session:', error);
+            console.error('   Error details:', {
+                message: error.message,
+                code: error.code,
+                statusCode: error.$metadata?.httpStatusCode,
+                requestId: error.$metadata?.requestId
+            });
             socket.emit('error', { message: 'Failed to start voice session: ' + error.message });
             await sessionManager.endSession();
         }
@@ -556,6 +563,11 @@ async function processResponseStream(stream, socket, sessionManager) {
         }
     } catch (error) {
         console.error('❌ Error processing Nova Sonic response stream:', error);
+        console.error('   Stream error details:', {
+            message: error.message,
+            code: error.code,
+            stack: error.stack
+        });
         socket.emit('error', { message: 'Stream processing failed' });
     } finally {
         // Ensure session cleanup
