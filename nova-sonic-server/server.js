@@ -238,7 +238,7 @@ class BidirectionalStreamHandler {
                                     sampleRateHertz: 24000,
                                     sampleSizeBits: 16,
                                     channelCount: 1,
-                                    voiceId: "matthew",
+                                    voiceId: "tiffany",
                                     encoding: "base64",
                                     audioType: "SPEECH"
                                 }
@@ -491,11 +491,39 @@ io.on('connection', (socket) => {
         console.log('👋 Client disconnected:', socket.id);
         const sessionManager = activeSessions.get(socket.id);
         if (sessionManager) {
-            // If there's an active stream handler, end it first
-            if (sessionManager.streamHandler) {
-                sessionManager.streamHandler.endStream();
+            try {
+                // If there's an active stream handler, properly close the audio content first
+                if (sessionManager.streamHandler && sessionManager.audioContentId) {
+                    // Send content end event for the audio stream
+                    const endEvent = {
+                        chunk: {
+                            bytes: new TextEncoder().encode(JSON.stringify({
+                                event: {
+                                    contentEnd: {
+                                        promptName: sessionManager.getPromptId(),
+                                        contentName: sessionManager.audioContentId
+                                    }
+                                }
+                            }))
+                        }
+                    };
+                    sessionManager.streamHandler.inputQueue.push(endEvent);
+                    
+                    // Give it a moment to process
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+                
+                // Now end the stream handler
+                if (sessionManager.streamHandler) {
+                    sessionManager.streamHandler.endStream();
+                }
+                
+                // Finally end the session
+                await sessionManager.endSession();
+            } catch (error) {
+                console.error('Error during disconnect cleanup:', error);
             }
-            await sessionManager.endSession();
+            
             activeSessions.delete(socket.id);
         }
     });
@@ -551,10 +579,13 @@ async function processResponseStream(stream, socket, sessionManager) {
                             const content = jsonResponse.event.textOutput.content;
                             console.log('💬 Nova Sonic text:', content);
                             
-                            socket.emit('transcript', {
-                                role: 'assistant',
-                                content: content
-                            });
+                            // Only emit non-empty content
+                            if (content && content.trim()) {
+                                socket.emit('transcript', {
+                                    role: 'assistant',
+                                    content: content
+                                });
+                            }
                         }
                         // Handle content start event
                         else if (jsonResponse.event.contentStart) {

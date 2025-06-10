@@ -136,7 +136,7 @@ export class NovaSonicClient {
         }
       });
 
-      this.audioContext = new AudioContext({ sampleRate: 16000 });
+      this.audioContext = new AudioContext({ sampleRate: 24000 });
       this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream);
 
       console.log('🎤 Audio initialized successfully');
@@ -220,20 +220,55 @@ export class NovaSonicClient {
       // Convert to Int16Array (LPCM format)
       const int16Array = new Int16Array(uint8Array.buffer);
       
-      // Create audio buffer for playback
-      const audioBuffer = this.audioContext.createBuffer(1, int16Array.length, 24000);
-      const channelData = audioBuffer.getChannelData(0);
+      // Nova Sonic sends audio at 24kHz, but our context might be different
+      // We need to resample if necessary
+      const sourceRate = 24000; // Nova Sonic output rate
+      const targetRate = this.audioContext.sampleRate;
       
-      // Convert Int16 to Float32 for Web Audio API
-      for (let i = 0; i < int16Array.length; i++) {
-        channelData[i] = int16Array[i] / 32768.0;
-      }
+      if (sourceRate === targetRate) {
+        // No resampling needed
+        const audioBuffer = this.audioContext.createBuffer(1, int16Array.length, targetRate);
+        const channelData = audioBuffer.getChannelData(0);
+        
+        // Convert Int16 to Float32 for Web Audio API
+        for (let i = 0; i < int16Array.length; i++) {
+          channelData[i] = int16Array[i] / 32768.0;
+        }
 
-      // Play the audio
-      const source = this.audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(this.audioContext.destination);
-      source.start();
+        // Play the audio
+        const source = this.audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(this.audioContext.destination);
+        source.start();
+      } else {
+        // Use offline context for resampling
+        const offlineContext = new OfflineAudioContext(1, 
+          Math.ceil(int16Array.length * targetRate / sourceRate), 
+          targetRate
+        );
+        
+        // Create buffer at source rate
+        const sourceBuffer = offlineContext.createBuffer(1, int16Array.length, sourceRate);
+        const sourceData = sourceBuffer.getChannelData(0);
+        
+        // Convert Int16 to Float32
+        for (let i = 0; i < int16Array.length; i++) {
+          sourceData[i] = int16Array[i] / 32768.0;
+        }
+        
+        // Play through offline context to resample
+        const source = offlineContext.createBufferSource();
+        source.buffer = sourceBuffer;
+        source.connect(offlineContext.destination);
+        source.start();
+        
+        // Render and play the resampled audio
+        const resampledBuffer = await offlineContext.startRendering();
+        const playSource = this.audioContext.createBufferSource();
+        playSource.buffer = resampledBuffer;
+        playSource.connect(this.audioContext.destination);
+        playSource.start();
+      }
 
       console.log('🔊 Playing Nova Sonic audio response');
 
