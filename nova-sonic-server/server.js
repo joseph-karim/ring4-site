@@ -559,8 +559,6 @@ INSTRUCTIONS:
 
 // Process response stream from Nova Sonic
 async function processResponseStream(stream, socket, sessionManager) {
-    let currentTextRole = 'assistant'; // Track the role for text outputs
-    
     try {
         for await (const event of stream) {
             if (event.chunk?.bytes) {
@@ -570,40 +568,51 @@ async function processResponseStream(stream, socket, sessionManager) {
 
                     // Nova Sonic responses have an "event" wrapper
                     if (jsonResponse.event) {
-                        const eventType = Object.keys(jsonResponse.event)[0];
-                        
-                        // Handle content start to track role
-                        if (jsonResponse.event.contentStart) {
-                            const contentStart = jsonResponse.event.contentStart;
-                            if (contentStart.type === 'TEXT') {
-                                currentTextRole = contentStart.role === 'USER' ? 'user' : 'assistant';
-                                const stage = contentStart.additionalModelFields ? 
-                                    JSON.parse(contentStart.additionalModelFields).generationStage : 'unknown';
-                                console.log(`📝 Text content starting - role: ${currentTextRole}, stage: ${stage}`);
-                            }
-                        }
-                        // Handle audio output event
-                        else if (jsonResponse.event.audioOutput) {
+                        // Handle audio output event (AI speaking)
+                        if (jsonResponse.event.audioOutput) {
                             console.log('🔊 Nova Sonic audio output received');
                             const audioBase64 = jsonResponse.event.audioOutput.content;
                             socket.emit('audioResponse', audioBase64);
                         }
-                        // Handle text output event
+                        // Handle text output event (could be user transcription or AI response)
                         else if (jsonResponse.event.textOutput) {
                             const content = jsonResponse.event.textOutput.content;
-                            console.log(`💬 Nova Sonic ${currentTextRole} text:`, content);
+                            const isUserTranscript = sessionManager.nextTextIsUserTranscript || false;
+                            const role = isUserTranscript ? 'user' : 'assistant';
+                            
+                            console.log(`💬 Nova Sonic ${role} text:`, content);
                             
                             // Only emit non-empty content
                             if (content && content.trim()) {
                                 socket.emit('transcript', {
-                                    role: currentTextRole,
+                                    role: role,
                                     content: content
                                 });
+                            }
+                            
+                            // Reset flag after use
+                            sessionManager.nextTextIsUserTranscript = false;
+                        }
+                        // Handle content start event
+                        else if (jsonResponse.event.contentStart) {
+                            const contentStart = jsonResponse.event.contentStart;
+                            console.log('📝 Content start:', {
+                                type: contentStart.type,
+                                role: contentStart.role,
+                                additionalFields: contentStart.additionalModelFields
+                            });
+                            
+                            // Check if this is user transcription vs assistant response
+                            if (contentStart.type === 'TEXT' && contentStart.role === 'USER') {
+                                // Next text output will be user transcription
+                                sessionManager.nextTextIsUserTranscript = true;
+                            } else {
+                                sessionManager.nextTextIsUserTranscript = false;
                             }
                         }
                         // Log other events for debugging
                         else {
-                            console.log('📨 Nova Sonic event:', eventType);
+                            console.log('📨 Nova Sonic event:', Object.keys(jsonResponse.event)[0]);
                         }
                     } else {
                         console.log('⚠️ Unexpected response format:', Object.keys(jsonResponse));
