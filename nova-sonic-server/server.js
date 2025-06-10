@@ -536,31 +536,48 @@ async function processResponseStream(stream, socket, sessionManager) {
                     const textResponse = new TextDecoder().decode(event.chunk.bytes);
                     const jsonResponse = JSON.parse(textResponse);
 
-                    console.log('📨 Nova Sonic event:', Object.keys(jsonResponse));
-
-                    if (jsonResponse.textOutput) {
-                        const content = jsonResponse.textOutput.content;
-                        const role = jsonResponse.textOutput.role || 'assistant';
-                        console.log(`💬 Nova Sonic text (${role}):`, content);
+                    // Nova Sonic responses have an "event" wrapper
+                    if (jsonResponse.event) {
+                        console.log('📨 Nova Sonic event type:', Object.keys(jsonResponse.event)[0]);
                         
-                        socket.emit('transcript', {
-                            role: role,
-                            content: content
-                        });
-                    } 
-                    else if (jsonResponse.audioOutput) {
-                        console.log('🔊 Nova Sonic audio output received, sending to client');
-                        const audioBase64 = jsonResponse.audioOutput.content;
-                        socket.emit('audioResponse', audioBase64);
-                    }
-                    else if (jsonResponse.contentStart) {
-                        console.log('📝 Nova Sonic content start:', jsonResponse.contentStart.type);
-                    }
-                    else if (jsonResponse.contentEnd) {
-                        console.log('📝 Nova Sonic content end');
-                    }
-                    else if (jsonResponse.completionEnd) {
-                        console.log('🏁 Nova Sonic completion end - conversation finished');
+                        // Handle audio output event
+                        if (jsonResponse.event.audioOutput) {
+                            console.log('🔊 Nova Sonic audio output received, sending to client');
+                            const audioBase64 = jsonResponse.event.audioOutput.content;
+                            socket.emit('audioResponse', audioBase64);
+                        }
+                        // Handle text output event
+                        else if (jsonResponse.event.textOutput) {
+                            const content = jsonResponse.event.textOutput.content;
+                            console.log('💬 Nova Sonic text:', content);
+                            
+                            socket.emit('transcript', {
+                                role: 'assistant',
+                                content: content
+                            });
+                        }
+                        // Handle content start event
+                        else if (jsonResponse.event.contentStart) {
+                            const contentStart = jsonResponse.event.contentStart;
+                            console.log('📝 Nova Sonic content start:', {
+                                role: contentStart.role,
+                                additionalFields: contentStart.additionalModelFields
+                            });
+                        }
+                        // Handle content end event
+                        else if (jsonResponse.event.contentEnd) {
+                            console.log('📝 Nova Sonic content end');
+                        }
+                        // Handle completion end event
+                        else if (jsonResponse.event.completionEnd) {
+                            console.log('🏁 Nova Sonic completion end - conversation finished');
+                        }
+                        // Handle tool use event (if using function calling)
+                        else if (jsonResponse.event.toolUse) {
+                            console.log('🛠️ Nova Sonic tool use:', jsonResponse.event.toolUse);
+                        }
+                    } else {
+                        console.log('⚠️ Unexpected response format:', Object.keys(jsonResponse));
                     }
 
                 } catch (parseError) {
