@@ -136,10 +136,12 @@ export class NovaSonicClient {
         }
       });
 
+      // Create AudioContext at 24kHz to match Nova Sonic output
       this.audioContext = new AudioContext({ sampleRate: 24000 });
       this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream);
 
       console.log('🎤 Audio initialized successfully');
+      console.log('🎤 AudioContext sample rate:', this.audioContext.sampleRate);
     } catch (error) {
       console.error('Error accessing microphone:', error);
       throw new Error('Could not access microphone. Please check permissions.');
@@ -208,69 +210,39 @@ export class NovaSonicClient {
 
   private async playAudioResponse(audioBase64: string) {
     try {
-      if (!this.audioContext) return;
+      if (!this.audioContext) {
+        // Initialize audio context if not already done
+        this.audioContext = new AudioContext({ sampleRate: 24000 });
+        console.log('🎵 Initialized AudioContext at 24kHz for Nova Sonic playback');
+      }
 
-      // Decode base64 to audio buffer
+      // Decode base64 to audio buffer - matching AWS implementation
       const binaryString = atob(audioBase64);
-      const uint8Array = new Uint8Array(binaryString.length);
+      const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
-        uint8Array[i] = binaryString.charCodeAt(i);
+        bytes[i] = binaryString.charCodeAt(i);
       }
-
-      // Convert to Int16Array (LPCM format)
-      const int16Array = new Int16Array(uint8Array.buffer);
       
-      // Nova Sonic sends audio at 24kHz, but our context might be different
-      // We need to resample if necessary
-      const sourceRate = 24000; // Nova Sonic output rate
-      const targetRate = this.audioContext.sampleRate;
+      // Convert to Int16Array (16-bit PCM format from Nova Sonic)
+      const int16Array = new Int16Array(bytes.buffer);
       
-      if (sourceRate === targetRate) {
-        // No resampling needed
-        const audioBuffer = this.audioContext.createBuffer(1, int16Array.length, targetRate);
-        const channelData = audioBuffer.getChannelData(0);
-        
-        // Convert Int16 to Float32 for Web Audio API
-        for (let i = 0; i < int16Array.length; i++) {
-          channelData[i] = int16Array[i] / 32768.0;
-        }
-
-        // Play the audio
-        const source = this.audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(this.audioContext.destination);
-        source.start();
-      } else {
-        // Use offline context for resampling
-        const offlineContext = new OfflineAudioContext(1, 
-          Math.ceil(int16Array.length * targetRate / sourceRate), 
-          targetRate
-        );
-        
-        // Create buffer at source rate
-        const sourceBuffer = offlineContext.createBuffer(1, int16Array.length, sourceRate);
-        const sourceData = sourceBuffer.getChannelData(0);
-        
-        // Convert Int16 to Float32
-        for (let i = 0; i < int16Array.length; i++) {
-          sourceData[i] = int16Array[i] / 32768.0;
-        }
-        
-        // Play through offline context to resample
-        const source = offlineContext.createBufferSource();
-        source.buffer = sourceBuffer;
-        source.connect(offlineContext.destination);
-        source.start();
-        
-        // Render and play the resampled audio
-        const resampledBuffer = await offlineContext.startRendering();
-        const playSource = this.audioContext.createBufferSource();
-        playSource.buffer = resampledBuffer;
-        playSource.connect(this.audioContext.destination);
-        playSource.start();
+      // Create Float32Array normalized to -1 to 1 range
+      const float32Array = new Float32Array(int16Array.length);
+      for (let i = 0; i < int16Array.length; i++) {
+        float32Array[i] = int16Array[i] / 32768.0; // Normalize to -1 to 1
       }
-
-      console.log('🔊 Playing Nova Sonic audio response');
+      
+      // Create audio buffer at 24kHz (Nova Sonic's output rate)
+      const audioBuffer = this.audioContext.createBuffer(1, float32Array.length, 24000);
+      audioBuffer.copyToChannel(float32Array, 0);
+      
+      // Play the audio chunk immediately
+      const source = this.audioContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(this.audioContext.destination);
+      source.start();
+      
+      console.log(`🔊 Playing Nova Sonic audio chunk: ${float32Array.length} samples`);
 
     } catch (error) {
       console.error('Error playing audio response:', error);
