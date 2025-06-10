@@ -3,9 +3,9 @@ services:
     name: ring4-nova-sonic-server
     env: node
     repo: https://github.com/joseph-karim/ring4-site.git
-    rootDir: nova-sonic-server
-    buildCommand: npm install
-    startCommand: npm start
+    rootDir: .
+    buildCommand: cd nova-sonic-server && npm install
+    startCommand: cd nova-sonic-server && npm start
     plan: free
     region: oregon
     branch: main

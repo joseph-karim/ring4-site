@@ -19,6 +19,7 @@
     "netlify:build": "netlify build",
     "netlify:deploy": "netlify deploy",
     "start": "cd nova-sonic-server && npm start",
+    "build:nova-sonic": "cd nova-sonic-server && npm install",
     "nova-sonic:install": "cd nova-sonic-server && npm install",
     "nova-sonic:start": "cd nova-sonic-server && npm start",
     "nova-sonic": "./start-nova-sonic.sh",
