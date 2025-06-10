@@ -39,7 +39,15 @@ app.use((req, res, next) => {
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:5173", "https://ring4.netlify.app", "https://ring4.com", "https://ring4-site-production.up.railway.app"],
+    origin: [
+      "http://localhost:3000", 
+      "http://localhost:5173", 
+      "https://ring4.netlify.app", 
+      "https://ring4.com", 
+      "https://ring4-site-production.up.railway.app",
+      "https://*.up.railway.app",  // Allow all Railway deployments
+      "http://*.up.railway.app"    // Allow HTTP Railway deployments during testing
+    ],
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -491,18 +499,19 @@ async function processResponseStream(stream, socket, sessionManager) {
 // Start the server
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-// Try different binding strategies based on environment
-// Railway needs special handling for IPv6
+// Railway requires proper IPv6 binding
 const startServer = () => {
-    // First try without specifying host (Node.js default behavior)
-    // This often works best for cloud platforms
-    server.listen(PORT, () => {
+    // For Railway: bind to :: which enables dual-stack (IPv4 and IPv6)
+    // This is the recommended approach for Railway deployments
+    const host = '::';
+    
+    server.listen(PORT, host, () => {
         console.log(`🚀 Nova Sonic server running on port ${PORT}`);
-        console.log(`🎯 WebSocket endpoint: ws://localhost:${PORT}`);
-        console.log(`📊 Health check: http://localhost:${PORT}/health`);
+        console.log(`🎯 WebSocket endpoint: ws://[::]:${PORT}`);
+        console.log(`📊 Health check: http://[::]:${PORT}/health`);
         console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
         console.log(`🚉 PORT from env: ${process.env.PORT || 'not set (using 3000)'}`);
-        console.log(`🌐 Listening on all available network interfaces`);
+        console.log(`🌐 Listening on :: (all IPv6 and IPv4 interfaces)`);
         console.log(`🚄 Server started successfully!`);
         
         // Get actual address info
@@ -524,6 +533,14 @@ server.on('error', (error) => {
         console.error(`Port ${PORT} is already in use`);
     } else if (error.code === 'EACCES') {
         console.error(`No permission to use port ${PORT}`);
+    } else if (error.code === 'EAFNOSUPPORT') {
+        console.error('IPv6 is not supported on this system');
+        console.log('Falling back to IPv4 only...');
+        // Fallback to IPv4 if IPv6 is not supported
+        server.listen(PORT, '0.0.0.0', () => {
+            console.log(`🚀 Nova Sonic server running on port ${PORT} (IPv4 only)`);
+        });
+        return;
     }
     process.exit(1);
 });
