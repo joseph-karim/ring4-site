@@ -52,9 +52,8 @@ const io = new Server(server, {
       "http://localhost:5173", 
       "https://ring4.netlify.app", 
       "https://ring4.com", 
-      "https://ring4-site-production.up.railway.app",
-      "https://*.up.railway.app",  // Allow all Railway deployments
-      "http://*.up.railway.app"    // Allow HTTP Railway deployments during testing
+      "https://ring4-site.onrender.com",
+      "https://*.onrender.com"  // Allow all Render deployments
     ],
     methods: ["GET", "POST"],
     credentials: true
@@ -546,19 +545,16 @@ async function processResponseStream(stream, socket, sessionManager) {
 // Start the server
 const PORT = parseInt(process.env.PORT || '3000', 10);
 
-// Railway requires proper IPv6 binding
+// Use standard binding for cloud platforms
 const startServer = () => {
-    // For Railway: bind to :: which enables dual-stack (IPv4 and IPv6)
-    // This is the recommended approach for Railway deployments
-    const host = '::';
-    
-    server.listen(PORT, host, () => {
+    // Use default binding (works on most cloud platforms)
+    server.listen(PORT, () => {
         console.log(`🚀 Nova Sonic server running on port ${PORT}`);
-        console.log(`🎯 WebSocket endpoint: ws://[::]:${PORT}`);
-        console.log(`📊 Health check: http://[::]:${PORT}/health`);
+        console.log(`🎯 WebSocket endpoint available`);
+        console.log(`📊 Health check: /health`);
         console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
         console.log(`🚉 PORT from env: ${process.env.PORT || 'not set (using 3000)'}`);
-        console.log(`🌐 Listening on :: (all IPv6 and IPv4 interfaces)`);
+        console.log(`🌐 Listening on all available interfaces`);
         console.log(`🚄 Server started successfully!`);
         
         // Get actual address info

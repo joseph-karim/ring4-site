@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: ring4-nova-sonic-server
+    env: node
+    repo: https://github.com/joseph-karim/ring4-site.git
+    rootDir: nova-sonic-server
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    region: oregon
+    branch: main
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AWS_ACCESS_KEY_ID
+        fromDatabase:
+          name: ring4-credentials
+          property: AWS_ACCESS_KEY_ID
+      - key: AWS_SECRET_ACCESS_KEY
+        fromDatabase:
+          name: ring4-credentials
+          property: AWS_SECRET_ACCESS_KEY
+      - key: AWS_REGION
+        value: us-east-1
+    healthCheckPath: /health
