@@ -19,6 +19,14 @@ const { randomUUID } = require('crypto');
 // Load environment variables
 config();
 
+// Debug Railway environment
+console.log('🔍 Starting Nova Sonic Server...');
+console.log('🔍 Environment variables:');
+console.log('   NODE_ENV:', process.env.NODE_ENV);
+console.log('   PORT:', process.env.PORT);
+console.log('   RAILWAY_ENVIRONMENT:', process.env.RAILWAY_ENVIRONMENT);
+console.log('   RAILWAY_PROJECT_ID:', process.env.RAILWAY_PROJECT_ID);
+
 // Create Express app and HTTP server
 const app = express();
 const server = http.createServer(app);
@@ -462,16 +470,15 @@ async function processResponseStream(stream, socket, sessionManager) {
 
 // Start the server
 const PORT = parseInt(process.env.PORT || '3002', 10);
-// For Railway, we need to listen on all interfaces including IPv6
-const HOST = process.env.RAILWAY_STATIC_URL ? '::' : '0.0.0.0';
 
-server.listen(PORT, HOST, () => {
+// Just listen on port without specifying host - this makes Node.js listen on all interfaces
+server.listen(PORT, () => {
     console.log(`🚀 Nova Sonic server running on port ${PORT}`);
-    console.log(`🎯 WebSocket endpoint: ws://${HOST === '::' ? 'localhost' : HOST}:${PORT}`);
-    console.log(`📊 Health check: http://${HOST === '::' ? 'localhost' : HOST}:${PORT}/health`);
+    console.log(`🎯 WebSocket endpoint: ws://localhost:${PORT}`);
+    console.log(`📊 Health check: http://localhost:${PORT}/health`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🚉 Railway PORT: ${process.env.PORT}`);
-    console.log(`🌐 Listening on: ${HOST}`);
+    console.log(`🚉 PORT from env: ${process.env.PORT || 'not set (using 3002)'}`);
+    console.log(`🌐 Listening on all available interfaces (IPv4 and IPv6)`);
     
     if (!process.env.AWS_ACCESS_KEY_ID) {
         console.warn('⚠️  AWS credentials not configured - Nova Sonic will not work');
