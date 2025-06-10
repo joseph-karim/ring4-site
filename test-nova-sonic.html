@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Sonic Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>Nova Sonic Server Test</h1>
+    <div id="status">Connecting...</div>
+    <button id="testBtn" disabled>Test Voice Session</button>
+    <div id="logs"></div>
+
+    <script>
+        const statusEl = document.getElementById('status');
+        const logsEl = document.getElementById('logs');
+        const testBtn = document.getElementById('testBtn');
+        
+        function log(message) {
+            const time = new Date().toLocaleTimeString();
+            logsEl.innerHTML += `<div>[${time}] ${message}</div>`;
+            console.log(message);
+        }
+
+        // Test health endpoint first
+        fetch('http://localhost:3002/health')
+            .then(res => res.json())
+            .then(data => {
+                log('Health check: ' + JSON.stringify(data));
+            })
+            .catch(err => {
+                log('Health check failed: ' + err.message);
+            });
+
+        // Connect to Socket.IO
+        const socket = io('http://localhost:3002', {
+            transports: ['websocket', 'polling']
+        });
+
+        socket.on('connect', () => {
+            statusEl.textContent = 'Connected!';
+            testBtn.disabled = false;
+            log('Socket connected: ' + socket.id);
+        });
+
+        socket.on('disconnect', () => {
+            statusEl.textContent = 'Disconnected';
+            testBtn.disabled = true;
+            log('Socket disconnected');
+        });
+
+        socket.on('error', (error) => {
+            log('Socket error: ' + JSON.stringify(error));
+        });
+
+        socket.on('session_ready', () => {
+            log('Nova Sonic session ready!');
+        });
+
+        socket.on('transcript', (data) => {
+            log(`Transcript (${data.role}): ${data.content}`);
+        });
+
+        socket.on('audioResponse', (audioBase64) => {
+            log('Received audio response: ' + audioBase64.substring(0, 50) + '...');
+        });
+
+        testBtn.addEventListener('click', () => {
+            log('Starting Nova Sonic session...');
+            socket.emit('start_session', {
+                systemPrompt: 'You are a helpful AI assistant.',
+                businessInfo: {
+                    name: 'Test Business',
+                    personality: 'Friendly and professional'
+                }
+            });
+        });
+    </script>
+</body>
+</html>
