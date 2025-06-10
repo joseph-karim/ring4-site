@@ -48,7 +48,7 @@ async function* createInputStream() {
             bytes: new TextEncoder().encode(JSON.stringify({
                 event: {
                     promptStart: {
-                        promptId: promptId,
+                        promptName: promptId,
                         textOutputConfiguration: {
                             mediaType: "text/plain"
                         },
@@ -73,8 +73,8 @@ async function* createInputStream() {
             bytes: new TextEncoder().encode(JSON.stringify({
                 event: {
                     contentStart: {
-                        promptId: promptId,
-                        contentId: contentId,
+                        promptName: promptId,
+                        contentName: contentId,
                         type: "TEXT",
                         interactive: false,
                         role: "SYSTEM",
@@ -92,8 +92,8 @@ async function* createInputStream() {
             bytes: new TextEncoder().encode(JSON.stringify({
                 event: {
                     textInput: {
-                        promptId: promptId,
-                        contentId: contentId,
+                        promptName: promptId,
+                        contentName: contentId,
                         content: "You are a helpful assistant."
                     }
                 }
@@ -106,8 +106,8 @@ async function* createInputStream() {
             bytes: new TextEncoder().encode(JSON.stringify({
                 event: {
                     contentEnd: {
-                        promptId: promptId,
-                        contentId: contentId
+                        promptName: promptId,
+                        contentName: contentId
                     }
                 }
             }))
@@ -121,8 +121,8 @@ async function* createInputStream() {
             bytes: new TextEncoder().encode(JSON.stringify({
                 event: {
                     contentStart: {
-                        promptId: promptId,
-                        contentId: audioContentId,
+                        promptName: promptId,
+                        contentName: audioContentId,
                         type: "AUDIO",
                         interactive: true,
                         role: "USER",
@@ -134,6 +134,60 @@ async function* createInputStream() {
                             encoding: "base64"
                         }
                     }
+                }
+            }))
+        }
+    };
+
+    // Send a small silent audio chunk to satisfy the content requirement
+    const silentAudio = Buffer.alloc(1600).toString('base64'); // 100ms of silence at 16kHz
+    yield {
+        chunk: {
+            bytes: new TextEncoder().encode(JSON.stringify({
+                event: {
+                    audioInput: {
+                        promptName: promptId,
+                        contentName: audioContentId,
+                        content: silentAudio
+                    }
+                }
+            }))
+        }
+    };
+
+    // End the audio content
+    yield {
+        chunk: {
+            bytes: new TextEncoder().encode(JSON.stringify({
+                event: {
+                    contentEnd: {
+                        promptName: promptId,
+                        contentName: audioContentId
+                    }
+                }
+            }))
+        }
+    };
+
+    // End the prompt
+    yield {
+        chunk: {
+            bytes: new TextEncoder().encode(JSON.stringify({
+                event: {
+                    promptEnd: {
+                        promptName: promptId
+                    }
+                }
+            }))
+        }
+    };
+
+    // End the session
+    yield {
+        chunk: {
+            bytes: new TextEncoder().encode(JSON.stringify({
+                event: {
+                    sessionEnd: {}
                 }
             }))
         }
