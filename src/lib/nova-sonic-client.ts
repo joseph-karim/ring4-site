@@ -79,13 +79,15 @@ export class NovaSonicClient {
 
     this.socket.on('audioResponse', (audioBase64: string) => {
       console.log('🔊 Nova Sonic audio response received');
+      
+      // Play the audio response
+      this.playAudioResponse(audioBase64);
+      
+      // Also notify callback if set (for UI updates, etc)
       this.onAudioResponseCallback?.({
         audioBase64,
         role: 'assistant'
       });
-      
-      // Automatically play the audio response
-      this.playAudioResponse(audioBase64);
     });
 
     this.socket.on('error', (error: { message: string }) => {
@@ -210,13 +212,12 @@ export class NovaSonicClient {
 
   private async playAudioResponse(audioBase64: string) {
     try {
-      if (!this.audioContext) {
-        // Initialize audio context if not already done
-        this.audioContext = new AudioContext({ sampleRate: 24000 });
-        console.log('🎵 Initialized AudioContext at 24kHz for Nova Sonic playback');
+      if (!this.audioContext || this.audioContext.state === 'closed') {
+        console.warn('AudioContext not available for playback');
+        return;
       }
 
-      // Decode base64 to audio buffer - matching AWS implementation
+      // Decode base64 to audio buffer
       const binaryString = atob(audioBase64);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
@@ -229,20 +230,18 @@ export class NovaSonicClient {
       // Create Float32Array normalized to -1 to 1 range
       const float32Array = new Float32Array(int16Array.length);
       for (let i = 0; i < int16Array.length; i++) {
-        float32Array[i] = int16Array[i] / 32768.0; // Normalize to -1 to 1
+        float32Array[i] = int16Array[i] / 32768.0;
       }
       
       // Create audio buffer at 24kHz (Nova Sonic's output rate)
       const audioBuffer = this.audioContext.createBuffer(1, float32Array.length, 24000);
       audioBuffer.copyToChannel(float32Array, 0);
       
-      // Play the audio chunk immediately
+      // Play the audio
       const source = this.audioContext.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(this.audioContext.destination);
       source.start();
-      
-      console.log(`🔊 Playing Nova Sonic audio chunk: ${float32Array.length} samples`);
 
     } catch (error) {
       console.error('Error playing audio response:', error);

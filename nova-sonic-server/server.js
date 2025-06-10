@@ -559,10 +559,6 @@ INSTRUCTIONS:
 
 // Process response stream from Nova Sonic
 async function processResponseStream(stream, socket, sessionManager) {
-    let currentAudioContentId = null;
-    let currentTextContentId = null;
-    let audioChunkCount = 0;
-    
     try {
         for await (const event of stream) {
             if (event.chunk?.bytes) {
@@ -573,76 +569,29 @@ async function processResponseStream(stream, socket, sessionManager) {
                     // Nova Sonic responses have an "event" wrapper
                     if (jsonResponse.event) {
                         const eventType = Object.keys(jsonResponse.event)[0];
-                        console.log('📨 Nova Sonic event type:', eventType);
                         
-                        // Handle content start event - track content IDs
-                        if (jsonResponse.event.contentStart) {
-                            const contentStart = jsonResponse.event.contentStart;
-                            console.log('📝 Nova Sonic content start:', {
-                                contentId: contentStart.contentId,
-                                type: contentStart.type,
-                                role: contentStart.role,
-                                additionalFields: contentStart.additionalModelFields
-                            });
-                            
-                            // Track audio content ID
-                            if (contentStart.type === 'AUDIO') {
-                                currentAudioContentId = contentStart.contentId;
-                                audioChunkCount = 0;
-                            }
-                            // Track text content ID
-                            else if (contentStart.type === 'TEXT') {
-                                currentTextContentId = contentStart.contentId;
-                            }
-                        }
                         // Handle audio output event
-                        else if (jsonResponse.event.audioOutput) {
-                            const audioOutput = jsonResponse.event.audioOutput;
-                            audioChunkCount++;
-                            console.log(`🔊 Nova Sonic audio chunk #${audioChunkCount} for content ${audioOutput.contentId}`);
-                            
-                            // Only emit audio if it's from the current audio content
-                            if (!currentAudioContentId || audioOutput.contentId === currentAudioContentId) {
-                                socket.emit('audioResponse', audioOutput.content);
-                            }
+                        if (jsonResponse.event.audioOutput) {
+                            console.log('🔊 Nova Sonic audio output received');
+                            const audioBase64 = jsonResponse.event.audioOutput.content;
+                            socket.emit('audioResponse', audioBase64);
                         }
                         // Handle text output event
                         else if (jsonResponse.event.textOutput) {
-                            const textOutput = jsonResponse.event.textOutput;
-                            const content = textOutput.content;
-                            console.log(`💬 Nova Sonic text for content ${textOutput.contentId}:`, content);
+                            const content = jsonResponse.event.textOutput.content;
+                            console.log('💬 Nova Sonic text:', content);
                             
-                            // Only emit non-empty content and check generationStage
+                            // Only emit non-empty content
                             if (content && content.trim()) {
                                 socket.emit('transcript', {
                                     role: 'assistant',
-                                    content: content,
-                                    contentId: textOutput.contentId
+                                    content: content
                                 });
                             }
                         }
-                        // Handle content end event
-                        else if (jsonResponse.event.contentEnd) {
-                            const contentEnd = jsonResponse.event.contentEnd;
-                            console.log('📝 Nova Sonic content end:', {
-                                contentId: contentEnd.contentId,
-                                type: contentEnd.type,
-                                stopReason: contentEnd.stopReason
-                            });
-                            
-                            // Reset tracking when audio content ends
-                            if (contentEnd.contentId === currentAudioContentId) {
-                                currentAudioContentId = null;
-                                console.log(`🔊 Total audio chunks sent: ${audioChunkCount}`);
-                            }
-                        }
-                        // Handle completion end event
-                        else if (jsonResponse.event.completionEnd) {
-                            console.log('🏁 Nova Sonic completion end - conversation finished');
-                        }
-                        // Handle tool use event (if using function calling)
-                        else if (jsonResponse.event.toolUse) {
-                            console.log('🛠️ Nova Sonic tool use:', jsonResponse.event.toolUse);
+                        // Log other events for debugging
+                        else {
+                            console.log('📨 Nova Sonic event:', eventType);
                         }
                     } else {
                         console.log('⚠️ Unexpected response format:', Object.keys(jsonResponse));
