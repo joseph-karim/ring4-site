@@ -35,11 +35,13 @@ async function* createInputStream() {
     yield {
         chunk: {
             bytes: new TextEncoder().encode(JSON.stringify({
-                sessionStart: {
-                    inferenceConfiguration: {
-                        maxTokens: 1024,
-                        topP: 0.9,
-                        temperature: 0.7
+                event: {
+                    sessionStart: {
+                        inferenceConfiguration: {
+                            maxTokens: 1024,
+                            topP: 0.9,
+                            temperature: 0.7
+                        }
                     }
                 }
             }))

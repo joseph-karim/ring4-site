@@ -229,7 +229,7 @@ class BidirectionalStreamHandler {
                     bytes: new TextEncoder().encode(JSON.stringify({
                         event: {
                             promptStart: {
-                                promptId: promptId,
+                                promptName: promptId,
                                 textOutputConfiguration: {
                                     mediaType: "text/plain"
                                 },
@@ -254,8 +254,8 @@ class BidirectionalStreamHandler {
                     bytes: new TextEncoder().encode(JSON.stringify({
                         event: {
                             contentStart: {
-                                promptId: promptId,
-                                contentId: contentId,
+                                promptName: promptId,
+                                contentName: contentId,
                                 type: "TEXT",
                                 interactive: true,
                                 role: "SYSTEM",
@@ -274,8 +274,8 @@ class BidirectionalStreamHandler {
                     bytes: new TextEncoder().encode(JSON.stringify({
                         event: {
                             textInput: {
-                                promptId: promptId,
-                                contentId: contentId,
+                                promptName: promptId,
+                                contentName: contentId,
                                 content: this.systemPrompt
                             }
                         }
@@ -289,8 +289,8 @@ class BidirectionalStreamHandler {
                     bytes: new TextEncoder().encode(JSON.stringify({
                         event: {
                             contentEnd: {
-                                promptId: promptId,
-                                contentId: contentId
+                                promptName: promptId,
+                                contentName: contentId
                             }
                         }
                     }))
@@ -303,8 +303,8 @@ class BidirectionalStreamHandler {
                     bytes: new TextEncoder().encode(JSON.stringify({
                         event: {
                             contentStart: {
-                                promptId: promptId,
-                                contentId: audioContentId,
+                                promptName: promptId,
+                                contentName: audioContentId,
                                 type: "AUDIO",
                                 interactive: true,
                                 role: "USER",
@@ -356,8 +356,8 @@ class BidirectionalStreamHandler {
                 bytes: new TextEncoder().encode(JSON.stringify({
                     event: {
                         audioInput: {
-                            promptId: this.sessionManager.getPromptId(),
-                            contentId: this.sessionManager.audioContentId,
+                            promptName: this.sessionManager.getPromptId(),
+                            contentName: this.sessionManager.audioContentId,
                             content: audioBase64
                         }
                     }
