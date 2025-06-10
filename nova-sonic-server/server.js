@@ -560,6 +560,9 @@ INSTRUCTIONS:
 // Process response stream from Nova Sonic
 async function processResponseStream(stream, socket, sessionManager) {
     let currentContentRole = null; // Track role from contentStart events
+    let currentAudioContentId = null; // Track audio content ID
+    let audioChunkCount = 0;
+    let shouldPlayAudio = true; // Track if we should play audio for current content
     
     try {
         for await (const event of stream) {
@@ -588,12 +591,26 @@ async function processResponseStream(stream, socket, sessionManager) {
                                 currentContentRole = contentStart.role?.toLowerCase() || 'assistant';
                                 // Store the contentStart for checking generation stage
                                 sessionManager.lastContentStart = contentStart;
+                            } else if (contentStart.type === 'AUDIO') {
+                                currentAudioContentId = contentStart.contentId || contentStart.contentName;
+                                audioChunkCount = 0;
+                                
+                                // Only play audio if this is FINAL generation (not SPECULATIVE)
+                                shouldPlayAudio = stage === 'FINAL' || stage === 'unknown';
+                                
+                                console.log(`🎵 Audio content starting - ID: ${currentAudioContentId}, stage: ${stage}, will play: ${shouldPlayAudio}`);
                             }
                         }
                         // Handle audio output event (AI speaking)
                         else if (jsonResponse.event.audioOutput) {
-                            console.log('🔊 Nova Sonic audio output received');
-                            socket.emit('audioResponse', jsonResponse.event.audioOutput.content);
+                            audioChunkCount++;
+                            
+                            if (shouldPlayAudio) {
+                                console.log(`🔊 Nova Sonic audio chunk #${audioChunkCount} - sending to client`);
+                                socket.emit('audioResponse', jsonResponse.event.audioOutput.content);
+                            } else {
+                                console.log(`🔇 Nova Sonic audio chunk #${audioChunkCount} - skipping (SPECULATIVE)`);
+                            }
                         }
                         // Handle text output event (transcriptions for display)
                         else if (jsonResponse.event.textOutput) {
@@ -620,6 +637,14 @@ async function processResponseStream(stream, socket, sessionManager) {
                                         content: content
                                     });
                                 }
+                            }
+                        }
+                        // Handle content end event
+                        else if (jsonResponse.event.contentEnd) {
+                            const contentEnd = jsonResponse.event.contentEnd;
+                            if (currentAudioContentId && (contentEnd.contentId === currentAudioContentId || contentEnd.contentName === currentAudioContentId)) {
+                                console.log(`🎵 Audio content ended - ID: ${currentAudioContentId}, sent ${audioChunkCount} chunks`);
+                                currentAudioContentId = null;
                             }
                         }
                         // Log other events
