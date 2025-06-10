@@ -469,16 +469,18 @@ async function processResponseStream(stream, socket, sessionManager) {
 }
 
 // Start the server
-const PORT = parseInt(process.env.PORT || '3002', 10);
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
-// Just listen on port without specifying host - this makes Node.js listen on all interfaces
-server.listen(PORT, () => {
+// Listen on :: to support both IPv4 and IPv6
+// :: binds to all addresses (both IPv4 and IPv6) which Railway requires
+server.listen(PORT, '::', () => {
     console.log(`🚀 Nova Sonic server running on port ${PORT}`);
     console.log(`🎯 WebSocket endpoint: ws://localhost:${PORT}`);
     console.log(`📊 Health check: http://localhost:${PORT}/health`);
     console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🚉 PORT from env: ${process.env.PORT || 'not set (using 3002)'}`);
-    console.log(`🌐 Listening on all available interfaces (IPv4 and IPv6)`);
+    console.log(`🚉 PORT from env: ${process.env.PORT || 'not set (using 3000)'}`);
+    console.log(`🌐 Listening on :: (all interfaces - dual stack IPv4/IPv6)`);
+    console.log(`🚄 Railway can connect via IPv6: [::]:${PORT}`);
     
     if (!process.env.AWS_ACCESS_KEY_ID) {
         console.warn('⚠️  AWS credentials not configured - Nova Sonic will not work');
