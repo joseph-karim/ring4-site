@@ -34,6 +34,11 @@ export class NovaSonicClient {
   private onTranscriptCallback?: (message: TranscriptMessage) => void;
   private onAudioResponseCallback?: (audio: AudioResponse) => void;
   private onStatusCallback?: (status: string, type?: 'connected' | 'recording' | 'processing' | 'error') => void;
+  
+  // Audio buffering for smooth playback
+  private audioQueue: ArrayBuffer[] = [];
+  private isPlaying = false;
+  private playbackContext: AudioContext | null = null;
 
   constructor(serverUrl?: string) {
     // Use environment variable or fallback to localhost
@@ -91,8 +96,8 @@ export class NovaSonicClient {
     this.socket.on('audioResponse', (audioBase64: string) => {
       console.log('🔊 Nova Sonic audio response received');
       
-      // Play the audio response
-      this.playAudioResponse(audioBase64);
+      // Add to queue and process
+      this.queueAudioChunk(audioBase64);
       
       // Also notify callback if set (for UI updates, etc)
       this.onAudioResponseCallback?.({
@@ -152,9 +157,13 @@ export class NovaSonicClient {
       // Create AudioContext at 16kHz to match microphone input
       this.audioContext = new AudioContext({ sampleRate: 16000 });
       this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream);
+      
+      // Create separate playback context at system default rate for better quality
+      this.playbackContext = new AudioContext();
 
       console.log('🎤 Audio initialized successfully');
-      console.log('🎤 AudioContext sample rate:', this.audioContext.sampleRate);
+      console.log('🎤 Recording AudioContext sample rate:', this.audioContext.sampleRate);
+      console.log('🎤 Playback AudioContext sample rate:', this.playbackContext.sampleRate);
     } catch (error) {
       console.error('Error accessing microphone:', error);
       throw new Error('Could not access microphone. Please check permissions.');
@@ -168,17 +177,42 @@ export class NovaSonicClient {
     }
 
     try {
-      // Create audio processor with larger buffer for smoother audio
-      this.processor = this.audioContext.createScriptProcessor(2048, 1, 1);
+      // Create audio processor with optimal buffer size
+      // Using 4096 for better performance and less distortion
+      const bufferSize = 4096;
+      this.processor = this.audioContext.createScriptProcessor(bufferSize, 1, 1);
+      
+      // Use a buffer to accumulate audio data before sending
+      let audioBuffer: Float32Array[] = [];
+      let lastSendTime = Date.now();
+      const SEND_INTERVAL_MS = 100; // Send every 100ms
       
       this.processor.onaudioprocess = (event) => {
         if (!this.isRecording) return;
         
         const inputData = event.inputBuffer.getChannelData(0);
-        const base64Data = this.float32ToBase64(inputData);
+        audioBuffer.push(new Float32Array(inputData));
         
-        // Send audio data to Nova Sonic
-        this.socket?.emit('audio_input', base64Data);
+        // Send accumulated audio every SEND_INTERVAL_MS
+        const now = Date.now();
+        if (now - lastSendTime >= SEND_INTERVAL_MS) {
+          // Combine all buffered audio
+          const totalLength = audioBuffer.reduce((sum, buf) => sum + buf.length, 0);
+          const combinedBuffer = new Float32Array(totalLength);
+          let offset = 0;
+          for (const buf of audioBuffer) {
+            combinedBuffer.set(buf, offset);
+            offset += buf.length;
+          }
+          
+          // Convert and send
+          const base64Data = this.float32ToBase64(combinedBuffer);
+          this.socket?.emit('audio_input', base64Data);
+          
+          // Reset buffer and timer
+          audioBuffer = [];
+          lastSendTime = now;
+        }
       };
 
       this.audioSource.connect(this.processor);
@@ -221,63 +255,93 @@ export class NovaSonicClient {
     return btoa(binaryString);
   }
 
-  private async playAudioResponse(audioBase64: string) {
+  private queueAudioChunk(audioBase64: string) {
     try {
-      if (!this.audioContext || this.audioContext.state === 'closed') {
-        console.warn('AudioContext not available for playback');
-        return;
-      }
-
-      // Decode base64 to audio buffer
+      // Decode base64 to ArrayBuffer
       const binaryString = atob(audioBase64);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
       
-      // Convert to Int16Array (16-bit PCM format from Nova Sonic)
-      const int16Array = new Int16Array(bytes.buffer);
+      // Add to queue
+      this.audioQueue.push(bytes.buffer);
       
-      // Create Float32Array normalized to -1 to 1 range
-      const float32Array = new Float32Array(int16Array.length);
-      for (let i = 0; i < int16Array.length; i++) {
-        float32Array[i] = int16Array[i] / 32768.0;
+      // Start playback if not already playing
+      if (!this.isPlaying) {
+        this.processAudioQueue();
       }
-      
-      // Create audio buffer at 24kHz (Nova Sonic's output rate)
-      const audioBuffer = this.audioContext.createBuffer(1, float32Array.length, 24000);
-      audioBuffer.copyToChannel(float32Array, 0);
-      
-      // Resample if AudioContext is not at 24kHz
-      if (this.audioContext.sampleRate !== 24000) {
-        // Create offline context for resampling
-        const offlineContext = new OfflineAudioContext(1, 
-          Math.floor(float32Array.length * this.audioContext.sampleRate / 24000),
-          this.audioContext.sampleRate);
-        
-        const source = offlineContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(offlineContext.destination);
-        source.start();
-        
-        const resampledBuffer = await offlineContext.startRendering();
-        
-        // Play the resampled audio
-        const playSource = this.audioContext.createBufferSource();
-        playSource.buffer = resampledBuffer;
-        playSource.connect(this.audioContext.destination);
-        playSource.start();
-      } else {
-        // Play directly if sample rates match
-        const source = this.audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(this.audioContext.destination);
-        source.start();
-      }
-
     } catch (error) {
-      console.error('Error playing audio response:', error);
+      console.error('Error queueing audio chunk:', error);
     }
+  }
+  
+  private async processAudioQueue() {
+    if (this.isPlaying || this.audioQueue.length === 0) return;
+    
+    this.isPlaying = true;
+    
+    while (this.audioQueue.length > 0) {
+      const audioBuffer = this.audioQueue.shift()!;
+      await this.playAudioChunk(audioBuffer);
+    }
+    
+    this.isPlaying = false;
+  }
+  
+  private async playAudioChunk(audioBuffer: ArrayBuffer): Promise<void> {
+    return new Promise((resolve) => {
+      try {
+        if (!this.playbackContext || this.playbackContext.state === 'closed') {
+          console.warn('Playback context not available');
+          resolve();
+          return;
+        }
+        
+        // Convert to Int16Array (16-bit PCM format from Nova Sonic)
+        const int16Array = new Int16Array(audioBuffer);
+        
+        // Create Float32Array normalized to -1 to 1 range
+        const float32Array = new Float32Array(int16Array.length);
+        for (let i = 0; i < int16Array.length; i++) {
+          float32Array[i] = int16Array[i] / 32768.0;
+        }
+        
+        // Create audio buffer at 24kHz (Nova Sonic's output rate)
+        const tempBuffer = this.playbackContext.createBuffer(1, float32Array.length, 24000);
+        tempBuffer.copyToChannel(float32Array, 0);
+        
+        // Create an offline context to resample to playback sample rate
+        const targetSampleRate = this.playbackContext.sampleRate;
+        const targetLength = Math.floor(float32Array.length * targetSampleRate / 24000);
+        const offlineContext = new OfflineAudioContext(1, targetLength, targetSampleRate);
+        
+        const offlineSource = offlineContext.createBufferSource();
+        offlineSource.buffer = tempBuffer;
+        offlineSource.connect(offlineContext.destination);
+        offlineSource.start();
+        
+        offlineContext.startRendering().then(resampledBuffer => {
+          // Play the resampled audio
+          const source = this.playbackContext!.createBufferSource();
+          source.buffer = resampledBuffer;
+          source.connect(this.playbackContext!.destination);
+          
+          source.onended = () => {
+            resolve();
+          };
+          
+          source.start();
+        }).catch(error => {
+          console.error('Error resampling audio:', error);
+          resolve();
+        });
+        
+      } catch (error) {
+        console.error('Error playing audio chunk:', error);
+        resolve();
+      }
+    });
   }
 
   // Event listener setters
@@ -309,6 +373,10 @@ export class NovaSonicClient {
   disconnect() {
     this.stopRecording();
     
+    // Clear audio queue
+    this.audioQueue = [];
+    this.isPlaying = false;
+    
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
       this.mediaStream = null;
@@ -317,6 +385,11 @@ export class NovaSonicClient {
     if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close();
       this.audioContext = null;
+    }
+    
+    if (this.playbackContext && this.playbackContext.state !== 'closed') {
+      this.playbackContext.close();
+      this.playbackContext = null;
     }
     
     if (this.socket) {

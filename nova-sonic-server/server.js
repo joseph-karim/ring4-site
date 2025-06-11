@@ -475,17 +475,21 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            // Log audio level for debugging
+            // Process audio in chunks to prevent overflow
             const audioBuffer = Buffer.from(audioBase64, 'base64');
-            const samples = new Int16Array(audioBuffer.buffer);
-            let sum = 0;
-            for (let i = 0; i < samples.length; i++) {
-                sum += samples[i] * samples[i];
-            }
-            const rms = Math.sqrt(sum / samples.length);
-            const level = Math.round((rms / 32768) * 100);
+            const samples = new Int16Array(audioBuffer.buffer, audioBuffer.byteOffset, audioBuffer.byteLength / 2);
             
-            console.log(`🎤 Processing audio for ${socket.id} - Level: ${level}% (${samples.length} samples)`);
+            // Calculate audio level for debugging
+            let maxAmplitude = 0;
+            for (let i = 0; i < samples.length; i++) {
+                maxAmplitude = Math.max(maxAmplitude, Math.abs(samples[i]));
+            }
+            const level = Math.round((maxAmplitude / 32768) * 100);
+            
+            // Only log if there's actual audio content
+            if (level > 1) {
+                console.log(`🎤 Processing audio for ${socket.id} - Level: ${level}% (${samples.length} samples)`);
+            }
             
             // Send audio input through the bidirectional stream handler
             sessionManager.streamHandler.sendAudioInput(audioBase64);
@@ -622,8 +626,12 @@ async function processResponseStream(stream, socket, sessionManager) {
                             audioChunkCount++;
                             
                             if (shouldPlayAudio) {
-                                console.log(`🔊 Nova Sonic audio chunk #${audioChunkCount} - sending to client`);
-                                socket.emit('audioResponse', jsonResponse.event.audioOutput.content);
+                                const audioContent = jsonResponse.event.audioOutput.content;
+                                const audioBytes = Buffer.from(audioContent, 'base64');
+                                console.log(`🔊 Nova Sonic audio chunk #${audioChunkCount} - ${audioBytes.length} bytes - sending to client`);
+                                
+                                // Send with proper timing to prevent audio overlap
+                                socket.emit('audioResponse', audioContent);
                             } else {
                                 console.log(`🔇 Nova Sonic audio chunk #${audioChunkCount} - skipping (SPECULATIVE)`);
                             }

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova Sonic Audio Quality Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .primary {
+      background: #4CAF50;
+      color: white;
+    }
+    .primary:hover {
+      background: #45a049;
+    }
+    .secondary {
+      background: #f44336;
+      color: white;
+    }
+    .secondary:hover {
+      background: #da190b;
+    }
+    button:disabled {
+      background: #ddd;
+      color: #999;
+      cursor: not-allowed;
+    }
+    .status {
+      text-align: center;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 5px;
+      font-weight: bold;
+    }
+    .status.connected {
+      background: #e8f5e9;
+      color: #2e7d32;
+    }
+    .status.recording {
+      background: #fff3e0;
+      color: #e65100;
+    }
+    .status.processing {
+      background: #e3f2fd;
+      color: #1565c0;
+    }
+    .status.error {
+      background: #ffebee;
+      color: #c62828;
+    }
+    .transcript {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      padding: 15px;
+      margin-top: 20px;
+      height: 300px;
+      overflow-y: auto;
+      background: #fafafa;
+    }
+    .message {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .message.user {
+      background: #e3f2fd;
+      margin-left: 50px;
+    }
+    .message.assistant {
+      background: #f3e5f5;
+      margin-right: 50px;
+    }
+    .audio-info {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      font-family: monospace;
+      font-size: 12px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .metric {
+      background: #f9f9f9;
+      padding: 15px;
+      border-radius: 5px;
+      text-align: center;
+    }
+    .metric h3 {
+      margin: 0 0 10px 0;
+      color: #666;
+      font-size: 14px;
+    }
+    .metric .value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎙️ Nova Sonic Audio Quality Test</h1>
+    
+    <div id="status" class="status">Initializing...</div>
+    
+    <div class="controls">
+      <button id="initBtn" class="primary">Initialize Session</button>
+      <button id="recordBtn" class="primary" disabled>Start Recording</button>
+      <button id="disconnectBtn" class="secondary" disabled>Disconnect</button>
+    </div>
+    
+    <div class="metrics">
+      <div class="metric">
+        <h3>Audio Chunks</h3>
+        <div class="value" id="chunkCount">0</div>
+      </div>
+      <div class="metric">
+        <h3>Latency (ms)</h3>
+        <div class="value" id="latency">-</div>
+      </div>
+      <div class="metric">
+        <h3>Queue Size</h3>
+        <div class="value" id="queueSize">0</div>
+      </div>
+    </div>
+    
+    <div class="audio-info" id="audioInfo">
+      Waiting for audio stream...
+    </div>
+    
+    <div class="transcript" id="transcript">
+      <div style="text-align: center; color: #999; padding: 50px;">
+        Conversation will appear here...
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    // Import the Nova Sonic client
+    import { NovaSonicClient } from './src/lib/nova-sonic-client.ts';
+    
+    let client = null;
+    let isRecording = false;
+    let audioChunkCount = 0;
+    let messageTimestamp = 0;
+    
+    const status = document.getElementById('status');
+    const initBtn = document.getElementById('initBtn');
+    const recordBtn = document.getElementById('recordBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
+    const transcript = document.getElementById('transcript');
+    const audioInfo = document.getElementById('audioInfo');
+    const chunkCountEl = document.getElementById('chunkCount');
+    const latencyEl = document.getElementById('latency');
+    const queueSizeEl = document.getElementById('queueSize');
+    
+    function updateStatus(message, type = '') {
+      status.textContent = message;
+      status.className = 'status ' + type;
+    }
+    
+    function addMessage(role, content) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+      messageDiv.innerHTML = `<strong>${role}:</strong> ${content}`;
+      transcript.appendChild(messageDiv);
+      transcript.scrollTop = transcript.scrollHeight;
+      
+      // Update latency if this is an assistant response
+      if (role === 'assistant' && messageTimestamp > 0) {
+        const latency = Date.now() - messageTimestamp;
+        latencyEl.textContent = latency;
+        messageTimestamp = 0;
+      }
+    }
+    
+    initBtn.addEventListener('click', async () => {
+      try {
+        initBtn.disabled = true;
+        updateStatus('Initializing Nova Sonic...', 'processing');
+        
+        // Create client with proper URL
+        const serverUrl = window.location.hostname === 'localhost' 
+          ? 'http://localhost:3002'
+          : 'https://ring4-site-2.onrender.com';
+          
+        client = new NovaSonicClient(serverUrl);
+        
+        // Set up event handlers
+        client.onStatus((message, type) => {
+          updateStatus(message, type || '');
+          console.log('Status:', message, type);
+        });
+        
+        client.onTranscript((message) => {
+          addMessage(message.role, message.content);
+        });
+        
+        client.onAudioResponse((audio) => {
+          audioChunkCount++;
+          chunkCountEl.textContent = audioChunkCount;
+          
+          // Update audio info
+          const bytes = atob(audio.audioBase64).length;
+          const samples = bytes / 2; // 16-bit samples
+          const duration = (samples / 24000 * 1000).toFixed(1); // ms at 24kHz
+          
+          audioInfo.innerHTML = `
+            Audio Chunk #${audioChunkCount}<br>
+            Size: ${bytes} bytes (${samples} samples)<br>
+            Duration: ${duration}ms<br>
+            Format: 16-bit PCM @ 24kHz
+          `;
+          
+          // Estimate queue size (this is a rough estimate)
+          if (client.audioQueue) {
+            queueSizeEl.textContent = client.audioQueue.length;
+          }
+        });
+        
+        // Initialize session with test prompt
+        await client.initializeSession({
+          systemPrompt: `You are a helpful AI assistant testing audio quality. 
+            When responding, please speak clearly and at a moderate pace. 
+            Keep your responses brief (1-2 sentences) to help test audio latency.
+            Always greet the user warmly when they first speak.`,
+          businessInfo: {
+            name: 'Audio Quality Test',
+            personality: 'Clear and articulate speaker'
+          }
+        });
+        
+        // Clear transcript for new session
+        transcript.innerHTML = '';
+        audioChunkCount = 0;
+        chunkCountEl.textContent = '0';
+        
+        recordBtn.disabled = false;
+        disconnectBtn.disabled = false;
+        
+      } catch (error) {
+        console.error('Failed to initialize:', error);
+        updateStatus('Failed to initialize: ' + error.message, 'error');
+        initBtn.disabled = false;
+      }
+    });
+    
+    recordBtn.addEventListener('click', () => {
+      if (!client) return;
+      
+      if (isRecording) {
+        client.stopRecording();
+        recordBtn.textContent = 'Start Recording';
+        recordBtn.classList.add('primary');
+        recordBtn.classList.remove('secondary');
+        isRecording = false;
+      } else {
+        // Track timestamp for latency measurement
+        messageTimestamp = Date.now();
+        
+        client.startRecording();
+        recordBtn.textContent = 'Stop Recording';
+        recordBtn.classList.remove('primary');
+        recordBtn.classList.add('secondary');
+        isRecording = true;
+      }
+    });
+    
+    disconnectBtn.addEventListener('click', () => {
+      if (client) {
+        client.disconnect();
+        client = null;
+        isRecording = false;
+        
+        updateStatus('Disconnected', '');
+        initBtn.disabled = false;
+        recordBtn.disabled = true;
+        disconnectBtn.disabled = true;
+        recordBtn.textContent = 'Start Recording';
+        recordBtn.classList.add('primary');
+        recordBtn.classList.remove('secondary');
+        
+        audioInfo.textContent = 'Session ended';
+      }
+    });
+    
+    // Initialize on page load
+    updateStatus('Ready to initialize', '');
+  </script>
+</body>
+</html>
