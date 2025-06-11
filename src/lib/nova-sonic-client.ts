@@ -39,6 +39,14 @@ export class NovaSonicClient {
   private audioQueue: ArrayBuffer[] = [];
   private isPlaying = false;
   private playbackContext: AudioContext | null = null;
+  
+  // Diagnostics
+  private audioStats = {
+    chunksReceived: 0,
+    chunksPlayed: 0,
+    totalLatency: 0,
+    lastChunkTime: 0
+  };
 
   constructor(serverUrl?: string) {
     // Use environment variable or fallback to localhost
@@ -94,7 +102,13 @@ export class NovaSonicClient {
     });
 
     this.socket.on('audioResponse', (audioBase64: string) => {
-      console.log('🔊 Nova Sonic audio response received');
+      this.audioStats.chunksReceived++;
+      const now = Date.now();
+      if (this.audioStats.lastChunkTime > 0) {
+        const chunkInterval = now - this.audioStats.lastChunkTime;
+        console.log(`🔊 Audio chunk #${this.audioStats.chunksReceived} - interval: ${chunkInterval}ms`);
+      }
+      this.audioStats.lastChunkTime = now;
       
       // Add to queue and process
       this.queueAudioChunk(audioBase64);
@@ -177,41 +191,38 @@ export class NovaSonicClient {
     }
 
     try {
-      // Create audio processor with optimal buffer size
-      // Using 4096 for better performance and less distortion
-      const bufferSize = 4096;
+      // Create audio processor with smaller buffer for lower latency
+      // AWS example uses 1024 chunk size
+      const bufferSize = 1024;
       this.processor = this.audioContext.createScriptProcessor(bufferSize, 1, 1);
       
-      // Use a buffer to accumulate audio data before sending
-      let audioBuffer: Float32Array[] = [];
-      let lastSendTime = Date.now();
-      const SEND_INTERVAL_MS = 100; // Send every 100ms
+      // Send audio immediately with minimal buffering
+      let silenceCounter = 0;
+      const SILENCE_THRESHOLD = 0.01;
       
       this.processor.onaudioprocess = (event) => {
         if (!this.isRecording) return;
         
         const inputData = event.inputBuffer.getChannelData(0);
-        audioBuffer.push(new Float32Array(inputData));
         
-        // Send accumulated audio every SEND_INTERVAL_MS
-        const now = Date.now();
-        if (now - lastSendTime >= SEND_INTERVAL_MS) {
-          // Combine all buffered audio
-          const totalLength = audioBuffer.reduce((sum, buf) => sum + buf.length, 0);
-          const combinedBuffer = new Float32Array(totalLength);
-          let offset = 0;
-          for (const buf of audioBuffer) {
-            combinedBuffer.set(buf, offset);
-            offset += buf.length;
-          }
-          
-          // Convert and send
-          const base64Data = this.float32ToBase64(combinedBuffer);
+        // Check if audio contains actual sound (not silence)
+        let maxAmplitude = 0;
+        for (let i = 0; i < inputData.length; i++) {
+          maxAmplitude = Math.max(maxAmplitude, Math.abs(inputData[i]));
+        }
+        
+        // Only send if there's actual audio content
+        if (maxAmplitude > SILENCE_THRESHOLD) {
+          silenceCounter = 0;
+          const base64Data = this.float32ToBase64(inputData);
           this.socket?.emit('audio_input', base64Data);
-          
-          // Reset buffer and timer
-          audioBuffer = [];
-          lastSendTime = now;
+        } else {
+          silenceCounter++;
+          // Send silence periodically to keep connection alive
+          if (silenceCounter % 50 === 0) {
+            const base64Data = this.float32ToBase64(inputData);
+            this.socket?.emit('audio_input', base64Data);
+          }
         }
       };
 
@@ -247,7 +258,9 @@ export class NovaSonicClient {
   private float32ToBase64(buffer: Float32Array): string {
     const int16Buffer = new Int16Array(buffer.length);
     for (let i = 0; i < buffer.length; i++) {
-      int16Buffer[i] = Math.max(-1, Math.min(1, buffer[i])) * 0x7FFF;
+      // More conservative scaling to prevent clipping
+      const sample = Math.max(-1, Math.min(1, buffer[i]));
+      int16Buffer[i] = Math.floor(sample * 0x7FFF * 0.9); // 90% to avoid clipping
     }
     
     const uint8Buffer = new Uint8Array(int16Buffer.buffer);
@@ -298,13 +311,29 @@ export class NovaSonicClient {
           return;
         }
         
+        this.audioStats.chunksPlayed++;
+        
         // Convert to Int16Array (16-bit PCM format from Nova Sonic)
         const int16Array = new Int16Array(audioBuffer);
         
-        // Create Float32Array normalized to -1 to 1 range
+        // Analyze audio for diagnostics
+        let maxValue = 0;
+        let minValue = 0;
+        for (let i = 0; i < int16Array.length; i++) {
+          maxValue = Math.max(maxValue, int16Array[i]);
+          minValue = Math.min(minValue, int16Array[i]);
+        }
+        
+        if (this.audioStats.chunksPlayed % 10 === 0) {
+          console.log(`📊 Audio stats - Chunks: ${this.audioStats.chunksPlayed}/${this.audioStats.chunksReceived}, Range: [${minValue}, ${maxValue}], Samples: ${int16Array.length}`);
+        }
+        
+        // Create Float32Array normalized to -1 to 1 range with clipping protection
         const float32Array = new Float32Array(int16Array.length);
         for (let i = 0; i < int16Array.length; i++) {
-          float32Array[i] = int16Array[i] / 32768.0;
+          // Clamp to prevent overflow
+          const sample = Math.max(-32768, Math.min(32767, int16Array[i]));
+          float32Array[i] = sample / 32768.0;
         }
         
         // Create audio buffer at 24kHz (Nova Sonic's output rate)
