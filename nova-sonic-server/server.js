@@ -563,6 +563,8 @@ async function processResponseStream(stream, socket, sessionManager) {
     let currentAudioContentId = null; // Track audio content ID
     let audioChunkCount = 0;
     let shouldPlayAudio = true; // Track if we should play audio for current content
+    let completionCount = 0;
+    let contentBlockCount = 0;
     
     try {
         for await (const event of stream) {
@@ -584,7 +586,8 @@ async function processResponseStream(stream, socket, sessionManager) {
                                 }
                             } catch (e) {}
                             
-                            console.log(`📝 Content start: ${contentStart.type} | role: ${contentStart.role} | stage: ${stage} | contentId: ${contentStart.contentId || contentStart.contentName}`);
+                            contentBlockCount++;
+                            console.log(`📝 Content block #${contentBlockCount} starting: ${contentStart.type} | role: ${contentStart.role} | stage: ${stage} | contentId: ${contentStart.contentId || contentStart.contentName}`);
                             
                             // Remember the role for text outputs
                             if (contentStart.type === 'TEXT') {
@@ -599,6 +602,9 @@ async function processResponseStream(stream, socket, sessionManager) {
                                 shouldPlayAudio = stage === 'FINAL' || stage === 'unknown';
                                 
                                 console.log(`🎵 Audio content starting - ID: ${currentAudioContentId}, stage: ${stage}, will play: ${shouldPlayAudio}`);
+                                
+                                // Debug: Log all content start details
+                                console.log('   Full contentStart:', JSON.stringify(contentStart, null, 2));
                             }
                         }
                         // Handle audio output event (AI speaking)
@@ -647,6 +653,15 @@ async function processResponseStream(stream, socket, sessionManager) {
                                 console.log(`🎵 Audio content ended - ID: ${currentAudioContentId}, sent ${audioChunkCount} chunks`);
                                 currentAudioContentId = null;
                             }
+                        }
+                        // Handle completion start
+                        else if (jsonResponse.event.completionStart) {
+                            completionCount++;
+                            console.log(`🚀 Completion #${completionCount} started`);
+                        }
+                        // Handle completion end
+                        else if (jsonResponse.event.completionEnd) {
+                            console.log(`🏁 Completion #${completionCount} ended`);
                         }
                         // Log other events
                         else {
