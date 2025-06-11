@@ -149,8 +149,8 @@ export class NovaSonicClient {
         }
       });
 
-      // Create AudioContext at 24kHz to match Nova Sonic output
-      this.audioContext = new AudioContext({ sampleRate: 24000 });
+      // Create AudioContext at 16kHz to match microphone input
+      this.audioContext = new AudioContext({ sampleRate: 16000 });
       this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream);
 
       console.log('🎤 Audio initialized successfully');
@@ -168,8 +168,8 @@ export class NovaSonicClient {
     }
 
     try {
-      // Create audio processor
-      this.processor = this.audioContext.createScriptProcessor(512, 1, 1);
+      // Create audio processor with larger buffer for smoother audio
+      this.processor = this.audioContext.createScriptProcessor(2048, 1, 1);
       
       this.processor.onaudioprocess = (event) => {
         if (!this.isRecording) return;
@@ -248,11 +248,32 @@ export class NovaSonicClient {
       const audioBuffer = this.audioContext.createBuffer(1, float32Array.length, 24000);
       audioBuffer.copyToChannel(float32Array, 0);
       
-      // Play the audio
-      const source = this.audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(this.audioContext.destination);
-      source.start();
+      // Resample if AudioContext is not at 24kHz
+      if (this.audioContext.sampleRate !== 24000) {
+        // Create offline context for resampling
+        const offlineContext = new OfflineAudioContext(1, 
+          Math.floor(float32Array.length * this.audioContext.sampleRate / 24000),
+          this.audioContext.sampleRate);
+        
+        const source = offlineContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(offlineContext.destination);
+        source.start();
+        
+        const resampledBuffer = await offlineContext.startRendering();
+        
+        // Play the resampled audio
+        const playSource = this.audioContext.createBufferSource();
+        playSource.buffer = resampledBuffer;
+        playSource.connect(this.audioContext.destination);
+        playSource.start();
+      } else {
+        // Play directly if sample rates match
+        const source = this.audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(this.audioContext.destination);
+        source.start();
+      }
 
     } catch (error) {
       console.error('Error playing audio response:', error);

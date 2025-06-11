@@ -328,14 +328,18 @@ class BidirectionalStreamHandler {
             
             // Keep the stream alive and process queued audio input
             while (this.isStreamActive) {
-                // Check for queued audio input
-                if (this.inputQueue.length > 0) {
+                // Wait for audio input without busy-waiting
+                if (this.inputQueue.length === 0) {
+                    await new Promise(resolve => {
+                        this.resolveQueue = resolve;
+                    });
+                }
+                
+                // Process all queued audio at once
+                while (this.inputQueue.length > 0 && this.isStreamActive) {
                     const audioEvent = this.inputQueue.shift();
                     yield audioEvent;
                 }
-                
-                // Small delay to prevent busy waiting
-                await new Promise(resolve => setTimeout(resolve, 10));
             }
             
         } catch (error) {
@@ -366,6 +370,12 @@ class BidirectionalStreamHandler {
         };
 
         this.inputQueue.push(audioEvent);
+        
+        // Wake up the stream if it's waiting
+        if (this.resolveQueue) {
+            this.resolveQueue();
+            this.resolveQueue = null;
+        }
     }
 
     // End the stream
