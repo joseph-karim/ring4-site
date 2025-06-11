@@ -39,9 +39,12 @@ export class NovaSonicClient {
     // Use environment variable or fallback to localhost
     const defaultUrl = import.meta.env.VITE_NOVA_SONIC_URL || 'http://localhost:3002';
     
+    // Create a new socket connection
     this.socket = io(serverUrl || defaultUrl, {
       transports: ['websocket', 'polling'],
-      autoConnect: true
+      autoConnect: true,
+      // Force new connection to prevent reusing existing ones
+      forceNew: true
     });
     
     this.setupSocketListeners();
@@ -49,6 +52,14 @@ export class NovaSonicClient {
 
   private setupSocketListeners() {
     if (!this.socket) return;
+
+    // Remove any existing listeners first to prevent duplicates
+    this.socket.off('connect');
+    this.socket.off('disconnect');
+    this.socket.off('session_ready');
+    this.socket.off('transcript');
+    this.socket.off('audioResponse');
+    this.socket.off('error');
 
     this.socket.on('connect', () => {
       console.log('🎯 Connected to Nova Sonic server');
@@ -288,6 +299,14 @@ export class NovaSonicClient {
     }
     
     if (this.socket) {
+      // Remove all listeners before disconnecting
+      this.socket.off('connect');
+      this.socket.off('disconnect');
+      this.socket.off('session_ready');
+      this.socket.off('transcript');
+      this.socket.off('audioResponse');
+      this.socket.off('error');
+      
       this.socket.disconnect();
       this.socket = null;
     }

@@ -627,6 +627,7 @@ async function processResponseStream(stream, socket, sessionManager) {
                             }
                             
                             console.log(`💬 ${role} (${generationStage}):`, content);
+                            console.log(`   Content ID: ${jsonResponse.event.textOutput.contentId || 'unknown'}`);
                             
                             // For assistant responses, only show FINAL text to avoid duplicates
                             // For user transcriptions, always show them
