@@ -172,8 +172,9 @@ export class NovaSonicClient {
       this.audioContext = new AudioContext({ sampleRate: 16000 });
       this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream);
       
-      // Create separate playback context at system default rate for better quality
-      this.playbackContext = new AudioContext();
+      // Create playback context at 24kHz to match Nova Sonic's output
+      // This avoids any resampling issues
+      this.playbackContext = new AudioContext({ sampleRate: 24000 });
 
       console.log('🎤 Audio initialized successfully');
       console.log('🎤 Recording AudioContext sample rate:', this.audioContext.sampleRate);
@@ -316,54 +317,37 @@ export class NovaSonicClient {
         // Convert to Int16Array (16-bit PCM format from Nova Sonic)
         const int16Array = new Int16Array(audioBuffer);
         
-        // Analyze audio for diagnostics
-        let maxValue = 0;
-        let minValue = 0;
-        for (let i = 0; i < int16Array.length; i++) {
-          maxValue = Math.max(maxValue, int16Array[i]);
-          minValue = Math.min(minValue, int16Array[i]);
-        }
-        
+        // Debug logging every 10 chunks
         if (this.audioStats.chunksPlayed % 10 === 0) {
+          let maxValue = 0;
+          let minValue = 0;
+          for (let i = 0; i < int16Array.length; i++) {
+            maxValue = Math.max(maxValue, int16Array[i]);
+            minValue = Math.min(minValue, int16Array[i]);
+          }
           console.log(`📊 Audio stats - Chunks: ${this.audioStats.chunksPlayed}/${this.audioStats.chunksReceived}, Range: [${minValue}, ${maxValue}], Samples: ${int16Array.length}`);
         }
         
-        // Create Float32Array normalized to -1 to 1 range WITHOUT clipping protection
-        // Trust that Nova Sonic sends valid 16-bit PCM data
+        // Direct conversion without clamping - trust Nova Sonic's output
         const float32Array = new Float32Array(int16Array.length);
         for (let i = 0; i < int16Array.length; i++) {
           float32Array[i] = int16Array[i] / 32768.0;
         }
         
-        // Create audio buffer at 24kHz (Nova Sonic's ACTUAL output rate per AWS docs)
-        const tempBuffer = this.playbackContext.createBuffer(1, float32Array.length, 24000);
-        tempBuffer.copyToChannel(float32Array, 0);
+        // Create audio buffer at 24kHz (Nova Sonic's output rate)
+        const playbackBuffer = this.playbackContext.createBuffer(1, float32Array.length, 24000);
+        playbackBuffer.copyToChannel(float32Array, 0);
         
-        // Create an offline context to resample to playback sample rate
-        const targetSampleRate = this.playbackContext.sampleRate;
-        const targetLength = Math.floor(float32Array.length * targetSampleRate / 24000);
-        const offlineContext = new OfflineAudioContext(1, targetLength, targetSampleRate);
+        // Play immediately
+        const source = this.playbackContext.createBufferSource();
+        source.buffer = playbackBuffer;
+        source.connect(this.playbackContext.destination);
         
-        const offlineSource = offlineContext.createBufferSource();
-        offlineSource.buffer = tempBuffer;
-        offlineSource.connect(offlineContext.destination);
-        offlineSource.start();
-        
-        offlineContext.startRendering().then(resampledBuffer => {
-          // Play the resampled audio
-          const source = this.playbackContext!.createBufferSource();
-          source.buffer = resampledBuffer;
-          source.connect(this.playbackContext!.destination);
-          
-          source.onended = () => {
-            resolve();
-          };
-          
-          source.start();
-        }).catch(error => {
-          console.error('Error resampling audio:', error);
+        source.onended = () => {
           resolve();
-        });
+        };
+        
+        source.start();
         
       } catch (error) {
         console.error('Error playing audio chunk:', error);
