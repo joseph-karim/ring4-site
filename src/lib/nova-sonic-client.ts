@@ -1,5 +1,5 @@
-// Real Nova Sonic Voice Integration Client
-// Based on the working implementation from /Users/josephkarim/Desktop/nova-sonic-test
+// Simplified Nova Sonic Voice Integration Client
+// Following AWS best practices: 16kHz input, 24kHz output
 
 import { io, Socket } from 'socket.io-client';
 import { SonicNovaConfig } from './sonic-nova-config';
@@ -7,7 +7,6 @@ import { SonicNovaConfig } from './sonic-nova-config';
 export interface NovaSessionConfig {
   systemPrompt?: string;
   voiceId?: string;
-  sampleRate?: number;
   businessInfo?: any;
 }
 
@@ -26,6 +25,7 @@ export interface TranscriptMessage {
 export class NovaSonicClient {
   private socket: Socket | null = null;
   private audioContext: AudioContext | null = null;
+  private playbackContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private audioSource: MediaStreamAudioSourceNode | null = null;
   private processor: ScriptProcessorNode | null = null;
@@ -35,22 +35,14 @@ export class NovaSonicClient {
   private onAudioResponseCallback?: (audio: AudioResponse) => void;
   private onStatusCallback?: (status: string, type?: 'connected' | 'recording' | 'processing' | 'error') => void;
   
-  // Audio buffering for smooth playback
-  private audioQueue: ArrayBuffer[] = [];
-  private isPlaying = false;
-  private playbackContext: AudioContext | null = null;
-  
-  // Diagnostics
-  private audioStats = {
-    chunksReceived: 0,
-    chunksPlayed: 0,
-    totalLatency: 0,
-    lastChunkTime: 0
-  };
+  // AWS Nova Sonic audio specifications
+  private readonly RECORDING_SAMPLE_RATE = 16000; // 16kHz for microphone input
+  private readonly PLAYBACK_SAMPLE_RATE = 24000;  // 24kHz for Nova Sonic output
+  private readonly BUFFER_SIZE = 1024;             // Small buffer for low latency
 
   constructor(serverUrl?: string) {
     // Use environment variable or fallback to localhost
-    const defaultUrl = import.meta.env.VITE_NOVA_SONIC_URL || 'http://localhost:3002';
+    const defaultUrl = (import.meta as any).env?.VITE_NOVA_SONIC_URL || 'http://localhost:3002';
     
     // Create a new socket connection
     this.socket = io(serverUrl || defaultUrl, {
@@ -102,18 +94,10 @@ export class NovaSonicClient {
     });
 
     this.socket.on('audioResponse', (audioBase64: string) => {
-      this.audioStats.chunksReceived++;
-      const now = Date.now();
-      if (this.audioStats.lastChunkTime > 0) {
-        const chunkInterval = now - this.audioStats.lastChunkTime;
-        console.log(`🔊 Audio chunk #${this.audioStats.chunksReceived} - interval: ${chunkInterval}ms`);
-      }
-      this.audioStats.lastChunkTime = now;
+      // Play audio directly - no queuing needed
+      this.playAudioChunk(audioBase64);
       
-      // Add to queue and process
-      this.queueAudioChunk(audioBase64);
-      
-      // Also notify callback if set (for UI updates, etc)
+      // Notify callback if set
       this.onAudioResponseCallback?.({
         audioBase64,
         role: 'assistant'
@@ -158,27 +142,27 @@ export class NovaSonicClient {
 
   private async initializeAudio() {
     try {
+      // Request microphone with AWS Nova Sonic requirements
       this.mediaStream = await navigator.mediaDevices.getUserMedia({
         audio: {
-          sampleRate: 16000,
-          channelCount: 1,
+          sampleRate: this.RECORDING_SAMPLE_RATE, // 16kHz as required by AWS
+          channelCount: 1,                        // Mono
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true
         }
       });
 
-      // Create AudioContext at 16kHz to match microphone input
-      this.audioContext = new AudioContext({ sampleRate: 16000 });
+      // Create AudioContext at 16kHz for recording
+      this.audioContext = new AudioContext({ sampleRate: this.RECORDING_SAMPLE_RATE });
       this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream);
       
-      // Create playback context at 24kHz to match Nova Sonic's output
-      // This avoids any resampling issues
-      this.playbackContext = new AudioContext({ sampleRate: 24000 });
+      // Create separate context at 24kHz for Nova Sonic playback
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      this.playbackContext = new AudioContextClass({ sampleRate: this.PLAYBACK_SAMPLE_RATE });
 
-      console.log('🎤 Audio initialized successfully');
-      console.log('🎤 Recording AudioContext sample rate:', this.audioContext.sampleRate);
-      console.log('🎤 Playback AudioContext sample rate:', this.playbackContext.sampleRate);
+      console.log('🎤 Audio initialized (AWS Nova Sonic specs)');
+      console.log('🎤 Recording: 16kHz mono | Playback: 24kHz mono');
     } catch (error) {
       console.error('Error accessing microphone:', error);
       throw new Error('Could not access microphone. Please check permissions.');
@@ -192,39 +176,17 @@ export class NovaSonicClient {
     }
 
     try {
-      // Create audio processor with smaller buffer for lower latency
-      // AWS example uses 1024 chunk size
-      const bufferSize = 1024;
-      this.processor = this.audioContext.createScriptProcessor(bufferSize, 1, 1);
-      
-      // Send audio immediately with minimal buffering
-      let silenceCounter = 0;
-      const SILENCE_THRESHOLD = 0.01;
+      // Create simple audio processor - AWS recommends 1024 buffer size
+      this.processor = this.audioContext.createScriptProcessor(this.BUFFER_SIZE, 1, 1);
       
       this.processor.onaudioprocess = (event) => {
         if (!this.isRecording) return;
         
         const inputData = event.inputBuffer.getChannelData(0);
         
-        // Check if audio contains actual sound (not silence)
-        let maxAmplitude = 0;
-        for (let i = 0; i < inputData.length; i++) {
-          maxAmplitude = Math.max(maxAmplitude, Math.abs(inputData[i]));
-        }
-        
-        // Only send if there's actual audio content
-        if (maxAmplitude > SILENCE_THRESHOLD) {
-          silenceCounter = 0;
-          const base64Data = this.float32ToBase64(inputData);
-          this.socket?.emit('audio_input', base64Data);
-        } else {
-          silenceCounter++;
-          // Send silence periodically to keep connection alive
-          if (silenceCounter % 50 === 0) {
-            const base64Data = this.float32ToBase64(inputData);
-            this.socket?.emit('audio_input', base64Data);
-          }
-        }
+        // Convert and send immediately - no complex silence detection
+        const base64Data = this.float32ToBase64(inputData);
+        this.socket?.emit('audio_input', base64Data);
       };
 
       this.audioSource.connect(this.processor);
@@ -232,8 +194,7 @@ export class NovaSonicClient {
 
       this.isRecording = true;
       this.onStatusCallback?.('🎙️ Listening... Speak now!', 'recording');
-
-      console.log('🎙️ Recording started with Nova Sonic');
+      console.log('🎙️ Recording started at 16kHz');
 
     } catch (error) {
       console.error('Error starting recording:', error);
@@ -257,103 +218,61 @@ export class NovaSonicClient {
   }
 
   private float32ToBase64(buffer: Float32Array): string {
+    // Convert Float32 to Int16 PCM format as expected by Nova Sonic
     const int16Buffer = new Int16Array(buffer.length);
     for (let i = 0; i < buffer.length; i++) {
-      // Clamp to valid range but don't scale down
-      const sample = Math.max(-1, Math.min(1, buffer[i]));
-      int16Buffer[i] = Math.floor(sample * 0x7FFF); // Full scale, no 90% reduction
+      // Simple conversion: clamp and scale to 16-bit range
+      const clamped = Math.max(-1, Math.min(1, buffer[i]));
+      int16Buffer[i] = Math.round(clamped * 32767);
     }
     
+    // Convert to base64
     const uint8Buffer = new Uint8Array(int16Buffer.buffer);
     const binaryString = Array.from(uint8Buffer, byte => String.fromCharCode(byte)).join('');
     return btoa(binaryString);
   }
 
-  private queueAudioChunk(audioBase64: string) {
+  private playAudioChunk(audioBase64: string) {
     try {
-      // Decode base64 to ArrayBuffer
+      if (!this.playbackContext || this.playbackContext.state === 'closed') {
+        console.warn('Playback context not available');
+        return;
+      }
+      
+      // Decode base64 to binary
       const binaryString = atob(audioBase64);
       const bytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
       
-      // Add to queue
-      this.audioQueue.push(bytes.buffer);
+      // Convert to Int16Array (Nova Sonic sends 16-bit PCM)
+      const int16Array = new Int16Array(bytes.buffer);
       
-      // Start playback if not already playing
-      if (!this.isPlaying) {
-        this.processAudioQueue();
+      // Convert to Float32 for Web Audio
+      const float32Array = new Float32Array(int16Array.length);
+      for (let i = 0; i < int16Array.length; i++) {
+        // Simple conversion from 16-bit to float
+        float32Array[i] = int16Array[i] / 32768.0;
       }
+      
+      // Create audio buffer at 24kHz (Nova Sonic output rate)
+      const audioBuffer = this.playbackContext.createBuffer(
+        1,                               // Mono
+        float32Array.length,             // Number of samples
+        this.PLAYBACK_SAMPLE_RATE        // 24kHz
+      );
+      audioBuffer.copyToChannel(float32Array, 0);
+      
+      // Play immediately
+      const source = this.playbackContext.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(this.playbackContext.destination);
+      source.start();
+      
     } catch (error) {
-      console.error('Error queueing audio chunk:', error);
+      console.error('Error playing audio:', error);
     }
-  }
-  
-  private async processAudioQueue() {
-    if (this.isPlaying || this.audioQueue.length === 0) return;
-    
-    this.isPlaying = true;
-    
-    while (this.audioQueue.length > 0) {
-      const audioBuffer = this.audioQueue.shift()!;
-      await this.playAudioChunk(audioBuffer);
-    }
-    
-    this.isPlaying = false;
-  }
-  
-  private async playAudioChunk(audioBuffer: ArrayBuffer): Promise<void> {
-    return new Promise((resolve) => {
-      try {
-        if (!this.playbackContext || this.playbackContext.state === 'closed') {
-          console.warn('Playback context not available');
-          resolve();
-          return;
-        }
-        
-        this.audioStats.chunksPlayed++;
-        
-        // Convert to Int16Array (16-bit PCM format from Nova Sonic)
-        const int16Array = new Int16Array(audioBuffer);
-        
-        // Debug logging every 10 chunks
-        if (this.audioStats.chunksPlayed % 10 === 0) {
-          let maxValue = 0;
-          let minValue = 0;
-          for (let i = 0; i < int16Array.length; i++) {
-            maxValue = Math.max(maxValue, int16Array[i]);
-            minValue = Math.min(minValue, int16Array[i]);
-          }
-          console.log(`📊 Audio stats - Chunks: ${this.audioStats.chunksPlayed}/${this.audioStats.chunksReceived}, Range: [${minValue}, ${maxValue}], Samples: ${int16Array.length}`);
-        }
-        
-        // Direct conversion without clamping - trust Nova Sonic's output
-        const float32Array = new Float32Array(int16Array.length);
-        for (let i = 0; i < int16Array.length; i++) {
-          float32Array[i] = int16Array[i] / 32768.0;
-        }
-        
-        // Create audio buffer at 24kHz (Nova Sonic's output rate)
-        const playbackBuffer = this.playbackContext.createBuffer(1, float32Array.length, 24000);
-        playbackBuffer.copyToChannel(float32Array, 0);
-        
-        // Play immediately
-        const source = this.playbackContext.createBufferSource();
-        source.buffer = playbackBuffer;
-        source.connect(this.playbackContext.destination);
-        
-        source.onended = () => {
-          resolve();
-        };
-        
-        source.start();
-        
-      } catch (error) {
-        console.error('Error playing audio chunk:', error);
-        resolve();
-      }
-    });
   }
 
   // Event listener setters
@@ -384,10 +303,6 @@ export class NovaSonicClient {
 
   disconnect() {
     this.stopRecording();
-    
-    // Clear audio queue
-    this.audioQueue = [];
-    this.isPlaying = false;
     
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach(track => track.stop());
@@ -420,7 +335,7 @@ export class NovaSonicClient {
     this.audioSource = null;
     this.processor = null;
     this.isSessionActive = false;
-    console.log('🧹 Nova Sonic client disconnected and cleaned up');
+    console.log('🧹 Nova Sonic client disconnected');
   }
 }
 
