@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "postinstall": "cd nova-sonic-server && npm ci",
+    "postinstall": "cd nova-sonic-server && npm ci --ignore-engines || echo 'Warning: Nova Sonic Server install failed. Continuing build...'",
     "lint": "eslint .",
     "preview": "vite preview",
     "supabase:start": "./scripts/supabase-setup.sh start",
