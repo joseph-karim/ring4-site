@@ -258,9 +258,9 @@ export class NovaSonicClient {
   private float32ToBase64(buffer: Float32Array): string {
     const int16Buffer = new Int16Array(buffer.length);
     for (let i = 0; i < buffer.length; i++) {
-      // More conservative scaling to prevent clipping
+      // Clamp to valid range but don't scale down
       const sample = Math.max(-1, Math.min(1, buffer[i]));
-      int16Buffer[i] = Math.floor(sample * 0x7FFF * 0.9); // 90% to avoid clipping
+      int16Buffer[i] = Math.floor(sample * 0x7FFF); // Full scale, no 90% reduction
     }
     
     const uint8Buffer = new Uint8Array(int16Buffer.buffer);
@@ -328,15 +328,14 @@ export class NovaSonicClient {
           console.log(`📊 Audio stats - Chunks: ${this.audioStats.chunksPlayed}/${this.audioStats.chunksReceived}, Range: [${minValue}, ${maxValue}], Samples: ${int16Array.length}`);
         }
         
-        // Create Float32Array normalized to -1 to 1 range with clipping protection
+        // Create Float32Array normalized to -1 to 1 range WITHOUT clipping protection
+        // Trust that Nova Sonic sends valid 16-bit PCM data
         const float32Array = new Float32Array(int16Array.length);
         for (let i = 0; i < int16Array.length; i++) {
-          // Clamp to prevent overflow
-          const sample = Math.max(-32768, Math.min(32767, int16Array[i]));
-          float32Array[i] = sample / 32768.0;
+          float32Array[i] = int16Array[i] / 32768.0;
         }
         
-        // Create audio buffer at 24kHz (Nova Sonic's output rate)
+        // Create audio buffer at 24kHz (Nova Sonic's ACTUAL output rate per AWS docs)
         const tempBuffer = this.playbackContext.createBuffer(1, float32Array.length, 24000);
         tempBuffer.copyToChannel(float32Array, 0);
         
