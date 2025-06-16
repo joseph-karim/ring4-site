@@ -237,25 +237,27 @@ export class NovaSonicClient {
         return;
       }
       
-      // Decode base64 to PCM data - exactly as shown in AWS example
-      const pcmData = atob(audioBase64);
-      const buffer = this.playbackContext.createBuffer(
-        1,
-        pcmData.length / 2,
-        24000
-      );
-      const nowBuffering = buffer.getChannelData(0);
-      
-      // Convert PCM data to float32 - exactly as shown in AWS example
-      for (let i = 0; i < pcmData.length / 2; i++) {
-        const sample = pcmData.charCodeAt(i * 2) | 
-                       (pcmData.charCodeAt(i * 2 + 1) << 8);
-        // Convert from int16 to float32
-        nowBuffering[i] = (sample < 32768 ? 
-                          sample : sample - 65536) / 32768.0;
+      // Properly decode base64 to binary
+      const binaryString = atob(audioBase64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
       }
       
-      // Play immediately
+      // Nova Sonic sends raw PCM: 16-bit, mono, 24kHz
+      const samples = bytes.length / 2;
+      const buffer = this.playbackContext.createBuffer(1, samples, 24000);
+      const channelData = buffer.getChannelData(0);
+      
+      // Convert 16-bit PCM to float32
+      const dataView = new DataView(bytes.buffer);
+      for (let i = 0; i < samples; i++) {
+        // Read as little-endian 16-bit signed integer
+        const sample = dataView.getInt16(i * 2, true);
+        channelData[i] = sample / 32768;
+      }
+      
+      // Play the audio
       const source = this.playbackContext.createBufferSource();
       source.buffer = buffer;
       source.connect(this.playbackContext.destination);
