@@ -239,33 +239,32 @@ export class NovaSonicClient {
         return;
       }
       
-      // Decode base64 to binary
+      // DIFFERENT APPROACH: Use proper base64 to ArrayBuffer conversion
+      // This handles binary data correctly without string encoding issues
       const binaryString = atob(audioBase64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
         bytes[i] = binaryString.charCodeAt(i);
       }
       
-      // Convert to Int16Array (Nova Sonic sends 16-bit PCM)
-      // IMPORTANT: Specify exact offset and length to avoid reading garbage data
-      const int16Array = new Int16Array(bytes.buffer, bytes.byteOffset, bytes.length / 2);
+      // Create Int16Array view with proper alignment
+      // PCM data is little-endian by default
+      const dataView = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+      const numSamples = bytes.length / 2;
+      const float32Array = new Float32Array(numSamples);
       
-      // Convert to Float32 for Web Audio
-      const float32Array = new Float32Array(int16Array.length);
-      for (let i = 0; i < int16Array.length; i++) {
-        // Simple conversion from 16-bit to float
-        float32Array[i] = int16Array[i] / 32768.0;
+      // Read samples as little-endian Int16 and convert to Float32
+      for (let i = 0; i < numSamples; i++) {
+        const sample = dataView.getInt16(i * 2, true); // true = little-endian
+        float32Array[i] = sample / 32768.0;
       }
       
-      // CRITICAL FIX: Nova Sonic might be sending 16kHz audio despite requesting 24kHz
-      // Test by playing at 16kHz instead of 24kHz to see if pitch normalizes
-      const actualSampleRate = 16000; // Try 16kHz first
-      
-      // Create audio buffer at the actual sample rate
+      // Create audio buffer at 24kHz (Nova Sonic output rate)
       const audioBuffer = this.playbackContext.createBuffer(
         1,                               // Mono
         float32Array.length,             // Number of samples
-        actualSampleRate                 // Use 16kHz instead of 24kHz
+        this.PLAYBACK_SAMPLE_RATE        // 24kHz
       );
       audioBuffer.copyToChannel(float32Array, 0);
       
@@ -275,7 +274,7 @@ export class NovaSonicClient {
       source.connect(this.playbackContext.destination);
       source.start();
       
-      console.log(`🔊 Playing audio chunk: ${int16Array.length} samples at ${actualSampleRate}Hz`);
+      console.log(`🔊 Playing audio chunk: ${numSamples} samples at ${this.PLAYBACK_SAMPLE_RATE}Hz`);
       
     } catch (error) {
       console.error('Error playing audio:', error);
