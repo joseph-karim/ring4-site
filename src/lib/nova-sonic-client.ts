@@ -161,8 +161,14 @@ export class NovaSonicClient {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       this.playbackContext = new AudioContextClass({ sampleRate: this.PLAYBACK_SAMPLE_RATE });
 
+      // CRITICAL: Check if browser actually gave us the requested sample rate
+      const actualPlaybackRate = this.playbackContext.sampleRate;
+      if (actualPlaybackRate !== this.PLAYBACK_SAMPLE_RATE) {
+        console.warn(`⚠️ Browser gave us ${actualPlaybackRate}Hz instead of requested ${this.PLAYBACK_SAMPLE_RATE}Hz`);
+      }
+
       console.log('🎤 Audio initialized (AWS Nova Sonic specs)');
-      console.log('🎤 Recording: 16kHz mono | Playback: 24kHz mono');
+      console.log(`🎤 Recording: ${this.audioContext.sampleRate}Hz mono | Playback: ${actualPlaybackRate}Hz mono`);
     } catch (error) {
       console.error('Error accessing microphone:', error);
       throw new Error('Could not access microphone. Please check permissions.');
@@ -260,21 +266,34 @@ export class NovaSonicClient {
         float32Array[i] = sample / 32768.0;
       }
       
-      // Create audio buffer at 24kHz (Nova Sonic output rate)
+      // Create audio buffer using the ACTUAL sample rate the browser gave us
+      // This is critical - if browser doesn't support 24kHz, we must use what it supports
+      const contextSampleRate = this.playbackContext.sampleRate;
+      
       const audioBuffer = this.playbackContext.createBuffer(
         1,                               // Mono
         float32Array.length,             // Number of samples
-        this.PLAYBACK_SAMPLE_RATE        // 24kHz
+        contextSampleRate                // Use the actual context sample rate
       );
       audioBuffer.copyToChannel(float32Array, 0);
       
-      // Play immediately
+      // If the context sample rate doesn't match Nova Sonic's output, we need to adjust playback
       const source = this.playbackContext.createBufferSource();
       source.buffer = audioBuffer;
+      
+      // CRITICAL FIX: Adjust playback rate if browser doesn't support 24kHz
+      if (contextSampleRate !== this.PLAYBACK_SAMPLE_RATE) {
+        // Calculate playback rate adjustment
+        // e.g., if browser is 48kHz and audio is 24kHz, play at 0.5x speed
+        const playbackRate = this.PLAYBACK_SAMPLE_RATE / contextSampleRate;
+        source.playbackRate.value = playbackRate;
+        console.log(`⚠️ Adjusting playback rate to ${playbackRate} (context: ${contextSampleRate}Hz, audio: ${this.PLAYBACK_SAMPLE_RATE}Hz)`);
+      }
+      
       source.connect(this.playbackContext.destination);
       source.start();
       
-      console.log(`🔊 Playing audio chunk: ${numSamples} samples at ${this.PLAYBACK_SAMPLE_RATE}Hz`);
+      console.log(`🔊 Playing audio chunk: ${numSamples} samples at effective ${this.PLAYBACK_SAMPLE_RATE}Hz`);
       
     } catch (error) {
       console.error('Error playing audio:', error);
