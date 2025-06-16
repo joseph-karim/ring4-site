@@ -153,18 +153,14 @@ export class NovaSonicClient {
         }
       });
 
-      // Create AudioContext at 16kHz for recording
-      this.audioContext = new AudioContext({ sampleRate: this.RECORDING_SAMPLE_RATE });
+      // Use a SINGLE AudioContext for both recording and playback
+      // This avoids any sample rate conversion issues
+      this.audioContext = new AudioContext();
+      this.playbackContext = this.audioContext; // Use the same context!
+      
       this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream);
       
-      // Create playback context - let browser choose its preferred sample rate
-      // Many browsers don't support 24kHz and trying to force it causes issues
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      this.playbackContext = new AudioContextClass(); // No sample rate specified
-      
-      const actualPlaybackRate = this.playbackContext.sampleRate;
-      console.log(`🎤 Audio initialized - browser chose ${actualPlaybackRate}Hz for playback`);
-      console.log(`🎤 Recording: ${this.audioContext.sampleRate}Hz mono | Playback: ${actualPlaybackRate}Hz mono`);
+      console.log(`🎤 Audio initialized with single context at ${this.audioContext.sampleRate}Hz`);
     } catch (error) {
       console.error('Error accessing microphone:', error);
       throw new Error('Could not access microphone. Please check permissions.');
