@@ -245,6 +245,16 @@ export class NovaSonicClient {
         return;
       }
       
+      // DEBUG: Log first audio chunk for analysis
+      if (!(window as any).__audioChunkLogged) {
+        console.log('🔍 First audio chunk for debugging:');
+        console.log(`Length: ${audioBase64.length}`);
+        console.log(`First 100 chars: ${audioBase64.substring(0, 100)}`);
+        console.log('Copy and analyze with: debugAudioChunk(chunk)');
+        (window as any).__audioChunkLogged = true;
+        (window as any).__firstAudioChunk = audioBase64;
+      }
+      
       // DIFFERENT APPROACH: Use proper base64 to ArrayBuffer conversion
       // This handles binary data correctly without string encoding issues
       const binaryString = atob(audioBase64);
@@ -254,46 +264,37 @@ export class NovaSonicClient {
         bytes[i] = binaryString.charCodeAt(i);
       }
       
-      // Create Int16Array view with proper alignment
-      // PCM data is little-endian by default
-      const dataView = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
-      const numSamples = bytes.length / 2;
+      // AWS example shows they read bytes differently - character by character
+      const numSamples = binaryString.length / 2;
       const float32Array = new Float32Array(numSamples);
       
-      // Read samples as little-endian Int16 and convert to Float32
+      // Convert PCM data exactly as shown in AWS examples
       for (let i = 0; i < numSamples; i++) {
-        const sample = dataView.getInt16(i * 2, true); // true = little-endian
-        float32Array[i] = sample / 32768.0;
+        // Read two bytes and combine them (little-endian)
+        const low = binaryString.charCodeAt(i * 2);
+        const high = binaryString.charCodeAt(i * 2 + 1);
+        const sample = low | (high << 8);
+        
+        // Convert from unsigned to signed 16-bit, then to float32
+        const signedSample = sample < 32768 ? sample : sample - 65536;
+        float32Array[i] = signedSample / 32768.0;
       }
       
-      // Create audio buffer using the ACTUAL sample rate the browser gave us
-      // This is critical - if browser doesn't support 24kHz, we must use what it supports
-      const contextSampleRate = this.playbackContext.sampleRate;
-      
+      // Create audio buffer at 24kHz as per AWS examples
       const audioBuffer = this.playbackContext.createBuffer(
         1,                               // Mono
         float32Array.length,             // Number of samples
-        contextSampleRate                // Use the actual context sample rate
+        this.PLAYBACK_SAMPLE_RATE        // 24kHz
       );
       audioBuffer.copyToChannel(float32Array, 0);
       
-      // If the context sample rate doesn't match Nova Sonic's output, we need to adjust playback
+      // Play immediately as shown in AWS examples
       const source = this.playbackContext.createBufferSource();
       source.buffer = audioBuffer;
-      
-      // CRITICAL FIX: Adjust playback rate if browser doesn't support 24kHz
-      if (contextSampleRate !== this.PLAYBACK_SAMPLE_RATE) {
-        // Calculate playback rate adjustment
-        // e.g., if browser is 48kHz and audio is 24kHz, play at 0.5x speed
-        const playbackRate = this.PLAYBACK_SAMPLE_RATE / contextSampleRate;
-        source.playbackRate.value = playbackRate;
-        console.log(`⚠️ Adjusting playback rate to ${playbackRate} (context: ${contextSampleRate}Hz, audio: ${this.PLAYBACK_SAMPLE_RATE}Hz)`);
-      }
-      
       source.connect(this.playbackContext.destination);
       source.start();
       
-      console.log(`🔊 Playing audio chunk: ${numSamples} samples at effective ${this.PLAYBACK_SAMPLE_RATE}Hz`);
+      console.log(`🔊 Playing audio chunk: ${numSamples} samples at ${this.PLAYBACK_SAMPLE_RATE}Hz`);
       
     } catch (error) {
       console.error('Error playing audio:', error);
