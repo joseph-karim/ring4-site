@@ -27,7 +27,7 @@ import { BusinessInfo } from '../lib/website-crawler'
 import { generateSonicNovaConfig } from '../lib/sonic-nova-config'
 import { saveAIReceptionist, saveDemoCallTranscript } from '../lib/ai-receptionist-storage'
 import { createSmartDefaultVoiceAgent, formatUrl, validateUrl, FALLBACK_MESSAGES } from '../lib/default-voice-agent'
-import { NovaSonicClient, TranscriptMessage, isNovaSonicAvailable } from '../lib/nova-sonic-client'
+import { NovaSonicClient, TranscriptMessage, isNovaSonicAvailable } from '../lib/nova-sonic-client-deepgram'
 import { NovaSonicHttpClient } from '../lib/nova-sonic-http-client'
 
 type WizardStep = 'intro' | 'website' | 'analyzing' | 'preview' | 'test-call' | 'claim'

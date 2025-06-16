@@ -24,7 +24,10 @@
     "nova-sonic:install": "cd nova-sonic-server && npm install",
     "nova-sonic:start": "cd nova-sonic-server && npm start",
     "nova-sonic": "./start-nova-sonic.sh",
+    "deepgram": "./start-deepgram-server.sh",
+    "deepgram:install": "cd deepgram-voice-server && npm install",
     "dev:voice": "concurrently \"npm run dev\" \"npm run nova-sonic\"",
+    "dev:deepgram": "concurrently \"npm run dev\" \"npm run deepgram\"",
     "dev:netlify": "npm run supabase:start && npm run netlify"
   },
   "dependencies": {

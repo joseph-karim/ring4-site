@@ -1,0 +1,32 @@
+{
+  "name": "ring4-deepgram-voice-server",
+  "version": "1.0.0",
+  "description": "Deepgram Voice Agent server for Ring4 AI Receptionist",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/socketio-wrapper.ts",
+    "dev": "ts-node-dev --respawn src/socketio-wrapper.ts",
+    "start:original": "ts-node src/index.ts"
+  },
+  "dependencies": {
+    "@deepgram/sdk": "^4.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "socket.io": "^4.8.1",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^20.8.2",
+    "@types/ws": "^8.5.6",
+    "ts-node": "^10.9.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deepgram Voice Test</title>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { margin: 5px; padding: 10px; }
+        #status { font-weight: bold; margin: 10px 0; }
+        #transcript { border: 1px solid #ccc; padding: 10px; min-height: 200px; margin-top: 10px; }
+        .user { color: blue; }
+        .assistant { color: green; }
+    </style>
+</head>
+<body>
+    <h1>Deepgram Voice Agent Test</h1>
+    
+    <div id="status">Not connected</div>
+    
+    <button id="connect">Connect & Start Session</button>
+    <button id="speak" disabled>Click & Hold to Speak</button>
+    
+    <div id="transcript"></div>
+
+    <script>
+        const socket = io(window.location.origin);
+        const statusDiv = document.getElementById('status');
+        const transcriptDiv = document.getElementById('transcript');
+        const connectBtn = document.getElementById('connect');
+        const speakBtn = document.getElementById('speak');
+        
+        let isRecording = false;
+        let audioContext = null;
+        let processor = null;
+        let source = null;
+        let stream = null;
+        
+        // Socket event handlers
+        socket.on('connect', () => {
+            statusDiv.textContent = 'Connected to server';
+            console.log('Connected to Deepgram server');
+        });
+        
+        socket.on('session_ready', () => {
+            statusDiv.textContent = 'Session ready - Hold button to speak';
+            speakBtn.disabled = false;
+            console.log('Session ready');
+        });
+        
+        socket.on('transcript', (data) => {
+            console.log('Transcript:', data);
+            const p = document.createElement('p');
+            p.className = data.role;
+            p.textContent = `${data.role}: ${data.content}`;
+            transcriptDiv.appendChild(p);
+            transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
+        });
+        
+        socket.on('audioResponse', (audioBase64) => {
+            console.log('Received audio chunk');
+            // Play the audio
+            playAudio(audioBase64);
+        });
+        
+        socket.on('error', (error) => {
+            console.error('Socket error:', error);
+            statusDiv.textContent = `Error: ${error.message}`;
+        });
+        
+        // Button handlers
+        connectBtn.onclick = async () => {
+            // Initialize audio context
+            audioContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+            
+            // Request microphone permission
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        sampleRate: 16000,
+                        channelCount: 1,
+                        echoCancellation: true,
+                        noiseSuppression: true
+                    } 
+                });
+                
+                socket.emit('start_session', {
+                    systemPrompt: 'You are a helpful AI assistant. Be friendly and conversational. Keep responses brief.',
+                    businessInfo: {
+                        name: 'Test Business',
+                        personality: 'Friendly and professional'
+                    }
+                });
+                
+                connectBtn.disabled = true;
+            } catch (error) {
+                console.error('Microphone error:', error);
+                statusDiv.textContent = 'Error: Could not access microphone';
+            }
+        };
+        
+        // Push-to-talk functionality
+        speakBtn.onmousedown = speakBtn.ontouchstart = (e) => {
+            e.preventDefault();
+            startRecording();
+        };
+        
+        speakBtn.onmouseup = speakBtn.ontouchend = speakBtn.onmouseleave = (e) => {
+            e.preventDefault();
+            stopRecording();
+        };
+        
+        function startRecording() {
+            if (!stream || isRecording) return;
+            
+            isRecording = true;
+            statusDiv.textContent = 'Recording... (release to stop)';
+            
+            source = audioContext.createMediaStreamSource(stream);
+            processor = audioContext.createScriptProcessor(2048, 1, 1);
+            
+            processor.onaudioprocess = (e) => {
+                if (!isRecording) return;
+                
+                const inputData = e.inputBuffer.getChannelData(0);
+                const pcmData = convertFloat32ToInt16(inputData);
+                const base64 = arrayBufferToBase64(pcmData.buffer);
+                
+                socket.emit('audio_input', base64);
+            };
+            
+            source.connect(processor);
+            processor.connect(audioContext.destination);
+        }
+        
+        function stopRecording() {
+            if (!isRecording) return;
+            
+            isRecording = false;
+            statusDiv.textContent = 'Processing...';
+            
+            if (processor) {
+                processor.disconnect();
+                source.disconnect();
+                processor = null;
+                source = null;
+            }
+            
+            setTimeout(() => {
+                if (!isRecording) {
+                    statusDiv.textContent = 'Session ready - Hold button to speak';
+                }
+            }, 1000);
+        }
+        
+        function convertFloat32ToInt16(buffer) {
+            const l = buffer.length;
+            const buf = new Int16Array(l);
+            
+            for (let i = 0; i < l; i++) {
+                const s = Math.max(-1, Math.min(1, buffer[i]));
+                buf[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+            }
+            
+            return buf;
+        }
+        
+        function arrayBufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+        
+        async function playAudio(base64Audio) {
+            try {
+                // Decode base64
+                const binaryString = atob(base64Audio);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                // Create audio buffer (24kHz from Deepgram)
+                const audioBuffer = audioContext.createBuffer(1, bytes.length / 2, 24000);
+                const channelData = audioBuffer.getChannelData(0);
+                
+                // Convert 16-bit PCM to float32
+                const dataView = new DataView(bytes.buffer);
+                for (let i = 0; i < bytes.length / 2; i++) {
+                    const sample = dataView.getInt16(i * 2, true);
+                    channelData[i] = sample / 32768;
+                }
+                
+                // Play the buffer
+                const source = audioContext.createBufferSource();
+                source.buffer = audioBuffer;
+                source.connect(audioContext.destination);
+                source.start();
+                
+            } catch (error) {
+                console.error('Error playing audio:', error);
+            }
+        }
+    </script>
+</body>
+</html>

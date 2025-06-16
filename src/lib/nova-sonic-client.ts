@@ -1,5 +1,5 @@
-// Simplified Nova Sonic Voice Integration Client
-// Following AWS best practices: 16kHz input, 24kHz output
+// Voice Agent Client - Using Deepgram instead of Nova Sonic
+// Deepgram provides more reliable voice agent capabilities
 
 import { io, Socket } from 'socket.io-client';
 import { SonicNovaConfig } from './sonic-nova-config';
