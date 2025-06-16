@@ -257,11 +257,15 @@ export class NovaSonicClient {
         float32Array[i] = int16Array[i] / 32768.0;
       }
       
-      // Create audio buffer at 24kHz (Nova Sonic output rate)
+      // CRITICAL FIX: Nova Sonic might be sending 16kHz audio despite requesting 24kHz
+      // Test by playing at 16kHz instead of 24kHz to see if pitch normalizes
+      const actualSampleRate = 16000; // Try 16kHz first
+      
+      // Create audio buffer at the actual sample rate
       const audioBuffer = this.playbackContext.createBuffer(
         1,                               // Mono
         float32Array.length,             // Number of samples
-        this.PLAYBACK_SAMPLE_RATE        // 24kHz
+        actualSampleRate                 // Use 16kHz instead of 24kHz
       );
       audioBuffer.copyToChannel(float32Array, 0);
       
@@ -270,6 +274,8 @@ export class NovaSonicClient {
       source.buffer = audioBuffer;
       source.connect(this.playbackContext.destination);
       source.start();
+      
+      console.log(`🔊 Playing audio chunk: ${int16Array.length} samples at ${actualSampleRate}Hz`);
       
     } catch (error) {
       console.error('Error playing audio:', error);
