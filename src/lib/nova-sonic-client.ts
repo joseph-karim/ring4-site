@@ -247,7 +247,8 @@ export class NovaSonicClient {
       }
       
       // Convert to Int16Array (Nova Sonic sends 16-bit PCM)
-      const int16Array = new Int16Array(bytes.buffer);
+      // IMPORTANT: Specify exact offset and length to avoid reading garbage data
+      const int16Array = new Int16Array(bytes.buffer, bytes.byteOffset, bytes.length / 2);
       
       // Convert to Float32 for Web Audio
       const float32Array = new Float32Array(int16Array.length);
