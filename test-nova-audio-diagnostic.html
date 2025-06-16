@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Nova Sonic Audio Diagnostic</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    .test { margin: 20px 0; padding: 10px; border: 1px solid #ccc; }
+    .pass { background: #d4edda; }
+    .fail { background: #f8d7da; }
+    pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+  </style>
+</head>
+<body>
+  <h1>Nova Sonic Audio Diagnostic</h1>
+  <div id="results"></div>
+
+  <script>
+    const results = document.getElementById('results');
+    
+    function log(title, content, status = 'info') {
+      const div = document.createElement('div');
+      div.className = `test ${status}`;
+      div.innerHTML = `<h3>${title}</h3><pre>${content}</pre>`;
+      results.appendChild(div);
+    }
+
+    // Test 1: Browser Audio Context Support
+    function testAudioContext() {
+      log('Test 1: Audio Context Support', 'Testing browser audio capabilities...');
+      
+      const ctx = new AudioContext();
+      const info = {
+        sampleRate: ctx.sampleRate,
+        state: ctx.state,
+        baseLatency: ctx.baseLatency,
+        outputLatency: ctx.outputLatency
+      };
+      
+      // Test different sample rates
+      const rates = [8000, 16000, 22050, 24000, 44100, 48000];
+      const supportedRates = {};
+      
+      rates.forEach(rate => {
+        try {
+          const testCtx = new AudioContext({ sampleRate: rate });
+          supportedRates[rate] = testCtx.sampleRate === rate ? 'exact' : `got ${testCtx.sampleRate}`;
+          testCtx.close();
+        } catch (e) {
+          supportedRates[rate] = 'error';
+        }
+      });
+      
+      log('Audio Context Info', JSON.stringify({
+        defaultContext: info,
+        sampleRateSupport: supportedRates
+      }, null, 2), 'pass');
+      
+      ctx.close();
+    }
+
+    // Test 2: PCM Decoding Methods
+    function testPCMDecoding() {
+      log('Test 2: PCM Decoding Methods', 'Testing different decoding approaches...');
+      
+      // Create test PCM data (sine wave at 440Hz, 1 second, 24kHz)
+      const sampleRate = 24000;
+      const frequency = 440;
+      const duration = 0.1; // 100ms
+      const numSamples = sampleRate * duration;
+      
+      // Generate as Int16
+      const int16Data = new Int16Array(numSamples);
+      for (let i = 0; i < numSamples; i++) {
+        const t = i / sampleRate;
+        const sample = Math.sin(2 * Math.PI * frequency * t);
+        int16Data[i] = Math.round(sample * 32767 * 0.5); // 50% volume
+      }
+      
+      // Convert to base64
+      const uint8Data = new Uint8Array(int16Data.buffer);
+      let binaryString = '';
+      for (let i = 0; i < uint8Data.length; i++) {
+        binaryString += String.fromCharCode(uint8Data[i]);
+      }
+      const base64Test = btoa(binaryString);
+      
+      log('Test Data Created', `Samples: ${numSamples}, Base64 length: ${base64Test.length}`);
+      
+      // Method 1: Current implementation
+      const decoded1 = atob(base64Test);
+      const method1Samples = [];
+      for (let i = 0; i < 10; i++) {
+        const low = decoded1.charCodeAt(i * 2);
+        const high = decoded1.charCodeAt(i * 2 + 1);
+        const sample = low | (high << 8);
+        const signed = sample < 32768 ? sample : sample - 65536;
+        method1Samples.push(signed);
+      }
+      
+      // Method 2: Direct Int16Array
+      const decoded2 = atob(base64Test);
+      const bytes2 = new Uint8Array(decoded2.length);
+      for (let i = 0; i < decoded2.length; i++) {
+        bytes2[i] = decoded2.charCodeAt(i);
+      }
+      const int16View = new Int16Array(bytes2.buffer);
+      const method2Samples = Array.from(int16View.slice(0, 10));
+      
+      // Method 3: DataView
+      const dataView = new DataView(bytes2.buffer);
+      const method3Samples = [];
+      for (let i = 0; i < 10; i++) {
+        method3Samples.push(dataView.getInt16(i * 2, true));
+      }
+      
+      // Compare
+      const match12 = JSON.stringify(method1Samples) === JSON.stringify(method2Samples);
+      const match23 = JSON.stringify(method2Samples) === JSON.stringify(method3Samples);
+      const matchOrig = JSON.stringify(Array.from(int16Data.slice(0, 10))) === JSON.stringify(method1Samples);
+      
+      log('Decoding Comparison', JSON.stringify({
+        original: Array.from(int16Data.slice(0, 10)),
+        method1_current: method1Samples,
+        method2_int16array: method2Samples,
+        method3_dataview: method3Samples,
+        matches: {
+          method1_vs_2: match12,
+          method2_vs_3: match23,
+          matches_original: matchOrig
+        }
+      }, null, 2), matchOrig ? 'pass' : 'fail');
+    }
+
+    // Test 3: Sample Rate Conversion
+    function testSampleRateConversion() {
+      log('Test 3: Sample Rate Effects', 'Testing audio at different sample rates...');
+      
+      const testFreq = 440; // A4 note
+      const duration = 0.5;
+      
+      async function generateAndPlay(contextRate, bufferRate, description) {
+        const ctx = new AudioContext({ sampleRate: contextRate });
+        const numSamples = bufferRate * duration;
+        
+        // Generate sine wave
+        const buffer = ctx.createBuffer(1, numSamples, bufferRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < numSamples; i++) {
+          data[i] = Math.sin(2 * Math.PI * testFreq * i / bufferRate) * 0.1;
+        }
+        
+        // Analyze frequency
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 2048;
+        source.connect(analyser);
+        analyser.connect(ctx.destination);
+        
+        source.start();
+        
+        // Wait a bit then analyze
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        const freqData = new Float32Array(analyser.frequencyBinCount);
+        analyser.getFloatFrequencyData(freqData);
+        
+        // Find peak frequency
+        let maxIdx = 0;
+        let maxVal = -Infinity;
+        for (let i = 0; i < freqData.length; i++) {
+          if (freqData[i] > maxVal) {
+            maxVal = freqData[i];
+            maxIdx = i;
+          }
+        }
+        
+        const detectedFreq = maxIdx * ctx.sampleRate / analyser.fftSize;
+        
+        source.stop();
+        ctx.close();
+        
+        return {
+          description,
+          contextRate,
+          bufferRate,
+          expectedFreq: testFreq,
+          detectedFreq: Math.round(detectedFreq),
+          ratio: (detectedFreq / testFreq).toFixed(2)
+        };
+      }
+      
+      // Run tests
+      Promise.all([
+        generateAndPlay(48000, 24000, 'Context 48kHz, Buffer 24kHz'),
+        generateAndPlay(44100, 24000, 'Context 44.1kHz, Buffer 24kHz'),
+        generateAndPlay(24000, 24000, 'Context 24kHz, Buffer 24kHz'),
+      ]).then(results => {
+        log('Sample Rate Test Results', JSON.stringify(results, null, 2), 
+          results.every(r => Math.abs(r.ratio - 1) < 0.1) ? 'pass' : 'fail');
+      });
+    }
+
+    // Test 4: Simulate Nova Sonic Pattern
+    async function testNovaPattern() {
+      log('Test 4: Nova Sonic Pattern', 'Simulating Nova audio pattern...');
+      
+      // Simulate the 960, 8640 sample pattern we see
+      const chunks = [
+        { samples: 960, description: '40ms chunk' },
+        { samples: 8640, description: '360ms chunk' }
+      ];
+      
+      const ctx = new AudioContext();
+      const results = [];
+      
+      for (const chunk of chunks) {
+        // Test at different assumed rates
+        const rates = [16000, 24000, 48000];
+        
+        for (const assumedRate of rates) {
+          const duration = chunk.samples / assumedRate;
+          const buffer = ctx.createBuffer(1, chunk.samples, assumedRate);
+          
+          results.push({
+            chunkSamples: chunk.samples,
+            assumedRate,
+            duration: `${(duration * 1000).toFixed(1)}ms`,
+            playbackAt24k: `${(chunk.samples / 24000 * 1000).toFixed(1)}ms`,
+            playbackAt48k: `${(chunk.samples / 48000 * 1000).toFixed(1)}ms`
+          });
+        }
+      }
+      
+      log('Nova Pattern Analysis', JSON.stringify(results, null, 2));
+      ctx.close();
+    }
+
+    // Run all tests
+    testAudioContext();
+    testPCMDecoding();
+    testSampleRateConversion();
+    testNovaPattern();
+
+    // Test 5: Check if audio might be coming in at different rate
+    log('Test 5: Rate Detection', `
+If audio sounds high-pitched, it means it's playing too fast. Common scenarios:
+- 16kHz audio played at 24kHz = 1.5x speed (high pitch)
+- 16kHz audio played at 48kHz = 3x speed (very high pitch)
+- 24kHz audio played at 48kHz = 2x speed (octave higher)
+
+The pattern of 960/8640 samples suggests:
+- At 16kHz: 60ms / 540ms chunks
+- At 24kHz: 40ms / 360ms chunks
+- At 48kHz: 20ms / 180ms chunks
+
+Most likely: Nova Sonic is sending 16kHz audio, but we're playing it at 48kHz (browser default).
+`);
+
+  </script>
+</body>
+</html>

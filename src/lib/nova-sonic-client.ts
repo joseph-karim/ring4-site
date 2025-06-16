@@ -37,7 +37,7 @@ export class NovaSonicClient {
   
   // AWS Nova Sonic audio specifications
   private readonly RECORDING_SAMPLE_RATE = 16000; // 16kHz for microphone input
-  private readonly PLAYBACK_SAMPLE_RATE = 24000;  // 24kHz for Nova Sonic output
+  // private readonly PLAYBACK_SAMPLE_RATE = 24000;  // 24kHz requested (but Nova might send 16kHz)
   private readonly BUFFER_SIZE = 1024;             // Small buffer for low latency
 
   constructor(serverUrl?: string) {
@@ -157,17 +157,13 @@ export class NovaSonicClient {
       this.audioContext = new AudioContext({ sampleRate: this.RECORDING_SAMPLE_RATE });
       this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream);
       
-      // Create separate context at 24kHz for Nova Sonic playback
+      // Create playback context - let browser choose its preferred sample rate
+      // Many browsers don't support 24kHz and trying to force it causes issues
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      this.playbackContext = new AudioContextClass({ sampleRate: this.PLAYBACK_SAMPLE_RATE });
-
-      // CRITICAL: Check if browser actually gave us the requested sample rate
+      this.playbackContext = new AudioContextClass(); // No sample rate specified
+      
       const actualPlaybackRate = this.playbackContext.sampleRate;
-      if (actualPlaybackRate !== this.PLAYBACK_SAMPLE_RATE) {
-        console.warn(`⚠️ Browser gave us ${actualPlaybackRate}Hz instead of requested ${this.PLAYBACK_SAMPLE_RATE}Hz`);
-      }
-
-      console.log('🎤 Audio initialized (AWS Nova Sonic specs)');
+      console.log(`🎤 Audio initialized - browser chose ${actualPlaybackRate}Hz for playback`);
       console.log(`🎤 Recording: ${this.audioContext.sampleRate}Hz mono | Playback: ${actualPlaybackRate}Hz mono`);
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -245,14 +241,37 @@ export class NovaSonicClient {
         return;
       }
       
-      // DEBUG: Log first audio chunk for analysis
-      if (!(window as any).__audioChunkLogged) {
-        console.log('🔍 First audio chunk for debugging:');
-        console.log(`Length: ${audioBase64.length}`);
-        console.log(`First 100 chars: ${audioBase64.substring(0, 100)}`);
-        console.log('Copy and analyze with: debugAudioChunk(chunk)');
-        (window as any).__audioChunkLogged = true;
-        (window as any).__firstAudioChunk = audioBase64;
+      // DEBUG: Enhanced logging for audio chunks
+      if (!(window as any).__audioChunkCount) {
+        (window as any).__audioChunkCount = 0;
+      }
+      (window as any).__audioChunkCount++;
+      
+      if ((window as any).__audioChunkCount <= 3) {
+        console.log(`🔍 Audio chunk #${(window as any).__audioChunkCount}:`);
+        console.log(`  Base64 length: ${audioBase64.length}`);
+        
+        // Decode and analyze
+        const binaryString = atob(audioBase64);
+        console.log(`  Binary length: ${binaryString.length} bytes`);
+        console.log(`  Samples: ${binaryString.length / 2}`);
+        
+        // Check first few bytes
+        const firstBytes = [];
+        for (let i = 0; i < Math.min(20, binaryString.length); i++) {
+          firstBytes.push(binaryString.charCodeAt(i));
+        }
+        console.log(`  First 20 bytes: [${firstBytes.join(', ')}]`);
+        
+        // Check if mostly zeros
+        let zeros = 0;
+        for (let i = 0; i < binaryString.length; i++) {
+          if (binaryString.charCodeAt(i) === 0) zeros++;
+        }
+        console.log(`  Zero bytes: ${zeros}/${binaryString.length} (${(zeros/binaryString.length*100).toFixed(1)}%)`);
+        
+        // Store for console access
+        (window as any)[`__audioChunk${(window as any).__audioChunkCount}`] = audioBase64;
       }
       
       // DIFFERENT APPROACH: Use proper base64 to ArrayBuffer conversion
@@ -280,21 +299,25 @@ export class NovaSonicClient {
         float32Array[i] = signedSample / 32768.0;
       }
       
-      // Create audio buffer at 24kHz as per AWS examples
+      // CRITICAL: Nova Sonic might be sending 16kHz audio to match our input
+      // even though we requested 24kHz output
+      const ACTUAL_NOVA_RATE = 16000; // Test with 16kHz
+      
+      // Create audio buffer at the rate Nova Sonic is actually sending
       const audioBuffer = this.playbackContext.createBuffer(
         1,                               // Mono
         float32Array.length,             // Number of samples
-        this.PLAYBACK_SAMPLE_RATE        // 24kHz
+        ACTUAL_NOVA_RATE                 // Try 16kHz instead of 24kHz
       );
       audioBuffer.copyToChannel(float32Array, 0);
       
-      // Play immediately as shown in AWS examples
+      // Play immediately
       const source = this.playbackContext.createBufferSource();
       source.buffer = audioBuffer;
       source.connect(this.playbackContext.destination);
       source.start();
       
-      console.log(`🔊 Playing audio chunk: ${numSamples} samples at ${this.PLAYBACK_SAMPLE_RATE}Hz`);
+      console.log(`🔊 Playing audio chunk: ${numSamples} samples at ${ACTUAL_NOVA_RATE}Hz (Nova actual rate)`);
       
     } catch (error) {
       console.error('Error playing audio:', error);
