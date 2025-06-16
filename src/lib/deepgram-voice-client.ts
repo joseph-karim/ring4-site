@@ -32,7 +32,7 @@ export class DeepgramVoiceClient {
   private readonly BUFFER_SIZE = 2048;   // Larger buffer for stability
 
   constructor(serverUrl?: string) {
-    const defaultUrl = (import.meta as any).env?.VITE_DEEPGRAM_URL || 'http://localhost:3003';
+    const defaultUrl = (import.meta as any).env?.VITE_DEEPGRAM_URL || 'http://localhost:3000';
     
     this.socket = io(serverUrl || defaultUrl, {
       transports: ['websocket', 'polling'],

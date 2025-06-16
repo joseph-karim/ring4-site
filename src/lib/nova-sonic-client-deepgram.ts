@@ -29,7 +29,7 @@ export class NovaSonicClient {
   
   constructor(serverUrl?: string) {
     // Use Deepgram server URL from environment or default
-    const deepgramUrl = serverUrl || (import.meta as any).env?.VITE_DEEPGRAM_URL || 'http://localhost:3003';
+    const deepgramUrl = serverUrl || (import.meta as any).env?.VITE_DEEPGRAM_URL || 'http://localhost:3000';
     this.deepgramClient = new DeepgramVoiceClient(deepgramUrl);
     
     // Set up pass-through callbacks
@@ -102,7 +102,7 @@ export function isNovaSonicAvailable(): boolean {
 
 export async function testNovaSonicConnection(serverUrl?: string): Promise<boolean> {
   // Test connection to Deepgram server
-  const url = serverUrl || (import.meta as any).env?.VITE_DEEPGRAM_URL || 'http://localhost:3003';
+  const url = serverUrl || (import.meta as any).env?.VITE_DEEPGRAM_URL || 'http://localhost:3000';
   
   try {
     const response = await fetch(`${url}/health`);
