@@ -124,6 +124,14 @@ export default function App() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
+              <Button
+                className="bg-[#0055FF] hover:bg-[#003399] text-white ml-4"
+                onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                data-gtm-click="cta-tally-form"
+                data-gtm-location="navigation"
+              >
+                Get Started
+              </Button>
 
             </div>
           </div>
