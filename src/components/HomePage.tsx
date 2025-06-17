@@ -531,9 +531,6 @@ export default function HomePage() {
                   <span className="text-gray-600">Keep your whole team in the loop on time-sensitive conversations</span>
                 </li>
               </ul>
-              <Button className="bg-[#0055FF] hover:bg-[#003399] text-white">
-                Learn More
-              </Button>
             </div>
 
             <div className="order-1 md:order-2 relative">
@@ -648,9 +645,6 @@ export default function HomePage() {
                   <span className="text-gray-600">Show your name, not "Spam Likely," on every call</span>
                 </li>
               </ul>
-              <Button className="bg-[#0055FF] hover:bg-[#003399] text-white">
-                See How It Works
-              </Button>
             </div>
           </motion.div>
 
@@ -690,9 +684,6 @@ export default function HomePage() {
                   <span className="text-gray-600">Capture and convert leads before they bounce</span>
                 </li>
               </ul>
-              <Button className="bg-[#0055FF] hover:bg-[#003399] text-white">
-                See It in Action
-              </Button>
             </div>
 
             <div className="order-1 md:order-2 relative">
