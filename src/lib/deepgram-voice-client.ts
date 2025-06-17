@@ -17,6 +17,7 @@ export interface TranscriptMessage {
 export class DeepgramVoiceClient {
   private socket: Socket | null = null;
   private audioContext: AudioContext | null = null;
+  private playbackContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
   private audioSource: MediaStreamAudioSourceNode | null = null;
   private processor: ScriptProcessorNode | null = null;
@@ -130,7 +131,10 @@ export class DeepgramVoiceClient {
       this.audioContext = new AudioContext({ sampleRate: this.SAMPLE_RATE });
       this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream);
       
-      console.log(`🎤 Audio initialized at ${this.audioContext.sampleRate}Hz`);
+      // Create separate context for playback at 24kHz
+      this.playbackContext = new AudioContext({ sampleRate: 24000 });
+      
+      console.log(`🎤 Audio initialized - Recording: ${this.audioContext.sampleRate}Hz, Playback: ${this.playbackContext.sampleRate}Hz`);
     } catch (error) {
       console.error('Error accessing microphone:', error);
       throw new Error('Could not access microphone. Please check permissions.');
@@ -210,52 +214,47 @@ export class DeepgramVoiceClient {
 
   private playAudioChunk(audioBase64: string) {
     try {
-      if (!this.audioContext) {
-        console.warn('Audio context not available');
+      if (!this.playbackContext) {
+        console.warn('Playback context not available');
         return;
       }
 
       // Decode base64 to binary
       const binaryString = atob(audioBase64);
-      const bytes = new Uint8Array(binaryString.length);
+      const rawBytes = new Uint8Array(binaryString.length);
       for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+        rawBytes[i] = binaryString.charCodeAt(i);
       }
 
-      // Deepgram sends 24kHz audio
-      const samples = bytes.length / 2;
-      const audioBuffer = this.audioContext.createBuffer(1, samples, 24000);
-      const channelData = audioBuffer.getChannelData(0);
+      // Create WAV header for the raw PCM data
+      const wavBytes = this.addWavHeader(rawBytes, 24000, 16, 1);
 
-      // Convert 16-bit PCM to float32
-      const dataView = new DataView(bytes.buffer);
-      for (let i = 0; i < samples; i++) {
-        const sample = dataView.getInt16(i * 2, true); // little-endian
-        channelData[i] = sample / 32768;
-      }
-
-      // Play the audio
-      const source = this.audioContext.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(this.audioContext.destination);
+      // Now decode the WAV file properly
+      this.playbackContext.decodeAudioData(wavBytes.buffer).then(audioBuffer => {
+        const source = this.playbackContext!.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(this.playbackContext!.destination);
       
-      // Queue management for smooth playback
-      if (this.audioQueue.length > 0) {
-        const lastSource = this.audioQueue[this.audioQueue.length - 1];
-        source.start(lastSource.context.currentTime + (lastSource.buffer?.duration || 0));
-      } else {
-        source.start();
-      }
-      
-      this.audioQueue.push(source);
-      
-      // Clean up old sources
-      source.onended = () => {
-        const index = this.audioQueue.indexOf(source);
-        if (index > -1) {
-          this.audioQueue.splice(index, 1);
+        // Queue management for smooth playback
+        if (this.audioQueue.length > 0) {
+          const lastSource = this.audioQueue[this.audioQueue.length - 1];
+          source.start(lastSource.context.currentTime + (lastSource.buffer?.duration || 0));
+        } else {
+          source.start();
         }
-      };
+        
+        this.audioQueue.push(source);
+        
+        // Clean up old sources
+        source.onended = () => {
+          const index = this.audioQueue.indexOf(source);
+          if (index > -1) {
+            this.audioQueue.splice(index, 1);
+          }
+        };
+      }).catch(error => {
+        console.error('Error decoding audio:', error);
+      });
 
     } catch (error) {
       console.error('Error playing audio:', error);
@@ -285,6 +284,11 @@ export class DeepgramVoiceClient {
       this.audioContext = null;
     }
     
+    if (this.playbackContext && this.playbackContext.state !== 'closed') {
+      this.playbackContext.close();
+      this.playbackContext = null;
+    }
+    
     if (this.socket) {
       this.socket.disconnect();
       this.socket = null;
@@ -296,6 +300,44 @@ export class DeepgramVoiceClient {
     this.audioQueue = [];
     
     console.log('🧹 Deepgram client disconnected');
+  }
+
+  private addWavHeader(pcmData: Uint8Array, sampleRate: number, bitDepth: number, channels: number): Uint8Array {
+    const dataLength = pcmData.length;
+    const header = new ArrayBuffer(44);
+    const view = new DataView(header);
+
+    // RIFF chunk descriptor
+    const writeString = (offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+
+    writeString(0, 'RIFF');
+    view.setUint32(4, 36 + dataLength, true); // file size - 8
+    writeString(8, 'WAVE');
+
+    // fmt sub-chunk
+    writeString(12, 'fmt ');
+    view.setUint32(16, 16, true); // subchunk size
+    view.setUint16(20, 1, true); // PCM format
+    view.setUint16(22, channels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * channels * (bitDepth / 8), true); // byte rate
+    view.setUint16(32, channels * (bitDepth / 8), true); // block align
+    view.setUint16(34, bitDepth, true);
+
+    // data sub-chunk
+    writeString(36, 'data');
+    view.setUint32(40, dataLength, true);
+
+    // Combine header and PCM data
+    const wavData = new Uint8Array(header.byteLength + dataLength);
+    wavData.set(new Uint8Array(header), 0);
+    wavData.set(pcmData, header.byteLength);
+
+    return wavData;
   }
 }
 
