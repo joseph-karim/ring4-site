@@ -70,8 +70,11 @@ export default function SeparateWorkLinePage() {
                 <Button
                   size="lg"
                   className="bg-[#6D28D9] hover:bg-[#5B21B6] text-white font-medium relative overflow-hidden group"
+                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                  data-gtm-click="cta-tally-form"
+                  data-gtm-location="hero"
                 >
-                  <span className="relative z-10">Get My Business Line Now → Start Free</span>
+                  <span className="relative z-10">Get Started</span>
                   <span className="absolute inset-0 bg-[#5B21B6] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
                 </Button>
               </motion.div>
@@ -676,8 +679,14 @@ export default function SeparateWorkLinePage() {
                 <p className="text-xl mb-8 text-purple-100">
                   You don't need a second phone. Just a smarter line.
                 </p>
-                <Button size="lg" className="bg-white text-purple-700 hover:bg-purple-100">
-                  Get My Business Line Now → Try Free
+                <Button 
+                  size="lg" 
+                  className="bg-white text-purple-700 hover:bg-purple-100"
+                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                  data-gtm-click="cta-tally-form"
+                  data-gtm-location="bottom-cta"
+                >
+                  Get Started
                 </Button>
 
                 <div className="mt-8 flex justify-center md:justify-start items-center space-x-2 text-purple-200 flex-wrap">

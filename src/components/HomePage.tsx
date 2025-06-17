@@ -77,12 +77,21 @@ export default function HomePage() {
                   size="lg"
                   className="bg-[#0055FF] hover:bg-[#003399] text-white font-medium relative z-20"
                   asChild
+                  data-gtm-click="internal-navigation"
+                  data-gtm-destination="spam-checker"
                 >
                   <Link to="/spam-checker">
                     Check My Number Now
                   </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50">
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50"
+                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                  data-gtm-click="cta-tally-form"
+                  data-gtm-location="hero"
+                >
                   Get Started
                 </Button>
               </motion.div>
@@ -761,7 +770,12 @@ export default function HomePage() {
 
                     <div className="mt-8 pt-4 border-t">
                       <p className="text-center text-sm text-gray-500 mb-4">Try Risk-Free for 14 Days</p>
-                      <Button className="w-full bg-[#0055FF] hover:bg-[#003399] text-white">
+                      <Button 
+                        className="w-full bg-[#0055FF] hover:bg-[#003399] text-white"
+                        onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                        data-gtm-click="cta-tally-form"
+                        data-gtm-location="pricing"
+                      >
                         Get Started
                       </Button>
                     </div>
@@ -1069,8 +1083,14 @@ export default function HomePage() {
 
             <div className="mt-16">
               <h3 className="text-2xl font-bold mb-6">No guesswork, no duct tape. Just clear connected calls and a clean reputation</h3>
-              <Button size="lg" className="bg-[#0055FF] hover:bg-[#003399] text-white font-medium">
-                Book a Demo
+              <Button 
+                size="lg" 
+                className="bg-[#0055FF] hover:bg-[#003399] text-white font-medium"
+                onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                data-gtm-click="cta-tally-form"
+                data-gtm-location="trust-section"
+              >
+                Get Started
               </Button>
             </div>
           </motion.div>
