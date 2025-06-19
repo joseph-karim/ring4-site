@@ -73,8 +73,8 @@ export default function TallyModal({
 
       window.Tally.openPopup(formId, {
         layout: 'modal',
-        width: modalOptions.width || 500,
-        hideTitle: modalOptions.hideTitle || false,
+        width: modalOptions.width || 650,
+        hideTitle: modalOptions.hideTitle || true,
         overlay: modalOptions.overlay !== false,
         hiddenFields: hiddenFields,
         autoClose: 3000,
