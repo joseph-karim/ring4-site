@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { CheckCircle } from 'lucide-react'
+import TallyModal from './TallyModal'
 
 export default function NeverMissAIPage() {
   return (
@@ -647,14 +648,14 @@ export default function NeverMissAIPage() {
                     </div>
 
                     <div className="pt-4">
-                      <Button 
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                        data-gtm-click="cta-tally-form"
-                        data-gtm-location="hero-demo"
-                      >
-                        Get Started
-                      </Button>
+                      <TallyModal
+                        buttonText="Get Started"
+                        buttonClassName="w-full bg-green-600 hover:bg-green-700 text-white h-10 px-4 py-2 rounded-md font-medium inline-flex items-center justify-center"
+                        modalOptions={{
+                          width: 500,
+                          overlay: true
+                        }}
+                      />
                       <p className="text-xs text-center text-gray-400 mt-2">
                         14-day free trial, no credit card required
                       </p>
@@ -1020,14 +1021,14 @@ export default function NeverMissAIPage() {
                   <span className="text-gray-700">Basic call analytics</span>
                 </div>
                 <div className="pt-4">
-                  <Button 
-                    className="w-full bg-[#0055FF] hover:bg-[#003399] text-white"
-                    onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                    data-gtm-click="cta-tally-form"
-                    data-gtm-location="pricing-starter"
-                  >
-                    Get Started
-                  </Button>
+                  <TallyModal
+                    buttonText="Get Started"
+                    buttonClassName="w-full bg-[#0055FF] hover:bg-[#003399] text-white h-10 px-4 py-2 rounded-md font-medium inline-flex items-center justify-center"
+                    modalOptions={{
+                      width: 500,
+                      overlay: true
+                    }}
+                  />
                 </div>
               </div>
             </motion.div>
@@ -1083,14 +1084,14 @@ export default function NeverMissAIPage() {
                   <span className="text-gray-700">Priority support</span>
                 </div>
                 <div className="pt-4">
-                  <Button 
-                    className="w-full bg-[#6D28D9] hover:bg-[#5B21B6] text-white"
-                    onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                    data-gtm-click="cta-tally-form"
-                    data-gtm-location="pricing-growth"
-                  >
-                    Get Started
-                  </Button>
+                  <TallyModal
+                    buttonText="Get Started"
+                    buttonClassName="w-full bg-[#6D28D9] hover:bg-[#5B21B6] text-white h-10 px-4 py-2 rounded-md font-medium inline-flex items-center justify-center"
+                    modalOptions={{
+                      width: 500,
+                      overlay: true
+                    }}
+                  />
                 </div>
               </div>
             </motion.div>
@@ -1210,15 +1211,14 @@ export default function NeverMissAIPage() {
               <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50">
                 🔊 Hear it in Action
               </Button>
-              <Button 
-                size="lg" 
-                className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white"
-                onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                data-gtm-click="cta-tally-form"
-                data-gtm-location="bottom-cta"
-              >
-                Get Started
-              </Button>
+              <TallyModal
+                buttonText="Get Started"
+                buttonClassName="h-11 px-8 py-2 text-base font-medium rounded-md border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white border inline-flex items-center justify-center"
+                modalOptions={{
+                  width: 500,
+                  overlay: true
+                }}
+              />
             </motion.div>
 
             <motion.div

@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { Link } from "react-router-dom"
+import TallyModal from "./TallyModal"
 
 export default function HomePage() {
   return (
@@ -84,16 +85,14 @@ export default function HomePage() {
                     Check My Number Now
                   </Link>
                 </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50"
-                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                  data-gtm-click="cta-tally-form"
-                  data-gtm-location="hero"
-                >
-                  Get Started
-                </Button>
+                <TallyModal
+                  buttonText="Get Started"
+                  buttonClassName="h-11 px-8 py-2 text-base font-medium rounded-md border border-[#0055FF] text-[#0055FF] hover:bg-blue-50 inline-flex items-center justify-center"
+                  modalOptions={{
+                    width: 500,
+                    overlay: true
+                  }}
+                />
               </motion.div>
 
               <motion.div
@@ -761,14 +760,14 @@ export default function HomePage() {
 
                     <div className="mt-8 pt-4 border-t">
                       <p className="text-center text-sm text-gray-500 mb-4">Try Risk-Free for 14 Days</p>
-                      <Button 
-                        className="w-full bg-[#0055FF] hover:bg-[#003399] text-white"
-                        onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                        data-gtm-click="cta-tally-form"
-                        data-gtm-location="pricing"
-                      >
-                        Get Started
-                      </Button>
+                      <TallyModal
+                        buttonText="Get Started"
+                        buttonClassName="w-full bg-[#0055FF] hover:bg-[#003399] text-white h-10 px-4 py-2 rounded-md font-medium inline-flex items-center justify-center"
+                        modalOptions={{
+                          width: 500,
+                          overlay: true
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1077,15 +1076,14 @@ export default function HomePage() {
 
             <div className="mt-16">
               <h3 className="text-2xl font-bold mb-6">No guesswork, no duct tape. Just clear connected calls and a clean reputation</h3>
-              <Button 
-                size="lg" 
-                className="bg-[#0055FF] hover:bg-[#003399] text-white font-medium"
-                onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                data-gtm-click="cta-tally-form"
-                data-gtm-location="trust-section"
-              >
-                Get Started
-              </Button>
+              <TallyModal
+                buttonText="Get Started"
+                buttonClassName="h-11 px-8 py-2 text-base font-medium rounded-md bg-[#0055FF] hover:bg-[#003399] text-white inline-flex items-center justify-center"
+                modalOptions={{
+                  width: 500,
+                  overlay: true
+                }}
+              />
             </div>
           </motion.div>
         </div>

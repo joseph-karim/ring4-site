@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { Check } from "lucide-react"
+import TallyModal from "./TallyModal"
 
 export default function PricingPage() {
   return (
@@ -54,13 +55,14 @@ export default function PricingPage() {
                     <span>iPhone and Android only</span>
                   </li>
                 </ul>
-                <Button 
-                  className="w-full" 
-                  variant="outline"
-                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                >
-                  Start 7-Day Free Trial
-                </Button>
+                <TallyModal
+                  buttonText="Start 7-Day Free Trial"
+                  buttonClassName="w-full h-10 px-4 py-2 rounded-md font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex items-center justify-center"
+                  modalOptions={{
+                    width: 500,
+                    overlay: true
+                  }}
+                />
               </div>
             </motion.div>
 
@@ -265,15 +267,14 @@ export default function PricingPage() {
           >
             <h2 className="text-3xl font-bold mb-4">Ready to transform your business communication?</h2>
             <p className="text-xl text-gray-600 mb-8">Join 700,000+ users who trust Ring4</p>
-            <Button 
-              size="lg"
-              className="bg-[#0055FF] hover:bg-[#003399]"
-              onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-              data-gtm-click="cta-tally-form"
-              data-gtm-location="pricing-bottom"
-            >
-              Start Your 7-Day Free Trial
-            </Button>
+            <TallyModal
+              buttonText="Start Your 7-Day Free Trial"
+              buttonClassName="h-11 px-8 py-2 text-base font-medium rounded-md bg-[#0055FF] hover:bg-[#003399] text-white inline-flex items-center justify-center"
+              modalOptions={{
+                width: 500,
+                overlay: true
+              }}
+            />
             <p className="text-sm text-gray-500 mt-4">30-Day Money Back Guarantee</p>
           </motion.div>
         </div>

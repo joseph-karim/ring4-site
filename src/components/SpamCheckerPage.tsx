@@ -8,6 +8,7 @@ import { checkPhoneNumber } from '@/lib/spam-check'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form'
+import TallyModal from './TallyModal'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 import {
@@ -198,22 +199,22 @@ export default function SpamCheckerPage() {
                   Our team specializes in removing spam flags and implementing verified business caller ID across all carriers.
                 </p>
                 <div className="space-y-2">
-                  <Button 
-                    className="w-full bg-white text-blue-700 hover:bg-blue-50"
-                    onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                    data-gtm-click="cta-tally-form"
-                    data-gtm-location="spam-checker-results"
-                  >
-                    Start Free Trial
-                  </Button>
-                  <Button 
-                    className="w-full border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white"
-                    onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                    data-gtm-click="cta-tally-form"
-                    data-gtm-location="spam-checker-results-demo"
-                  >
-                    Book a Demo
-                  </Button>
+                  <TallyModal
+                    buttonText="Start Free Trial"
+                    buttonClassName="w-full bg-white text-blue-700 hover:bg-blue-50 h-10 px-4 py-2 rounded-md font-medium inline-flex items-center justify-center"
+                    modalOptions={{
+                      width: 500,
+                      overlay: true
+                    }}
+                  />
+                  <TallyModal
+                    buttonText="Book a Demo"
+                    buttonClassName="w-full border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white h-10 px-4 py-2 rounded-md font-medium inline-flex items-center justify-center border"
+                    modalOptions={{
+                      width: 500,
+                      overlay: true
+                    }}
+                  />
                 </div>
               </div>
             </div>
@@ -238,14 +239,14 @@ export default function SpamCheckerPage() {
                   <span className="font-bold"> {checkResult.status === 'at-risk' ? '50%' : '80%'} </span>
                   of potential connections. This directly impacts your revenue pipeline.
                 </p>
-                <Button 
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                  data-gtm-click="cta-tally-form"
-                  data-gtm-location="spam-checker-warning"
-                >
-                  Fix This Now
-                </Button>
+                <TallyModal
+                  buttonText="Fix This Now"
+                  buttonClassName="bg-red-600 hover:bg-red-700 text-white h-10 px-4 py-2 rounded-md font-medium inline-flex items-center justify-center"
+                  modalOptions={{
+                    width: 500,
+                    overlay: true
+                  }}
+                />
               </div>
             </div>
           </motion.div>
@@ -267,14 +268,14 @@ export default function SpamCheckerPage() {
                 <p className="text-gray-700 mb-3">
                   Your number is currently in good standing, but spam labels can happen any time. Proactive protection ensures your calls always get through.
                 </p>
-                <Button 
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                  data-gtm-click="cta-tally-form"
-                  data-gtm-location="spam-checker-clean"
-                >
-                  Keep It Protected
-                </Button>
+                <TallyModal
+                  buttonText="Keep It Protected"
+                  buttonClassName="bg-green-600 hover:bg-green-700 text-white h-10 px-4 py-2 rounded-md font-medium inline-flex items-center justify-center"
+                  modalOptions={{
+                    width: 500,
+                    overlay: true
+                  }}
+                />
               </div>
             </div>
           </motion.div>
@@ -652,27 +653,25 @@ export default function SpamCheckerPage() {
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <div className="relative">
-                <Button 
-                  size="lg" 
-                  className="bg-white text-blue-700 hover:bg-blue-50"
-                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                  data-gtm-click="cta-tally-form"
-                  data-gtm-location="spam-checker-bottom"
-                >
-                  Start Free Trial
-                </Button>
+                <TallyModal
+                  buttonText="Start Free Trial"
+                  buttonClassName="h-11 px-8 py-2 text-base font-medium rounded-md bg-white text-blue-700 hover:bg-blue-50 inline-flex items-center justify-center"
+                  modalOptions={{
+                    width: 500,
+                    overlay: true
+                  }}
+                />
 
               </div>
               <div className="relative">
-                <Button 
-                  size="lg" 
-                  className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white"
-                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                  data-gtm-click="cta-tally-form"
-                  data-gtm-location="spam-checker-bottom-demo"
-                >
-                  Book a Demo
-                </Button>
+                <TallyModal
+                  buttonText="Book a Demo"
+                  buttonClassName="h-11 px-8 py-2 text-base font-medium rounded-md border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white border inline-flex items-center justify-center"
+                  modalOptions={{
+                    width: 500,
+                    overlay: true
+                  }}
+                />
 
               </div>
             </div>

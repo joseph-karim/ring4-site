@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { CheckCircle, MessageSquare, Phone, Shield } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import TallyModal from './TallyModal'
 
 export default function SeparateWorkLinePage() {
   return (
@@ -67,16 +68,14 @@ export default function SeparateWorkLinePage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
               >
-                <Button
-                  size="lg"
-                  className="bg-[#6D28D9] hover:bg-[#5B21B6] text-white font-medium relative overflow-hidden group"
-                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                  data-gtm-click="cta-tally-form"
-                  data-gtm-location="hero"
-                >
-                  <span className="relative z-10">Get Started</span>
-                  <span className="absolute inset-0 bg-[#5B21B6] scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-300"></span>
-                </Button>
+                <TallyModal
+                  buttonText="Get Started"
+                  buttonClassName="h-11 px-8 py-2 text-base font-medium rounded-md bg-[#6D28D9] hover:bg-[#5B21B6] text-white inline-flex items-center justify-center relative overflow-hidden group"
+                  modalOptions={{
+                    width: 500,
+                    overlay: true
+                  }}
+                />
               </motion.div>
             </div>
 
@@ -679,15 +678,14 @@ export default function SeparateWorkLinePage() {
                 <p className="text-xl mb-8 text-purple-100">
                   You don't need a second phone. Just a smarter line.
                 </p>
-                <Button 
-                  size="lg" 
-                  className="bg-white text-purple-700 hover:bg-purple-100"
-                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                  data-gtm-click="cta-tally-form"
-                  data-gtm-location="bottom-cta"
-                >
-                  Get Started
-                </Button>
+                <TallyModal
+                  buttonText="Get Started"
+                  buttonClassName="h-11 px-8 py-2 text-base font-medium rounded-md bg-white text-purple-700 hover:bg-purple-100 inline-flex items-center justify-center"
+                  modalOptions={{
+                    width: 500,
+                    overlay: true
+                  }}
+                />
 
                 <div className="mt-8 flex justify-center md:justify-start items-center space-x-2 text-purple-200 flex-wrap">
                   <CheckCircle className="h-5 w-5" />

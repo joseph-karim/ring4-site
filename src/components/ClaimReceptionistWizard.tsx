@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
+import TallyModal from './TallyModal'
 import { Badge } from './ui/badge'
 import { ScrollArea } from './ui/scroll-area'
 import { Progress } from './ui/progress'
@@ -836,22 +837,22 @@ export default function ClaimReceptionistWizard() {
             </Card>
             
             <div className="space-y-4">
-              <Button 
-                size="lg" 
-                className="w-full max-w-md bg-green-600 hover:bg-green-700"
-                onClick={() => {
-                  // Pass configuration to Tally form
-                  const configData = btoa(JSON.stringify({
+              <TallyModal
+                buttonText="Claim Your AI Receptionist Now"
+                buttonClassName="w-full max-w-md h-11 px-8 py-2 text-base font-medium rounded-md bg-green-600 hover:bg-green-700 text-white inline-flex items-center justify-center gap-2"
+                modalOptions={{
+                  width: 500,
+                  overlay: true
+                }}
+                hiddenFields={{
+                  config: btoa(JSON.stringify({
                     websiteUrl,
                     businessInfo,
                     aiConfig,
                     receptionistId
                   }))
-                  window.open(`https://tally.so/r/mOkko8?config=${configData}`, '_blank')
                 }}
-              >
-                Claim Your AI Receptionist Now <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              />
               
               <p className="text-sm text-gray-500">
                 Free 14-day trial • No credit card required • Cancel anytime

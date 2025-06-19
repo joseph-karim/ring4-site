@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs'
 import { Badge } from './ui/badge'
 import { ScrollArea } from './ui/scroll-area'
+import TallyModal from './TallyModal'
 import { 
   Phone, 
   Mic, 
@@ -283,9 +284,6 @@ function DemoExperience({
     }, 2000)
   }
 
-  const redirectToTally = () => {
-    window.location.href = 'https://tally.so/r/mOkko8'
-  }
 
   return (
     <div className="space-y-8">
@@ -385,14 +383,14 @@ function DemoExperience({
                       <p className="text-gray-700 mb-4">
                         Your AI receptionist can start taking real calls in minutes
                       </p>
-                      <Button 
-                        onClick={redirectToTally}
-                        size="lg"
-                        className="bg-[#0055FF] hover:bg-[#003399]"
-                      >
-                        Claim Your AI Receptionist
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Button>
+                      <TallyModal
+                        buttonText="Claim Your AI Receptionist"
+                        buttonClassName="h-11 px-8 py-2 text-base font-medium rounded-md bg-[#0055FF] hover:bg-[#003399] text-white inline-flex items-center justify-center gap-2"
+                        modalOptions={{
+                          width: 500,
+                          overlay: true
+                        }}
+                      />
                     </div>
                   </motion.div>
                 )}
