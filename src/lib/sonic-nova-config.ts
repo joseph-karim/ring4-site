@@ -29,18 +29,31 @@ export interface SonicNovaConfig {
 }
 
 export function generateSonicNovaConfig(businessInfo: BusinessInfo, crawlMetadata?: any): SonicNovaConfig {
+  // Check if using Ring4 defaults
+  const isRing4Default = crawlMetadata?.extractionMethod === 'ring4-defaults'
+  
   // Adapt voice settings based on business type and crawled content
   const voiceSettings = determineOptimalVoiceSettings(businessInfo)
   
   // Generate enhanced knowledge base from crawled data
   const knowledgeBase = generateEnhancedKnowledgeBase(businessInfo, crawlMetadata)
   
+  // Generate system prompt - use Ring4 comprehensive defaults if skipped
+  let systemPrompt: string
+  if (isRing4Default) {
+    // Import and use the comprehensive Ring4 default prompt
+    const { createRing4DefaultSystemPrompt } = require('./ring4-default-agent')
+    systemPrompt = createRing4DefaultSystemPrompt()
+  } else {
+    systemPrompt = generateAdvancedSystemPrompt(businessInfo, crawlMetadata)
+  }
+  
   const config: SonicNovaConfig = {
-    agentName: `${businessInfo.name} AI Receptionist`,
+    agentName: businessInfo.name.includes('Ring4') ? businessInfo.name : `${businessInfo.name} AI Receptionist`,
     personality: determinePersonality(businessInfo),
     voiceSettings,
     knowledgeBase,
-    systemPrompt: generateAdvancedSystemPrompt(businessInfo, crawlMetadata),
+    systemPrompt,
     conversationStarters: generateSmartConversationStarters(businessInfo),
     escalationRules: generateIntelligentEscalationRules(businessInfo)
   }

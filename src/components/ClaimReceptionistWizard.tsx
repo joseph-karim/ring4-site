@@ -85,17 +85,30 @@ export default function ClaimReceptionistWizard() {
       let fallbackType = 'GENERIC'
       let crawlMetadata: any = null
       
-      // Format and validate URL first
-      const formattedUrl = formatUrl(websiteUrl)
-      if (!validateUrl(formattedUrl)) {
-        console.warn('Invalid URL provided:', websiteUrl)
-        setIsUsingFallback(true)
-        fallbackType = 'INVALID_URL'
-        info = createSmartDefaultVoiceAgent(websiteUrl)
+      // Check if user chose to skip
+      if (websiteUrl === 'skip') {
+        console.log('🎯 User chose to skip website crawling, using Ring4 defaults')
+        setIsUsingFallback(false) // Not a fallback, intentional choice
+        
+        // Import the Ring4 default agent configuration
+        const { createRing4DefaultAgent } = await import('../lib/ring4-default-agent')
+        info = createRing4DefaultAgent()
+        crawlMetadata = {
+          skipped: true,
+          extractionMethod: 'ring4-defaults'
+        }
       } else {
-        // Use real Crawl4AI-based Netlify function for website crawling
-        try {
-          console.log(`🚀 Starting real crawl for: ${formattedUrl}`)
+        // Format and validate URL first
+        const formattedUrl = formatUrl(websiteUrl)
+        if (!validateUrl(formattedUrl)) {
+          console.warn('Invalid URL provided:', websiteUrl)
+          setIsUsingFallback(true)
+          fallbackType = 'INVALID_URL'
+          info = createSmartDefaultVoiceAgent(websiteUrl)
+        } else {
+          // Use real Crawl4AI-based Netlify function for website crawling
+          try {
+            console.log(`🚀 Starting real crawl for: ${formattedUrl}`)
           
           const response = await fetch('/.netlify/functions/crawl-website-real', {
             method: 'POST',
@@ -144,6 +157,7 @@ export default function ClaimReceptionistWizard() {
           
           // Use smart default that adapts to business type
           info = createSmartDefaultVoiceAgent(formattedUrl)
+          }
         }
       }
       
@@ -161,7 +175,7 @@ export default function ClaimReceptionistWizard() {
       // Save to Supabase (with fallback flag)
       try {
         const savedReceptionist = await saveAIReceptionist({
-          websiteUrl: formattedUrl,
+          websiteUrl: websiteUrl === 'skip' ? 'https://ring4.com' : websiteUrl,
           businessInfo: info,
           aiConfig: config,
           isUsingFallback,
@@ -358,9 +372,9 @@ export default function ClaimReceptionistWizard() {
             className="max-w-xl mx-auto space-y-6"
           >
             <div className="text-center space-y-2">
-              <h2 className="text-3xl font-bold">Enter Your Website</h2>
+              <h2 className="text-3xl font-bold">Configure Your AI Receptionist</h2>
               <p className="text-gray-600">
-                We'll analyze your website to create a personalized AI receptionist
+                Add your website for personalization or skip to use our smart defaults
               </p>
             </div>
             
@@ -371,8 +385,8 @@ export default function ClaimReceptionistWizard() {
                     <Globe className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                     <Input
                       type="url"
-                      placeholder="your-business.com (we'll format it automatically)"
-                      value={websiteUrl}
+                      placeholder="your-business.com (optional)"
+                      value={websiteUrl === 'skip' ? '' : websiteUrl}
                       onChange={(e) => setWebsiteUrl(e.target.value)}
                       className="pl-10 h-12 text-lg"
                     />
@@ -380,10 +394,34 @@ export default function ClaimReceptionistWizard() {
                   
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <p className="text-sm text-blue-700">
-                      <strong>Tip:</strong> Your AI receptionist will learn about your services, 
-                      hours, and specialties from your website.
+                      <strong>Website Analysis:</strong> We'll extract your business info, services, 
+                      and hours to personalize your AI receptionist.
                     </p>
                   </div>
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-white px-2 text-muted-foreground">Or</span>
+                    </div>
+                  </div>
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setWebsiteUrl('skip');
+                      handleAnalyzeWebsite();
+                    }}
+                    className="w-full"
+                  >
+                    Skip and Use Smart Defaults
+                  </Button>
+                  
+                  <p className="text-xs text-center text-gray-500">
+                    You can customize your AI's responses and knowledge later
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -397,7 +435,7 @@ export default function ClaimReceptionistWizard() {
               </Button>
               <Button 
                 onClick={handleAnalyzeWebsite}
-                disabled={!websiteUrl}
+                disabled={!websiteUrl || websiteUrl === 'skip'}
                 className="bg-blue-600 hover:bg-blue-700"
               >
                 Analyze Website <ArrowRight className="ml-2 h-4 w-4" />
@@ -471,12 +509,25 @@ export default function ClaimReceptionistWizard() {
             <div className="text-center space-y-2">
               <h2 className="text-3xl font-bold">Meet Your AI Receptionist</h2>
               <p className="text-gray-600">
-                {isUsingFallback 
-                  ? "Smart business assistant - ready to handle your calls professionally"
-                  : "Trained on your business and ready to handle calls professionally"
+                {websiteUrl === 'skip' 
+                  ? "Ring4 AI Receptionist - Professional voice agent with comprehensive capabilities"
+                  : isUsingFallback 
+                    ? "Smart business assistant - ready to handle your calls professionally"
+                    : "Trained on your business and ready to handle calls professionally"
                 }
               </p>
-              {isUsingFallback && fallbackMessage && (
+              {websiteUrl === 'skip' ? (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                  <p className="text-green-800 text-sm font-medium">
+                    ✨ Using Ring4's Professional AI Configuration
+                  </p>
+                  <p className="text-green-600 text-sm mt-1">
+                    Your AI receptionist comes with comprehensive call handling capabilities, 
+                    lead capture, and instant SMS notifications. You can customize the responses 
+                    during setup.
+                  </p>
+                </div>
+              ) : isUsingFallback && fallbackMessage && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
                   <p className="text-blue-800 text-sm">{fallbackMessage}</p>
                   <p className="text-blue-600 text-sm mt-2 font-medium">
