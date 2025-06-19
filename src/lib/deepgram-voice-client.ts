@@ -135,6 +135,12 @@ export class DeepgramVoiceClient {
       this.playbackContext = new AudioContext({ sampleRate: 24000 });
       
       console.log(`🎤 Audio initialized - Recording: ${this.audioContext.sampleRate}Hz, Playback: ${this.playbackContext.sampleRate}Hz`);
+      
+      // CRITICAL: Check if browser actually created context at requested sample rate
+      if (this.playbackContext.sampleRate !== 24000) {
+        console.warn(`⚠️ Browser created AudioContext at ${this.playbackContext.sampleRate}Hz instead of requested 24000Hz!`);
+        console.warn('This WILL cause audio distortion. Audio will play at wrong speed.');
+      }
     } catch (error) {
       console.error('Error accessing microphone:', error);
       throw new Error('Could not access microphone. Please check permissions.');
@@ -212,11 +218,16 @@ export class DeepgramVoiceClient {
 
   private audioQueue: AudioBufferSourceNode[] = [];
 
-  private playAudioChunk(audioBase64: string) {
+  private async playAudioChunk(audioBase64: string) {
     try {
       if (!this.playbackContext) {
         console.warn('Playback context not available');
         return;
+      }
+
+      // Resume audio context if it's suspended
+      if (this.playbackContext.state === 'suspended') {
+        await this.playbackContext.resume();
       }
 
       // Decode base64 to binary
@@ -227,21 +238,21 @@ export class DeepgramVoiceClient {
       }
 
       // Create WAV header for the raw PCM data
+      // IMPORTANT: The audio from Deepgram is ALWAYS 24000Hz regardless of AudioContext sample rate
+      // The WAV header must specify the actual data's sample rate, not the context's rate
       const wavBytes = this.addWavHeader(rawBytes, 24000, 16, 1);
 
       // Now decode the WAV file properly
       this.playbackContext.decodeAudioData(wavBytes.buffer).then(audioBuffer => {
+        // Log important debugging info
+        console.log(`🎵 Audio decoded - Duration: ${audioBuffer.duration}s, Sample Rate: ${audioBuffer.sampleRate}Hz`);
+        
         const source = this.playbackContext!.createBufferSource();
         source.buffer = audioBuffer;
         source.connect(this.playbackContext!.destination);
       
-        // Queue management for smooth playback
-        if (this.audioQueue.length > 0) {
-          const lastSource = this.audioQueue[this.audioQueue.length - 1];
-          source.start(lastSource.context.currentTime + (lastSource.buffer?.duration || 0));
-        } else {
-          source.start();
-        }
+        // Play immediately without queuing to avoid timing issues
+        source.start();
         
         this.audioQueue.push(source);
         
@@ -254,6 +265,8 @@ export class DeepgramVoiceClient {
         };
       }).catch(error => {
         console.error('Error decoding audio:', error);
+        console.error('Audio data length:', rawBytes.length);
+        console.error('First few bytes:', Array.from(rawBytes.slice(0, 10)));
       });
 
     } catch (error) {
