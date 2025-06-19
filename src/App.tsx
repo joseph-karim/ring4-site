@@ -9,6 +9,7 @@ import ClaimReceptionistWizard from './components/ClaimReceptionistWizard'
 import PricingPage from './components/PricingPage'
 import PrivacyPolicyPage from './components/PrivacyPolicyPage'
 import TermsOfServicePage from './components/TermsOfServicePage'
+import TallyModal from './components/TallyModal'
 
 import { Button } from './components/ui/button'
 import { Toaster } from './components/ui/toaster'
@@ -135,14 +136,14 @@ export default function App() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button
-                className="bg-[#0055FF] hover:bg-[#003399] text-white ml-4"
-                onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                data-gtm-click="cta-tally-form"
-                data-gtm-location="navigation"
-              >
-                Get Started
-              </Button>
+              <TallyModal
+                buttonText="Get Started"
+                buttonClassName="bg-[#0055FF] hover:bg-[#003399] text-white ml-4 h-10 px-4 py-2 rounded-md font-medium inline-flex items-center justify-center"
+                modalOptions={{
+                  width: 500,
+                  overlay: true
+                }}
+              />
 
             </div>
           </div>

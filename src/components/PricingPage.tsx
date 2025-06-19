@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
 import { Check } from "lucide-react"
 import TallyModal from "./TallyModal"
@@ -121,14 +120,14 @@ export default function PricingPage() {
                     <span>Caller ID SPAM label monitoring</span>
                   </li>
                 </ul>
-                <Button 
-                  className="w-full bg-[#0055FF] hover:bg-[#003399]"
-                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                  data-gtm-click="cta-tally-form"
-                  data-gtm-location="pricing-business"
-                >
-                  Start 7-Day Free Trial
-                </Button>
+                <TallyModal
+                  buttonText="Start 7-Day Free Trial"
+                  buttonClassName="w-full bg-[#0055FF] hover:bg-[#003399] text-white h-10 px-4 py-2 rounded-md font-medium inline-flex items-center justify-center"
+                  modalOptions={{
+                    width: 500,
+                    overlay: true
+                  }}
+                />
               </div>
             </motion.div>
 
@@ -165,13 +164,14 @@ export default function PricingPage() {
                     <span>Priority support</span>
                   </li>
                 </ul>
-                <Button 
-                  className="w-full" 
-                  variant="outline"
-                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
-                >
-                  Start 7-Day Free Trial
-                </Button>
+                <TallyModal
+                  buttonText="Start 7-Day Free Trial"
+                  buttonClassName="w-full h-10 px-4 py-2 rounded-md font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex items-center justify-center"
+                  modalOptions={{
+                    width: 500,
+                    overlay: true
+                  }}
+                />
               </div>
             </motion.div>
           </div>
