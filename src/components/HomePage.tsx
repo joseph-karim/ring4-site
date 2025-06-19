@@ -725,7 +725,7 @@ export default function HomePage() {
                   </div>
                   <div className="p-6">
                     <div className="flex justify-between items-center mb-6 pb-6 border-b">
-                      <span className="text-2xl font-bold">$29</span>
+                      <span className="text-2xl font-bold">$15</span>
                       <span className="text-gray-500">per user / month</span>
                     </div>
 
@@ -735,8 +735,8 @@ export default function HomePage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         <div>
-                          <span className="text-gray-900">Unlimited Calls & Texts</span>
-                          <div className="text-xs text-green-600 line-through">No hidden fees</div>
+                          <span className="text-gray-900">1 Free Phone Number</span>
+                          <div className="text-xs text-gray-500">Additional numbers $5/month</div>
                         </div>
                       </li>
                       <li className="flex items-center space-x-3">
@@ -744,8 +744,8 @@ export default function HomePage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         <div>
-                          <span className="text-gray-900">Free Number Porting</span>
-                          <div className="text-xs text-green-600 line-through">No setup fee</div>
+                          <span className="text-gray-900">Team Messaging & Shared Numbers</span>
+                          <div className="text-xs text-gray-500">Collaborate seamlessly</div>
                         </div>
                       </li>
                       <li className="flex items-center space-x-3">
@@ -753,8 +753,8 @@ export default function HomePage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                         <div>
-                          <span className="text-gray-900">No Annual Contracts</span>
-                          <div className="text-xs text-green-600 line-through">No cancellation fee</div>
+                          <span className="text-gray-900">Business Caller ID & Spam Monitoring</span>
+                          <div className="text-xs text-gray-500">Protect your reputation</div>
                         </div>
                       </li>
                     </ul>
@@ -807,8 +807,11 @@ export default function HomePage() {
                   <span className="text-gray-600">Clear monthly pricing—what you see is what you pay</span>
                 </li>
               </ul>
-              <Button className="bg-[#0055FF] hover:bg-[#003399] text-white">
-                View Pricing
+              <Button 
+                className="bg-[#0055FF] hover:bg-[#003399] text-white"
+                asChild
+              >
+                <Link to="/pricing">View Pricing</Link>
               </Button>
             </div>
           </motion.div>
@@ -1096,17 +1099,17 @@ export default function HomePage() {
               <h4 className="text-xl font-bold mb-4">Ring4</h4>
               <p className="text-gray-300 mb-4">Transform your business communication with branded calling, intelligent routing, and team collaboration.</p>
               <div className="flex space-x-4">
-                <a href="#" className="text-gray-300 hover:text-white">
+                <a href="https://twitter.com/ring4com" className="text-gray-300 hover:text-white" target="_blank" rel="noopener noreferrer">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
                   </svg>
                 </a>
-                <a href="#" className="text-gray-300 hover:text-white">
+                <a href="https://www.linkedin.com/company/ring4" className="text-gray-300 hover:text-white" target="_blank" rel="noopener noreferrer">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
                   </svg>
                 </a>
-                <a href="#" className="text-gray-300 hover:text-white">
+                <a href="https://www.facebook.com/ring4" className="text-gray-300 hover:text-white" target="_blank" rel="noopener noreferrer">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
                   </svg>
@@ -1117,30 +1120,30 @@ export default function HomePage() {
             <div>
               <h4 className="text-lg font-bold mb-4">Product</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-white">Features</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white">Pricing</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white">Use Cases</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white">Integrations</a></li>
+                <li><Link to="/" className="text-gray-300 hover:text-white">Features</Link></li>
+                <li><Link to="/pricing" className="text-gray-300 hover:text-white">Pricing</Link></li>
+                <li><Link to="/#use-cases" className="text-gray-300 hover:text-white">Use Cases</Link></li>
+                <li><a href="https://ring4.com/integrations" className="text-gray-300 hover:text-white" target="_blank" rel="noopener noreferrer">Integrations</a></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-lg font-bold mb-4">Company</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-white">About Us</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white">Blog</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white">Careers</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white">Contact</a></li>
+                <li><a href="https://ring4.com/about" className="text-gray-300 hover:text-white" target="_blank" rel="noopener noreferrer">About Us</a></li>
+                <li><a href="https://ring4.com/blog" className="text-gray-300 hover:text-white" target="_blank" rel="noopener noreferrer">Blog</a></li>
+                <li><a href="https://ring4.com/careers" className="text-gray-300 hover:text-white" target="_blank" rel="noopener noreferrer">Careers</a></li>
+                <li><a href="https://ring4.com/contact" className="text-gray-300 hover:text-white" target="_blank" rel="noopener noreferrer">Contact</a></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-lg font-bold mb-4">Resources</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-300 hover:text-white">Help Center</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white">API Documentation</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white">Privacy Policy</a></li>
-                <li><a href="#" className="text-gray-300 hover:text-white">Terms of Service</a></li>
+                <li><a href="https://ring4.com/help" className="text-gray-300 hover:text-white" target="_blank" rel="noopener noreferrer">Help Center</a></li>
+                <li><a href="https://ring4.com/developers" className="text-gray-300 hover:text-white" target="_blank" rel="noopener noreferrer">API Documentation</a></li>
+                <li><Link to="/privacy-policy" className="text-gray-300 hover:text-white">Privacy Policy</Link></li>
+                <li><Link to="/terms-of-service" className="text-gray-300 hover:text-white">Terms of Service</Link></li>
               </ul>
             </div>
           </div>

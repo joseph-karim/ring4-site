@@ -6,6 +6,9 @@ import SeparateWorkLinePage from './components/SeparateWorkLinePage'
 import NeverMissAIPage from './components/NeverMissAIPage'
 import RealEstateAgentsPage from './components/RealEstateAgentsPage'
 import ClaimReceptionistWizard from './components/ClaimReceptionistWizard'
+import PricingPage from './components/PricingPage'
+import PrivacyPolicyPage from './components/PrivacyPolicyPage'
+import TermsOfServicePage from './components/TermsOfServicePage'
 
 import { Button } from './components/ui/button'
 import { Toaster } from './components/ui/toaster'
@@ -23,6 +26,7 @@ export default function App() {
   const isSpamChecker = location.pathname === '/spam-checker';
   const isNeverMissAI = location.pathname === '/nevermiss-ai';
   const isRealEstateAgents = location.pathname === '/real-estate-agents';
+  const isPricing = location.pathname === '/pricing';
 
 
   return (
@@ -40,6 +44,13 @@ export default function App() {
                 asChild
               >
                 <Link to="/">Home</Link>
+              </Button>
+
+              <Button
+                variant={isPricing ? 'default' : 'ghost'}
+                asChild
+              >
+                <Link to="/pricing">Pricing</Link>
               </Button>
 
               <DropdownMenu>
@@ -145,6 +156,9 @@ export default function App() {
           <Route path="/nevermiss-ai" element={<NeverMissAIPage />} />
           <Route path="/real-estate-agents" element={<RealEstateAgentsPage />} />
           <Route path="/claim-receptionist" element={<ClaimReceptionistWizard />} />
+          <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms-of-service" element={<TermsOfServicePage />} />
         </Routes>
       </div>
       <Toaster />

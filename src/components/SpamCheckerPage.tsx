@@ -198,10 +198,20 @@ export default function SpamCheckerPage() {
                   Our team specializes in removing spam flags and implementing verified business caller ID across all carriers.
                 </p>
                 <div className="space-y-2">
-                  <Button className="w-full bg-white text-blue-700 hover:bg-blue-50">
+                  <Button 
+                    className="w-full bg-white text-blue-700 hover:bg-blue-50"
+                    onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                    data-gtm-click="cta-tally-form"
+                    data-gtm-location="spam-checker-results"
+                  >
                     Start Free Trial
                   </Button>
-                  <Button className="w-full border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white">
+                  <Button 
+                    className="w-full border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white"
+                    onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                    data-gtm-click="cta-tally-form"
+                    data-gtm-location="spam-checker-results-demo"
+                  >
                     Book a Demo
                   </Button>
                 </div>
@@ -228,7 +238,12 @@ export default function SpamCheckerPage() {
                   <span className="font-bold"> {checkResult.status === 'at-risk' ? '50%' : '80%'} </span>
                   of potential connections. This directly impacts your revenue pipeline.
                 </p>
-                <Button className="bg-red-600 hover:bg-red-700 text-white">
+                <Button 
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                  data-gtm-click="cta-tally-form"
+                  data-gtm-location="spam-checker-warning"
+                >
                   Fix This Now
                 </Button>
               </div>
@@ -252,7 +267,12 @@ export default function SpamCheckerPage() {
                 <p className="text-gray-700 mb-3">
                   Your number is currently in good standing, but spam labels can happen any time. Proactive protection ensures your calls always get through.
                 </p>
-                <Button className="bg-green-600 hover:bg-green-700 text-white">
+                <Button 
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                  data-gtm-click="cta-tally-form"
+                  data-gtm-location="spam-checker-clean"
+                >
                   Keep It Protected
                 </Button>
               </div>
@@ -632,13 +652,25 @@ export default function SpamCheckerPage() {
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <div className="relative">
-                <Button size="lg" className="bg-white text-blue-700 hover:bg-blue-50">
+                <Button 
+                  size="lg" 
+                  className="bg-white text-blue-700 hover:bg-blue-50"
+                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                  data-gtm-click="cta-tally-form"
+                  data-gtm-location="spam-checker-bottom"
+                >
                   Start Free Trial
                 </Button>
 
               </div>
               <div className="relative">
-                <Button size="lg" className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white">
+                <Button 
+                  size="lg" 
+                  className="border-[#0055FF] text-[#0055FF] hover:bg-blue-50 bg-white"
+                  onClick={() => window.location.href = 'https://tally.so/r/mOkko8'}
+                  data-gtm-click="cta-tally-form"
+                  data-gtm-location="spam-checker-bottom-demo"
+                >
                   Book a Demo
                 </Button>
 
