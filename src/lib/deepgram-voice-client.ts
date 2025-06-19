@@ -131,15 +131,16 @@ export class DeepgramVoiceClient {
       this.audioContext = new AudioContext({ sampleRate: this.SAMPLE_RATE });
       this.audioSource = this.audioContext.createMediaStreamSource(this.mediaStream);
       
-      // Create separate context for playback at 24kHz
-      this.playbackContext = new AudioContext({ sampleRate: 24000 });
+      // Create separate context for playback
+      // Most browsers don't support 24kHz natively, so we'll use the default rate
+      // and resample the audio during playback
+      this.playbackContext = new AudioContext();
       
       console.log(`🎤 Audio initialized - Recording: ${this.audioContext.sampleRate}Hz, Playback: ${this.playbackContext.sampleRate}Hz`);
       
-      // CRITICAL: Check if browser actually created context at requested sample rate
+      // Note the actual playback context sample rate for later use
       if (this.playbackContext.sampleRate !== 24000) {
-        console.warn(`⚠️ Browser created AudioContext at ${this.playbackContext.sampleRate}Hz instead of requested 24000Hz!`);
-        console.warn('This WILL cause audio distortion. Audio will play at wrong speed.');
+        console.info(`ℹ️ Browser AudioContext is ${this.playbackContext.sampleRate}Hz (Deepgram sends 24kHz audio)`);
       }
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -217,6 +218,7 @@ export class DeepgramVoiceClient {
   }
 
   private audioQueue: AudioBufferSourceNode[] = [];
+  private lastPlayTime = 0;
 
   private async playAudioChunk(audioBase64: string) {
     try {
@@ -238,21 +240,29 @@ export class DeepgramVoiceClient {
       }
 
       // Create WAV header for the raw PCM data
-      // IMPORTANT: The audio from Deepgram is ALWAYS 24000Hz regardless of AudioContext sample rate
-      // The WAV header must specify the actual data's sample rate, not the context's rate
+      // IMPORTANT: The audio from Deepgram is ALWAYS 24000Hz
+      // We MUST specify 24000Hz in the WAV header so decodeAudioData knows the source sample rate
       const wavBytes = this.addWavHeader(rawBytes, 24000, 16, 1);
 
-      // Now decode the WAV file properly
+      // decodeAudioData will automatically resample from 24kHz to the context's sample rate
       this.playbackContext.decodeAudioData(wavBytes.buffer).then(audioBuffer => {
-        // Log important debugging info
-        console.log(`🎵 Audio decoded - Duration: ${audioBuffer.duration}s, Sample Rate: ${audioBuffer.sampleRate}Hz`);
+        // The audioBuffer.sampleRate will match the context's sample rate after resampling
+        const currentTime = this.playbackContext!.currentTime;
+        const startTime = Math.max(currentTime, this.lastPlayTime);
+        
+        console.log(`🎵 Audio decoded - Duration: ${audioBuffer.duration.toFixed(2)}s, Resampled to: ${audioBuffer.sampleRate}Hz, Start: ${startTime.toFixed(2)}s`);
         
         const source = this.playbackContext!.createBufferSource();
         source.buffer = audioBuffer;
+        
+        // CRITICAL: Do NOT set playbackRate - let the resampling handle the rate conversion
+        // source.playbackRate.value = 1.0 is the default and correct value
+        
         source.connect(this.playbackContext!.destination);
       
-        // Play immediately without queuing to avoid timing issues
-        source.start();
+        // Schedule playback for seamless audio
+        source.start(startTime);
+        this.lastPlayTime = startTime + audioBuffer.duration;
         
         this.audioQueue.push(source);
         
@@ -311,6 +321,7 @@ export class DeepgramVoiceClient {
     this.processor = null;
     this.isSessionActive = false;
     this.audioQueue = [];
+    this.lastPlayTime = 0;
     
     console.log('🧹 Deepgram client disconnected');
   }
@@ -349,6 +360,9 @@ export class DeepgramVoiceClient {
     const wavData = new Uint8Array(header.byteLength + dataLength);
     wavData.set(new Uint8Array(header), 0);
     wavData.set(pcmData, header.byteLength);
+
+    // Debug log to verify WAV header
+    console.log(`📝 WAV Header: ${sampleRate}Hz, ${bitDepth}bit, ${channels}ch, Data: ${dataLength} bytes`);
 
     return wavData;
   }
