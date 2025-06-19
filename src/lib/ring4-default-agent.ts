@@ -66,7 +66,11 @@ export function createRing4DefaultAgent(): BusinessInfo {
         question: "How natural do I sound?",
         answer: "I use Deepgram's advanced voice technology to sound natural and conversational. Callers often don't realize they're speaking with AI until I mention it."
       }
-    ]
+    ],
+    primaryCTA: {
+      text: "Start Free Trial",
+      action: "Help the caller start their 14-day free trial with Ring4. Guide them to speak with a specialist for personalized setup."
+    }
   }
 }
 

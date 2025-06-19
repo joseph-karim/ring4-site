@@ -19,6 +19,10 @@ export interface BusinessInfo {
     question: string
     answer: string
   }>
+  primaryCTA?: {
+    text: string
+    action: string
+  }
 }
 
 export async function crawlWebsite(url: string): Promise<BusinessInfo> {

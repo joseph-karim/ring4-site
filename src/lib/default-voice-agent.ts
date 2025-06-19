@@ -112,7 +112,11 @@ export function createDefaultVoiceAgent(websiteUrl: string): BusinessInfo {
         question: "What makes your business different?",
         answer: "We focus on delivering quality service with a personal touch. Our commitment to customer satisfaction and professional excellence sets us apart."
       }
-    ]
+    ],
+    primaryCTA: {
+      text: "Schedule a consultation",
+      action: "Help the caller schedule a consultation or appointment with us. Gather their contact information and preferred time."
+    }
   }
 }
 
@@ -190,7 +194,14 @@ export function createSmartDefaultVoiceAgent(websiteUrl: string): BusinessInfo {
       ...(businessType === 'real-estate' ? ['Local market expertise', 'Property valuations'] : []),
       ...(businessType === 'legal' ? ['Legal expertise', 'Case management'] : []),
       ...(businessType === 'medical' ? ['Patient care', 'Medical expertise'] : [])
-    ]
+    ],
+    primaryCTA: businessType === 'real-estate' 
+      ? { text: "Schedule a property showing", action: "Help the caller schedule a property showing or consultation about buying/selling real estate." }
+      : businessType === 'legal'
+      ? { text: "Book a legal consultation", action: "Help the caller book a legal consultation. Gather their contact information and the general nature of their legal matter." }
+      : businessType === 'medical'
+      ? { text: "Schedule an appointment", action: "Help the caller schedule a medical appointment. Gather their contact information and the type of appointment needed." }
+      : baseConfig.primaryCTA
   }
 }
 

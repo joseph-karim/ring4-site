@@ -4,7 +4,7 @@ const fs = require('fs').promises;
 
 /**
  * Real Crawl4AI-based website crawler for AI Receptionist knowledge base extraction
- * This function uses proper Python + Crawl4AI to extract business information
+ * This function uses the Python Crawl4AI script for sophisticated extraction
  */
 exports.handler = async function(event, context) {
   const headers = {
@@ -36,10 +36,35 @@ exports.handler = async function(event, context) {
       };
     }
 
-    console.log(`🚀 Starting crawl for: ${url}`);
+    console.log(`🚀 Starting Crawl4AI extraction for: ${url}`);
 
-    // For now, let's use a working Node.js-based crawler instead of Python
-    // since Netlify functions have issues with Python dependencies
+    // Try to use the Python Crawl4AI script first
+    try {
+      const scriptPath = path.join(__dirname, '..', '..', 'scripts', 'business_crawler.py');
+      const pythonResult = await runCrawl4AI(scriptPath, url);
+      
+      if (pythonResult && pythonResult.businessInfo) {
+        console.log('✅ Crawl4AI extraction successful');
+        return {
+          statusCode: 200,
+          headers,
+          body: JSON.stringify({
+            success: true,
+            businessInfo: pythonResult.businessInfo,
+            crawlMetadata: pythonResult.metadata || {
+              url,
+              usedFallback: false,
+              extractionMethod: 'crawl4ai',
+              extractedAt: new Date().toISOString()
+            }
+          })
+        };
+      }
+    } catch (pythonError) {
+      console.error('⚠️ Python Crawl4AI failed, falling back to Node.js:', pythonError.message);
+    }
+
+    // Fallback to Node.js crawler if Python fails
     const businessInfo = await crawlWebsiteNodeJS(url);
     
     return {

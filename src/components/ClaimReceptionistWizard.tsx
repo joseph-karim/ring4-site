@@ -30,8 +30,9 @@ import { saveAIReceptionist, saveDemoCallTranscript } from '../lib/ai-receptioni
 import { createSmartDefaultVoiceAgent, formatUrl, validateUrl, FALLBACK_MESSAGES } from '../lib/default-voice-agent'
 import { NovaSonicClient, TranscriptMessage, isNovaSonicAvailable } from '../lib/nova-sonic-client-deepgram'
 import { NovaSonicHttpClient } from '../lib/nova-sonic-http-client'
+import BusinessInfoEditor from './BusinessInfoEditor'
 
-type WizardStep = 'intro' | 'website' | 'analyzing' | 'preview' | 'test-call' | 'claim'
+type WizardStep = 'intro' | 'website' | 'analyzing' | 'edit' | 'preview' | 'test-call' | 'claim'
 
 export default function ClaimReceptionistWizard() {
   const [currentStep, setCurrentStep] = useState<WizardStep>('intro')
@@ -53,7 +54,7 @@ export default function ClaimReceptionistWizard() {
   const callTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Progress calculation
-  const stepOrder: WizardStep[] = ['intro', 'website', 'analyzing', 'preview', 'test-call', 'claim']
+  const stepOrder: WizardStep[] = ['intro', 'website', 'analyzing', 'edit', 'preview', 'test-call', 'claim']
   const currentStepIndex = stepOrder.indexOf(currentStep)
   const progress = ((currentStepIndex + 1) / stepOrder.length) * 100
 
@@ -192,7 +193,12 @@ export default function ClaimReceptionistWizard() {
       // Wait a bit to show analyzing animation
       await new Promise(resolve => setTimeout(resolve, 2000))
       
-      setCurrentStep('preview')
+      // If we have business info and it's not Ring4 defaults, go to edit step
+      if (businessInfo && websiteUrl !== 'skip') {
+        setCurrentStep('edit')
+      } else {
+        setCurrentStep('preview')
+      }
     } catch (error) {
       console.error('Error analyzing website:', error)
       // Still proceed to preview with fallback data
@@ -203,10 +209,36 @@ export default function ClaimReceptionistWizard() {
       setBusinessInfo(fallbackInfo)
       setAiConfig(generateSonicNovaConfig(fallbackInfo))
       
-      setCurrentStep('preview')
+      // Go to edit step for fallback data too
+      setCurrentStep('edit')
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleSaveBusinessInfo = async (updatedInfo: BusinessInfo) => {
+    setBusinessInfo(updatedInfo)
+    
+    // Regenerate AI configuration with updated info
+    const config = generateSonicNovaConfig(updatedInfo)
+    setAiConfig(config)
+    
+    // Update in Supabase if we have a receptionist ID
+    if (receptionistId) {
+      try {
+        await saveAIReceptionist({
+          websiteUrl: websiteUrl === 'skip' ? 'https://ring4.com' : websiteUrl,
+          businessInfo: updatedInfo,
+          aiConfig: config,
+          isUsingFallback,
+          fallbackType: isUsingFallback ? 'MANUAL_EDIT' : undefined
+        })
+      } catch (saveError) {
+        console.warn('Failed to update in Supabase:', saveError)
+      }
+    }
+    
+    setCurrentStep('preview')
   }
 
   const startTestCall = async () => {
@@ -495,6 +527,25 @@ export default function ClaimReceptionistWizard() {
                 <span>Training AI receptionist</span>
               </motion.div>
             </div>
+          </motion.div>
+        )
+
+      case 'edit':
+        return (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="max-w-4xl mx-auto"
+          >
+            {businessInfo && (
+              <BusinessInfoEditor
+                businessInfo={businessInfo}
+                onChange={setBusinessInfo}
+                onSave={() => handleSaveBusinessInfo(businessInfo)}
+                onCancel={() => setCurrentStep('preview')}
+              />
+            )}
           </motion.div>
         )
 
