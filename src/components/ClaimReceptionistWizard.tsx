@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from './ui/button'
+import { Input } from './ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import TallyModal from './TallyModal'
 import { Badge } from './ui/badge'
@@ -9,6 +10,7 @@ import { Progress } from './ui/progress'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion'
 import { 
   Phone, 
+  Globe,
   Sparkles, 
   CheckCircle,
   ArrowRight,
@@ -25,7 +27,7 @@ import {
 import { BusinessInfo } from '../lib/website-crawler'
 import { generateSonicNovaConfig } from '../lib/sonic-nova-config'
 import { saveAIReceptionist, saveDemoCallTranscript } from '../lib/ai-receptionist-storage'
-import { createSmartDefaultVoiceAgent } from '../lib/default-voice-agent'
+import { createSmartDefaultVoiceAgent, formatUrl, validateUrl } from '../lib/default-voice-agent'
 import { DeepgramVoiceClient, TranscriptMessage, isVoiceAgentSupported } from '../lib/deepgram-voice-client'
 import BusinessInfoEditor from './BusinessInfoEditor'
 
@@ -43,6 +45,8 @@ export default function ClaimReceptionistWizard() {
   const [callDuration, setCallDuration] = useState(0)
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([])
   const [isUsingFallback, setIsUsingFallback] = useState(false)
+  const [fallbackMessage, setFallbackMessage] = useState<string>('')
+  const [crawlAttempted, setCrawlAttempted] = useState(false)
   const [deepgramClient, setDeepgramClient] = useState<DeepgramVoiceClient | null>(null)
   const [isRecording, setIsRecording] = useState(false)
   const [voiceStatus, setVoiceStatus] = useState<string>('Initializing...')
@@ -76,36 +80,111 @@ export default function ClaimReceptionistWizard() {
     
     setCurrentStep('analyzing')
     setIsLoading(true)
+    setCrawlAttempted(false)
+    setIsUsingFallback(false)
+    setFallbackMessage('')
     
     try {
       let info: BusinessInfo
       let crawlMetadata: any = null
       
-      console.log('🎯 Creating industry-specific AI configuration for:', websiteUrl)
-      setIsUsingFallback(false) // Using professional industry templates
+      // Check if this is an industry selection or a website URL
+      const industryTypes = ['real-estate', 'legal', 'medical', 'business']
+      const isIndustrySelection = industryTypes.includes(websiteUrl)
       
-      // Import the industry-specific agent configuration
-      const { createIndustrySpecificAgent } = await import('../lib/industry-specific-agent')
-      info = createIndustrySpecificAgent(websiteUrl)
-      crawlMetadata = {
-        industry: websiteUrl,
-        extractionMethod: 'industry-template'
+      if (isIndustrySelection) {
+        // Use industry template directly
+        console.log('🎯 Using industry template for:', websiteUrl)
+        const { createIndustrySpecificAgent } = await import('../lib/industry-specific-agent')
+        info = createIndustrySpecificAgent(websiteUrl)
+        crawlMetadata = {
+          industry: websiteUrl,
+          extractionMethod: 'industry-template'
+        }
+      } else {
+        // Try to crawl the website first
+        console.log('🕷️ Attempting to crawl website:', websiteUrl)
+        setCrawlAttempted(true)
+        
+        const formattedUrl = formatUrl(websiteUrl)
+        if (!validateUrl(formattedUrl)) {
+          throw new Error('Invalid URL provided')
+        }
+        
+        try {
+          const response = await fetch('/.netlify/functions/crawl-website-real', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: formattedUrl })
+          })
+          
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+          }
+          
+          const data = await response.json()
+          
+          if (!data.success || !data.businessInfo) {
+            throw new Error('Crawling failed or returned invalid data')
+          }
+          
+          info = data.businessInfo as BusinessInfo
+          crawlMetadata = data.crawlMetadata
+          
+          console.log('✅ Successfully crawled website:', info.name)
+        } catch (crawlError) {
+          console.warn('Website crawling failed, using smart fallback:', crawlError)
+          
+          // Fall back to industry template based on URL
+          setIsUsingFallback(true)
+          setFallbackMessage('We couldn\'t automatically extract information from your website, so we\'ve created a professional template based on your business type. You can customize everything in the next step.')
+          
+          // Try to determine industry from URL/content
+          let detectedIndustry = 'business'
+          const urlLower = formattedUrl.toLowerCase()
+          if (urlLower.includes('real') || urlLower.includes('estate') || urlLower.includes('realtor')) {
+            detectedIndustry = 'real-estate'
+          } else if (urlLower.includes('law') || urlLower.includes('legal') || urlLower.includes('attorney')) {
+            detectedIndustry = 'legal'
+          } else if (urlLower.includes('medical') || urlLower.includes('doctor') || urlLower.includes('health')) {
+            detectedIndustry = 'medical'
+          }
+          
+          const { createIndustrySpecificAgent } = await import('../lib/industry-specific-agent')
+          info = createIndustrySpecificAgent(detectedIndustry)
+          
+          // Update business name to match domain
+          const domain = new URL(formattedUrl).hostname.replace('www.', '')
+          const businessName = domain.split('.')[0]
+            .split(/[-_]/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
+          
+          info.name = businessName || info.name
+          
+          crawlMetadata = {
+            industry: detectedIndustry,
+            extractionMethod: 'fallback-from-crawl',
+            originalUrl: formattedUrl,
+            crawlError: crawlError instanceof Error ? crawlError.message : 'Unknown error'
+          }
+        }
       }
       
       setBusinessInfo(info)
       
-      // Generate AI configuration with industry metadata
+      // Generate AI configuration
       const config = generateSonicNovaConfig(info, crawlMetadata)
       setAiConfig(config)
       
       // Save to Supabase
       try {
         const savedReceptionist = await saveAIReceptionist({
-          websiteUrl: `industry-${websiteUrl}`,
+          websiteUrl: isIndustrySelection ? `industry-${websiteUrl}` : websiteUrl,
           businessInfo: info,
           aiConfig: config,
-          isUsingFallback: false,
-          fallbackType: undefined
+          isUsingFallback,
+          fallbackType: isUsingFallback ? 'CRAWL_FAILED' : undefined
         })
         
         if (savedReceptionist) {
@@ -118,18 +197,19 @@ export default function ClaimReceptionistWizard() {
       // Wait a bit to show analyzing animation
       await new Promise(resolve => setTimeout(resolve, 2000))
       
-      // Go to edit step to allow customization of industry defaults
+      // Go to edit step to allow customization
       setCurrentStep('edit')
     } catch (error) {
-      console.error('Error creating industry configuration:', error)
-      // Still proceed to preview with fallback data
+      console.error('Error in website analysis:', error)
+      // Final fallback to business template
       setIsUsingFallback(true)
+      setFallbackMessage('We encountered an issue analyzing your website. We\'ve created a professional business template that you can customize.')
       
       const fallbackInfo = createSmartDefaultVoiceAgent('business')
       setBusinessInfo(fallbackInfo)
       setAiConfig(generateSonicNovaConfig(fallbackInfo))
       
-      setCurrentStep('preview')
+      setCurrentStep('edit')
     } finally {
       setIsLoading(false)
     }
@@ -334,15 +414,53 @@ export default function ClaimReceptionistWizard() {
             className="max-w-xl mx-auto space-y-6"
           >
             <div className="text-center space-y-2">
-              <h2 className="text-3xl font-bold">Pick Your Industry</h2>
+              <h2 className="text-3xl font-bold">Set Up Your AI Receptionist</h2>
               <p className="text-gray-600">
-                Select your industry to customize your AI receptionist with the right knowledge and tone
+                Add your website to personalize your AI, or choose your industry for smart defaults
               </p>
             </div>
             
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
+                  <div className="space-y-4">
+                    <div className="relative">
+                      <Globe className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                      <Input
+                        type="url"
+                        placeholder="your-business.com (optional - we'll extract your info)"
+                        value={websiteUrl && !['real-estate', 'legal', 'medical', 'business'].includes(websiteUrl) ? websiteUrl : ''}
+                        onChange={(e) => setWebsiteUrl(e.target.value)}
+                        className="pl-10 h-12 text-lg"
+                      />
+                    </div>
+                    
+                    {websiteUrl && !['real-estate', 'legal', 'medical', 'business'].includes(websiteUrl) && (
+                      <Button
+                        onClick={handleAnalyzeWebsite}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                      >
+                        Analyze My Website <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    )}
+                    
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        <strong>Website Analysis:</strong> We'll extract your business info, services, 
+                        and hours to personalize your AI receptionist.
+                      </p>
+                    </div>
+                    
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="bg-white px-2 text-muted-foreground">Or choose your industry</span>
+                      </div>
+                    </div>
+                  </div>
+                  
                   <div className="grid grid-cols-2 gap-3">
                     <Button
                       variant="outline"
@@ -390,9 +508,9 @@ export default function ClaimReceptionistWizard() {
                     </Button>
                   </div>
                   
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-blue-700">
-                      <strong>Professional Setup:</strong> We'll configure your AI with industry-specific 
+                  <div className="bg-green-50 p-4 rounded-lg">
+                    <p className="text-sm text-green-700">
+                      <strong>Industry Templates:</strong> Professional defaults with industry-specific 
                       knowledge, appropriate tone, and relevant conversation starters.
                     </p>
                   </div>
@@ -495,17 +613,34 @@ export default function ClaimReceptionistWizard() {
             <div className="text-center space-y-2">
               <h2 className="text-3xl font-bold">Meet Your AI Receptionist</h2>
               <p className="text-gray-600">
-                Professional AI receptionist set up for your {websiteUrl === 'business' ? 'business' : websiteUrl.replace('-', ' ')} with industry-specific knowledge and tone
+                {crawlAttempted && !isUsingFallback 
+                  ? `AI receptionist personalized with information from your website`
+                  : `Professional AI receptionist configured for your ${websiteUrl === 'business' ? 'business' : websiteUrl.replace('-', ' ')}`
+                }
               </p>
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
-                <p className="text-green-800 text-sm font-medium">
-                  ✨ Ready to Handle Your Calls
-                </p>
-                <p className="text-green-600 text-sm mt-1">
-                  Your AI knows your services, hours, and common questions. It will sound professional 
-                  and guide callers toward scheduling or getting the help they need.
-                </p>
-              </div>
+              
+              {isUsingFallback && fallbackMessage ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
+                  <p className="text-yellow-800 text-sm font-medium">
+                    ⚠️ Using Professional Template
+                  </p>
+                  <p className="text-yellow-700 text-sm mt-1">
+                    {fallbackMessage}
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                  <p className="text-green-800 text-sm font-medium">
+                    {crawlAttempted && !isUsingFallback ? '✅ Website Information Extracted' : '✨ Ready to Handle Your Calls'}
+                  </p>
+                  <p className="text-green-600 text-sm mt-1">
+                    {crawlAttempted && !isUsingFallback 
+                      ? 'Successfully gathered your business information from your website. Review and customize as needed.'
+                      : 'Your AI knows your services, hours, and common questions. It will sound professional and guide callers toward scheduling or getting the help they need.'
+                    }
+                  </p>
+                </div>
+              )}
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">
