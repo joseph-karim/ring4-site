@@ -90,6 +90,13 @@ io.on('connection', (socket) => {
         const systemPrompt = config.systemPrompt || 
           'You are a helpful AI receptionist. Be professional, friendly, and concise.';
         
+        const greetingText = config.greeting || 
+          (config.businessInfo?.name ? 
+            `Thank you for calling ${config.businessInfo.name}, I am an AI receptionist, how can I help you today?` :
+            "Thank you for calling, I am an AI receptionist, how can I help you today?");
+        
+        console.log('🎤 Configuring agent with greeting:', greetingText);
+        
         agent.configure({
           audio: {
             input: {
@@ -136,13 +143,17 @@ io.on('connection', (socket) => {
               ` : ''}
               
               CRITICAL BEHAVIOR:
-              - IMMEDIATELY start the conversation with your greeting when the call connects
-              - Do NOT wait for the caller to speak first
-              - Keep responses conversational and concise (1-2 sentences)
+              - You MUST immediately greet the caller when the conversation starts
+              - NEVER wait for the caller to speak first - you speak first always
+              - Your very first action should be to say your greeting: "${greetingText}"
+              - After your greeting, wait for the caller to respond
+              - Keep all responses conversational and concise (1-2 sentences)
               - Be professional and represent the business well
               - Guide conversations toward scheduling or the main business goal
               - If you don't know something, offer to connect them with someone who can help
-              - Always maintain a helpful, ${config.businessInfo.personality || 'professional'} tone`
+              - Always maintain a helpful, ${config.businessInfo.personality || 'professional'} tone
+              
+              IMPORTANT: Start every conversation by immediately saying your greeting. Do not wait.`
             },
             speak: {
               provider: {
@@ -150,16 +161,38 @@ io.on('connection', (socket) => {
                 model: config.voiceId || 'aura-2-asteria-en'
               }
             },
-            greeting: config.greeting || 
-              (config.businessInfo?.name ? 
-                `Thank you for calling ${config.businessInfo.name}, I am an AI receptionist, how can I help you today?` :
-                "Thank you for calling, I am an AI receptionist, how can I help you today?")
+            greeting: greetingText
           }
         });
       });
 
       agent.on('SettingsApplied', (data) => {
         console.log('Server confirmed settings:', data);
+        
+        // After settings are applied, trigger the greeting
+        console.log('🎤 Settings applied, triggering initial greeting...');
+        
+        // Give the agent a moment to fully initialize, then start the conversation
+        setTimeout(() => {
+          try {
+            // Send a system message to trigger the greeting behavior
+            console.log('🗣️ Sending conversation start trigger...');
+            
+            // Try different approaches to start the conversation
+            if (typeof agent.sendMessage === 'function') {
+              agent.sendMessage({ type: 'conversation_start' });
+            } else if (typeof agent.injectUserMessage === 'function') {
+              agent.injectUserMessage('');
+            } else {
+              // If no specific method, send empty audio to trigger response
+              agent.send(Buffer.alloc(0));
+            }
+            
+          } catch (error) {
+            console.log('⚠️ Could not trigger greeting:', error.message);
+            console.log('Available agent methods:', Object.getOwnPropertyNames(agent));
+          }
+        }, 500);
       });
 
       agent.on(AgentEvents.ConversationText, (message: { role: string; content: string }) => {
