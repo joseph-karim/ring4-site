@@ -61,32 +61,11 @@ export function generateSonicNovaConfig(businessInfo: BusinessInfo, crawlMetadat
   return config
 }
 
-// Determine optimal voice settings based on business type
-function determineOptimalVoiceSettings(info: BusinessInfo): SonicNovaConfig['voiceSettings'] {
-  const services = info.services.join(' ').toLowerCase()
-  
-  // Legal/Professional services
-  if (services.includes('law') || services.includes('legal') || services.includes('attorney')) {
-    return { tone: 'professional', speed: 'normal', gender: 'neutral' }
-  }
-  
-  // Medical/Healthcare
-  if (services.includes('medical') || services.includes('doctor') || services.includes('health')) {
-    return { tone: 'professional', speed: 'normal', gender: 'female' }
-  }
-  
-  // Real Estate
-  if (services.includes('real estate') || services.includes('realtor') || services.includes('property')) {
-    return { tone: 'friendly', speed: 'normal', gender: 'neutral' }
-  }
-  
-  // Creative/Design services
-  if (services.includes('design') || services.includes('creative') || services.includes('marketing')) {
-    return { tone: 'friendly', speed: 'normal', gender: 'neutral' }
-  }
-  
-  // Default professional
-  return { tone: 'professional', speed: 'normal', gender: 'neutral' }
+// Determine optimal voice settings based on business type (internal use only)
+function determineOptimalVoiceSettings(_info: BusinessInfo): SonicNovaConfig['voiceSettings'] {
+  // All industries use professional, clear voice settings
+  // Technical voice model selection is handled automatically
+  return { tone: 'professional', speed: 'normal', gender: 'female' }
 }
 
 // Determine personality based on business values and content
@@ -169,9 +148,14 @@ function enhanceServicesWithContext(services: string[], description: string): st
 }
 
 function generateAdvancedSystemPrompt(info: BusinessInfo, crawlMetadata?: any): string {
-  const extractionQuality = crawlMetadata?.extractionMethod === 'crawl4ai' ? 'comprehensive' : 'basic'
+  const extractionQuality = crawlMetadata?.extractionMethod === 'industry-template' ? 'industry-specific' : 'comprehensive'
   
-  return `You are the AI receptionist for ${info.name}. Your role is to provide exceptional customer service that reflects our business values and expertise.
+  return `You are an AI receptionist for ${info.name}. Your role is to provide exceptional customer service that reflects our business values and expertise.
+
+CRITICAL BEHAVIOR:
+- IMMEDIATELY greet callers when the call connects - do NOT wait for them to speak first
+- Start every call with your greeting: "Thank you for calling ${info.name}, I am an AI receptionist, how can I help you today?"
+- Answer the phone proactively, not reactively
 
 CORE RESPONSIBILITIES:
 1. Answer calls professionally with our signature ${determinePersonality(info)} approach
@@ -181,7 +165,7 @@ CORE RESPONSIBILITIES:
 5. Handle common questions using our comprehensive knowledge base
 
 CONVERSATION GUIDELINES:
-- Always greet callers warmly and identify yourself as ${info.name}'s AI receptionist
+- Always greet callers warmly and identify yourself as an AI receptionist for ${info.name}
 - Listen actively and ask clarifying questions to better help
 - Keep responses helpful but concise (aim for 1-2 sentences)
 - Show genuine interest in solving the caller's problem
@@ -208,19 +192,19 @@ function generateSmartConversationStarters(info: BusinessInfo): string[] {
   const businessType = determineBusinessType(info)
   
   const starters = [
-    `Thank you for calling ${info.name}! How can I help you today?`,
-    `Good ${getTimeOfDay()}, you've reached ${info.name}. What can I assist you with?`
+    `Thank you for calling ${info.name}, I am an AI receptionist, how can I help you today?`,
+    `Good ${getTimeOfDay()}, you've reached ${info.name}. I am an AI receptionist. What can I assist you with?`
   ]
   
   // Add business-specific starters
   if (businessType === 'real-estate') {
-    starters.push(`Welcome to ${info.name}! Are you looking to buy, sell, or have questions about a property?`)
+    starters.push(`Welcome to ${info.name}! I am an AI receptionist. Are you looking to buy, sell, or have questions about a property?`)
   } else if (businessType === 'medical') {
-    starters.push(`Hello, this is ${info.name}. Are you calling to schedule an appointment or do you have a medical question?`)
+    starters.push(`Hello, this is ${info.name}. I am an AI receptionist. Are you calling to schedule an appointment or do you have a medical question?`)
   } else if (businessType === 'legal') {
-    starters.push(`You've reached ${info.name}. Are you calling for a consultation or do you have legal questions?`)
+    starters.push(`You've reached ${info.name}. I am an AI receptionist. Are you calling for a consultation or do you have legal questions?`)
   } else {
-    starters.push(`Hello! This is ${info.name}. Are you calling about our services or to schedule an appointment?`)
+    starters.push(`Hello! This is ${info.name}. I am an AI receptionist. Are you calling about our services or to schedule an appointment?`)
   }
   
   return starters

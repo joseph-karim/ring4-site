@@ -118,27 +118,42 @@ io.on('connection', (socket) => {
               
               ${config.businessInfo ? `
               BUSINESS CONTEXT:
-              - You are the AI receptionist for ${config.businessInfo.name || 'this business'}
+              - You are an AI receptionist for ${config.businessInfo.name || 'this business'}
               - Personality: ${config.businessInfo.personality || 'Professional and helpful'}
+              - Agent Name: ${config.businessInfo.agentName || 'AI Receptionist'}
               
-              KNOWLEDGE BASE:
-              ${JSON.stringify(config.businessInfo.knowledgeBase, null, 2) || 'General business knowledge'}
+              SERVICES YOU KNOW ABOUT:
+              ${config.businessInfo.services ? config.businessInfo.services.map(s => `- ${s}`).join('\n') : '- General business services'}
+              
+              BUSINESS HOURS:
+              ${config.businessInfo.hours ? Object.entries(config.businessInfo.hours).map(([day, hours]) => `${day}: ${hours}`).join('\n') : 'Standard business hours'}
+              
+              KNOWLEDGE BASE (Questions you can answer):
+              ${config.businessInfo.knowledgeBase?.faqs ? config.businessInfo.knowledgeBase.faqs.map(faq => `Q: ${faq.question}\nA: ${faq.answer}`).join('\n\n') : 'Standard business questions'}
+              
+              CONVERSATION STARTERS:
+              ${config.businessInfo.conversationStarters ? config.businessInfo.conversationStarters.join('\n- ') : 'How can I help you today?'}
               ` : ''}
               
-              Remember to:
+              CRITICAL BEHAVIOR:
+              - IMMEDIATELY start the conversation with your greeting when the call connects
+              - Do NOT wait for the caller to speak first
               - Keep responses conversational and concise (1-2 sentences)
               - Be professional and represent the business well
-              - If you don't know something, offer to connect them with someone who can help`
+              - Guide conversations toward scheduling or the main business goal
+              - If you don't know something, offer to connect them with someone who can help
+              - Always maintain a helpful, ${config.businessInfo.personality || 'professional'} tone`
             },
             speak: {
               provider: {
                 type: 'deepgram',
-                model: config.voiceId || 'aura-2-thalia-en'
+                model: config.voiceId || 'aura-2-asteria-en'
               }
             },
-            greeting: config.businessInfo?.name ? 
-              `Hello! Thank you for calling ${config.businessInfo.name}. How can I help you today?` :
-              "Hello! How can I help you today?"
+            greeting: config.greeting || 
+              (config.businessInfo?.name ? 
+                `Thank you for calling ${config.businessInfo.name}, I am an AI receptionist, how can I help you today?` :
+                "Thank you for calling, I am an AI receptionist, how can I help you today?")
           }
         });
       });

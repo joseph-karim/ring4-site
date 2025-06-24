@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from './ui/button'
-import { Input } from './ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card'
 import TallyModal from './TallyModal'
 import { Badge } from './ui/badge'
@@ -10,7 +9,6 @@ import { Progress } from './ui/progress'
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion'
 import { 
   Phone, 
-  Globe, 
   Sparkles, 
   CheckCircle,
   ArrowRight,
@@ -27,9 +25,8 @@ import {
 import { BusinessInfo } from '../lib/website-crawler'
 import { generateSonicNovaConfig } from '../lib/sonic-nova-config'
 import { saveAIReceptionist, saveDemoCallTranscript } from '../lib/ai-receptionist-storage'
-import { createSmartDefaultVoiceAgent, formatUrl, validateUrl, FALLBACK_MESSAGES } from '../lib/default-voice-agent'
-import { NovaSonicClient, TranscriptMessage, isNovaSonicAvailable } from '../lib/nova-sonic-client-deepgram'
-import { NovaSonicHttpClient } from '../lib/nova-sonic-http-client'
+import { createSmartDefaultVoiceAgent } from '../lib/default-voice-agent'
+import { DeepgramVoiceClient, TranscriptMessage, isVoiceAgentSupported } from '../lib/deepgram-voice-client'
 import BusinessInfoEditor from './BusinessInfoEditor'
 
 type WizardStep = 'intro' | 'website' | 'analyzing' | 'edit' | 'preview' | 'test-call' | 'claim'
@@ -46,11 +43,10 @@ export default function ClaimReceptionistWizard() {
   const [callDuration, setCallDuration] = useState(0)
   const [transcript, setTranscript] = useState<TranscriptMessage[]>([])
   const [isUsingFallback, setIsUsingFallback] = useState(false)
-  const [fallbackMessage, setFallbackMessage] = useState<string>('')
-  const [novaSonicClient, setNovaSonicClient] = useState<NovaSonicClient | NovaSonicHttpClient | null>(null)
+  const [deepgramClient, setDeepgramClient] = useState<DeepgramVoiceClient | null>(null)
   const [isRecording, setIsRecording] = useState(false)
   const [voiceStatus, setVoiceStatus] = useState<string>('Initializing...')
-  const [isNovaSonicSupported, setIsNovaSonicSupported] = useState(false)
+  const [isVoiceSupported, setIsVoiceSupported] = useState(false)
   const callTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // Progress calculation
@@ -58,22 +54,22 @@ export default function ClaimReceptionistWizard() {
   const currentStepIndex = stepOrder.indexOf(currentStep)
   const progress = ((currentStepIndex + 1) / stepOrder.length) * 100
 
-  // Check Nova Sonic support on component mount
+  // Check voice support on component mount
   useEffect(() => {
-    setIsNovaSonicSupported(isNovaSonicAvailable())
+    setIsVoiceSupported(isVoiceAgentSupported())
   }, [])
 
-  // Cleanup Nova Sonic client on unmount
+  // Cleanup Deepgram client on unmount
   useEffect(() => {
     return () => {
-      if (novaSonicClient) {
-        novaSonicClient.disconnect()
+      if (deepgramClient) {
+        deepgramClient.disconnect()
       }
       if (callTimerRef.current) {
         clearInterval(callTimerRef.current)
       }
     }
-  }, [novaSonicClient])
+  }, [deepgramClient])
 
   const handleAnalyzeWebsite = async () => {
     if (!websiteUrl) return
@@ -83,104 +79,33 @@ export default function ClaimReceptionistWizard() {
     
     try {
       let info: BusinessInfo
-      let fallbackType = 'GENERIC'
       let crawlMetadata: any = null
       
-      // Check if user chose to skip
-      if (websiteUrl === 'skip') {
-        console.log('🎯 User chose to skip website crawling, using Ring4 defaults')
-        setIsUsingFallback(false) // Not a fallback, intentional choice
-        
-        // Import the Ring4 default agent configuration
-        const { createRing4DefaultAgent } = await import('../lib/ring4-default-agent')
-        info = createRing4DefaultAgent()
-        crawlMetadata = {
-          skipped: true,
-          extractionMethod: 'ring4-defaults'
-        }
-      } else {
-        // Format and validate URL first
-        const formattedUrl = formatUrl(websiteUrl)
-        if (!validateUrl(formattedUrl)) {
-          console.warn('Invalid URL provided:', websiteUrl)
-          setIsUsingFallback(true)
-          fallbackType = 'INVALID_URL'
-          info = createSmartDefaultVoiceAgent(websiteUrl)
-        } else {
-          // Use real Crawl4AI-based Netlify function for website crawling
-          try {
-            console.log(`🚀 Starting real crawl for: ${formattedUrl}`)
-          
-          const response = await fetch('/.netlify/functions/crawl-website-real', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ url: formattedUrl })
-          })
-          
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-          }
-          
-          const data = await response.json()
-          
-          if (!data.success || !data.businessInfo) {
-            throw new Error('Crawling failed or returned invalid data')
-          }
-          
-          info = data.businessInfo as BusinessInfo
-          crawlMetadata = data.crawlMetadata
-          
-          // Check if fallback was used in the backend
-          if (crawlMetadata?.usedFallback) {
-            setIsUsingFallback(true)
-            fallbackType = 'CRAWL_FAILED'
-            console.log('✅ Crawling completed with fallback:', info.name)
-          } else {
-            console.log('✅ Successfully crawled website with Crawl4AI:', info.name)
-          }
-          
-        } catch (crawlError) {
-          console.warn('Crawl4AI function failed, using smart fallback:', crawlError)
-          setIsUsingFallback(true)
-          
-          // Determine fallback type based on error
-          if (crawlError instanceof Error) {
-            if (crawlError.message.includes('timeout')) {
-              fallbackType = 'TIMEOUT'
-            } else if (crawlError.message.includes('network')) {
-              fallbackType = 'NETWORK_ERROR'
-            } else {
-              fallbackType = 'CRAWL_FAILED'
-            }
-          }
-          
-          // Use smart default that adapts to business type
-          info = createSmartDefaultVoiceAgent(formattedUrl)
-          }
-        }
-      }
+      console.log('🎯 Creating industry-specific AI configuration for:', websiteUrl)
+      setIsUsingFallback(false) // Using professional industry templates
       
-      // Set fallback message if using fallback
-      if (isUsingFallback) {
-        setFallbackMessage(FALLBACK_MESSAGES[fallbackType as keyof typeof FALLBACK_MESSAGES])
+      // Import the industry-specific agent configuration
+      const { createIndustrySpecificAgent } = await import('../lib/industry-specific-agent')
+      info = createIndustrySpecificAgent(websiteUrl)
+      crawlMetadata = {
+        industry: websiteUrl,
+        extractionMethod: 'industry-template'
       }
       
       setBusinessInfo(info)
       
-      // Generate AI configuration with crawl metadata for enhanced context
+      // Generate AI configuration with industry metadata
       const config = generateSonicNovaConfig(info, crawlMetadata)
       setAiConfig(config)
       
-      // Save to Supabase (with fallback flag)
+      // Save to Supabase
       try {
         const savedReceptionist = await saveAIReceptionist({
-          websiteUrl: websiteUrl === 'skip' ? 'https://ring4.com' : websiteUrl,
+          websiteUrl: `industry-${websiteUrl}`,
           businessInfo: info,
           aiConfig: config,
-          isUsingFallback,
-          fallbackType
+          isUsingFallback: false,
+          fallbackType: undefined
         })
         
         if (savedReceptionist) {
@@ -193,24 +118,18 @@ export default function ClaimReceptionistWizard() {
       // Wait a bit to show analyzing animation
       await new Promise(resolve => setTimeout(resolve, 2000))
       
-      // If we have business info and it's not Ring4 defaults, go to edit step
-      if (businessInfo && websiteUrl !== 'skip') {
-        setCurrentStep('edit')
-      } else {
-        setCurrentStep('preview')
-      }
+      // Go to edit step to allow customization of industry defaults
+      setCurrentStep('edit')
     } catch (error) {
-      console.error('Error analyzing website:', error)
+      console.error('Error creating industry configuration:', error)
       // Still proceed to preview with fallback data
       setIsUsingFallback(true)
-      setFallbackMessage(FALLBACK_MESSAGES.GENERIC)
       
-      const fallbackInfo = createSmartDefaultVoiceAgent(websiteUrl)
+      const fallbackInfo = createSmartDefaultVoiceAgent('business')
       setBusinessInfo(fallbackInfo)
       setAiConfig(generateSonicNovaConfig(fallbackInfo))
       
-      // Go to edit step for fallback data too
-      setCurrentStep('edit')
+      setCurrentStep('preview')
     } finally {
       setIsLoading(false)
     }
@@ -242,7 +161,7 @@ export default function ClaimReceptionistWizard() {
   }
 
   const startTestCall = async () => {
-    if (!isNovaSonicSupported) {
+    if (!isVoiceSupported) {
       setVoiceStatus('Voice features not supported in this browser')
       return
     }
@@ -261,24 +180,39 @@ export default function ClaimReceptionistWizard() {
       setCallDuration(0)
       setTranscript([])
       
-      // Initialize Nova Sonic client if not already done
-      if (!novaSonicClient) {
-        // Always use WebSocket client now that we'll deploy the server properly
-        const wsClient = new NovaSonicClient()
+      // Initialize Deepgram client if not already done
+      if (!deepgramClient) {
+        const client = new DeepgramVoiceClient()
         
-        wsClient.onStatus((status) => {
+        client.onStatus((status) => {
           setVoiceStatus(status)
         })
         
-        wsClient.onTranscript((message) => {
+        client.onTranscript((message) => {
           setTranscript(prev => [...prev, message])
         })
         
-        // Initialize session with business context
-        const sessionConfig = NovaSonicClient.createFromBusinessConfig(aiConfig)
-        await wsClient.initializeSession(sessionConfig)
+        // Initialize session with full AI configuration from wizard
+        const systemPrompt = aiConfig?.systemPrompt || `You are an AI receptionist for ${businessInfo?.name || 'this business'}. IMMEDIATELY greet callers when the call connects. Start with: "Thank you for calling ${businessInfo?.name || 'us'}, I am an AI receptionist, how can I help you today?" Be professional, friendly, and helpful.`
         
-        setNovaSonicClient(wsClient)
+        // Use appropriate voice for the industry (users don't choose this)
+        let voiceId = 'aura-2-asteria-en' // Professional female voice - works for all industries
+        
+        await client.initializeSession({
+          systemPrompt,
+          voiceId,
+          businessInfo: {
+            ...businessInfo,
+            personality: aiConfig?.personality,
+            knowledgeBase: aiConfig?.knowledgeBase,
+            agentName: aiConfig?.agentName,
+            conversationStarters: aiConfig?.conversationStarters,
+            escalationRules: aiConfig?.escalationRules
+          },
+          greeting: `Thank you for calling ${businessInfo?.name || 'us'}, I am an AI receptionist, how can I help you today?`
+        })
+        
+        setDeepgramClient(client)
       }
       
       // Start call timer
@@ -296,27 +230,23 @@ export default function ClaimReceptionistWizard() {
   }
   
   const toggleRecording = async () => {
-    if (!novaSonicClient) return
+    if (!deepgramClient) return
     
     if (isRecording) {
       // Stop recording
-      if (novaSonicClient instanceof NovaSonicClient) {
-        novaSonicClient.stopRecording()
-      }
+      deepgramClient.stopRecording()
       setIsRecording(false)
     } else {
       // Start recording
-      if (novaSonicClient instanceof NovaSonicClient) {
-        novaSonicClient.startRecording()
-        setIsRecording(true)
-      }
+      deepgramClient.startRecording()
+      setIsRecording(true)
     }
   }
   
   const endCall = () => {
-    if (novaSonicClient) {
-      novaSonicClient.disconnect()
-      setNovaSonicClient(null)
+    if (deepgramClient) {
+      deepgramClient.disconnect()
+      setDeepgramClient(null)
     }
     
     if (callTimerRef.current) {
@@ -404,56 +334,68 @@ export default function ClaimReceptionistWizard() {
             className="max-w-xl mx-auto space-y-6"
           >
             <div className="text-center space-y-2">
-              <h2 className="text-3xl font-bold">Configure Your AI Receptionist</h2>
+              <h2 className="text-3xl font-bold">Pick Your Industry</h2>
               <p className="text-gray-600">
-                Add your website for personalization or skip to use our smart defaults
+                Select your industry to customize your AI receptionist with the right knowledge and tone
               </p>
             </div>
             
             <Card>
               <CardContent className="pt-6">
                 <div className="space-y-4">
-                  <div className="relative">
-                    <Globe className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                    <Input
-                      type="url"
-                      placeholder="your-business.com (optional)"
-                      value={websiteUrl === 'skip' ? '' : websiteUrl}
-                      onChange={(e) => setWebsiteUrl(e.target.value)}
-                      className="pl-10 h-12 text-lg"
-                    />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setWebsiteUrl('real-estate');
+                        handleAnalyzeWebsite();
+                      }}
+                      className="h-16 flex flex-col items-center justify-center"
+                    >
+                      <span className="font-medium">Real Estate</span>
+                      <span className="text-xs text-gray-500">Agents & Brokers</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setWebsiteUrl('legal');
+                        handleAnalyzeWebsite();
+                      }}
+                      className="h-16 flex flex-col items-center justify-center"
+                    >
+                      <span className="font-medium">Legal</span>
+                      <span className="text-xs text-gray-500">Law Firms & Attorneys</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setWebsiteUrl('medical');
+                        handleAnalyzeWebsite();
+                      }}
+                      className="h-16 flex flex-col items-center justify-center"
+                    >
+                      <span className="font-medium">Medical</span>
+                      <span className="text-xs text-gray-500">Healthcare & Clinics</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setWebsiteUrl('business');
+                        handleAnalyzeWebsite();
+                      }}
+                      className="h-16 flex flex-col items-center justify-center"
+                    >
+                      <span className="font-medium">Business</span>
+                      <span className="text-xs text-gray-500">General Services</span>
+                    </Button>
                   </div>
                   
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <p className="text-sm text-blue-700">
-                      <strong>Website Analysis:</strong> We'll extract your business info, services, 
-                      and hours to personalize your AI receptionist.
+                      <strong>Professional Setup:</strong> We'll configure your AI with industry-specific 
+                      knowledge, appropriate tone, and relevant conversation starters.
                     </p>
                   </div>
-                  
-                  <div className="relative">
-                    <div className="absolute inset-0 flex items-center">
-                      <span className="w-full border-t" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase">
-                      <span className="bg-white px-2 text-muted-foreground">Or</span>
-                    </div>
-                  </div>
-                  
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setWebsiteUrl('skip');
-                      handleAnalyzeWebsite();
-                    }}
-                    className="w-full"
-                  >
-                    Skip and Use Smart Defaults
-                  </Button>
-                  
-                  <p className="text-xs text-center text-gray-500">
-                    You can customize your AI's responses and knowledge later
-                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -464,13 +406,6 @@ export default function ClaimReceptionistWizard() {
                 onClick={() => setCurrentStep('intro')}
               >
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
-              </Button>
-              <Button 
-                onClick={handleAnalyzeWebsite}
-                disabled={!websiteUrl || websiteUrl === 'skip'}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                Analyze Website <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           </motion.div>
@@ -560,75 +495,60 @@ export default function ClaimReceptionistWizard() {
             <div className="text-center space-y-2">
               <h2 className="text-3xl font-bold">Meet Your AI Receptionist</h2>
               <p className="text-gray-600">
-                {websiteUrl === 'skip' 
-                  ? "Ring4 AI Receptionist - Professional voice agent with comprehensive capabilities"
-                  : isUsingFallback 
-                    ? "Smart business assistant - ready to handle your calls professionally"
-                    : "Trained on your business and ready to handle calls professionally"
-                }
+                Professional AI receptionist set up for your {websiteUrl === 'business' ? 'business' : websiteUrl.replace('-', ' ')} with industry-specific knowledge and tone
               </p>
-              {websiteUrl === 'skip' ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
-                  <p className="text-green-800 text-sm font-medium">
-                    ✨ Using Ring4's Professional AI Configuration
-                  </p>
-                  <p className="text-green-600 text-sm mt-1">
-                    Your AI receptionist comes with comprehensive call handling capabilities, 
-                    lead capture, and instant SMS notifications. You can customize the responses 
-                    during setup.
-                  </p>
-                </div>
-              ) : isUsingFallback && fallbackMessage && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
-                  <p className="text-blue-800 text-sm">{fallbackMessage}</p>
-                  <p className="text-blue-600 text-sm mt-2 font-medium">
-                    {FALLBACK_MESSAGES.SETUP_HELP}
-                  </p>
-                </div>
-              )}
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                <p className="text-green-800 text-sm font-medium">
+                  ✨ Ready to Handle Your Calls
+                </p>
+                <p className="text-green-600 text-sm mt-1">
+                  Your AI knows your services, hours, and common questions. It will sound professional 
+                  and guide callers toward scheduling or getting the help they need.
+                </p>
+              </div>
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">
-              {/* AI Personality Card */}
+              {/* AI Overview Card */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <User className="h-5 w-5" />
-                    AI Personality
+                    Your AI Receptionist
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div>
-                    <p className="font-medium">Name</p>
-                    <p className="text-gray-600">{aiConfig?.agentName || 'Emma'}</p>
+                    <p className="font-medium">Business</p>
+                    <p className="text-gray-600">{businessInfo?.name || 'Your Business'}</p>
                   </div>
                   <div>
-                    <p className="font-medium">Voice</p>
-                    <p className="text-gray-600">{aiConfig?.voiceSettings?.voiceId || 'Professional Female'}</p>
+                    <p className="font-medium">Industry</p>
+                    <p className="text-gray-600 capitalize">{websiteUrl === 'business' ? 'General Business' : websiteUrl.replace('-', ' ')}</p>
                   </div>
                   <div>
-                    <p className="font-medium">Personality Traits</p>
+                    <p className="font-medium">Personality</p>
                     <div className="flex flex-wrap gap-2 mt-1">
                       <Badge variant="secondary">Professional</Badge>
-                      <Badge variant="secondary">Friendly</Badge>
                       <Badge variant="secondary">Helpful</Badge>
+                      <Badge variant="secondary">Knowledgeable</Badge>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Business Knowledge Card */}
+              {/* What Your AI Knows */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Brain className="h-5 w-5" />
-                    Business Knowledge
+                    What Your AI Knows
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Accordion type="single" collapsible className="w-full">
                     <AccordionItem value="hours">
-                      <AccordionTrigger>Business Hours</AccordionTrigger>
+                      <AccordionTrigger>Your Hours</AccordionTrigger>
                       <AccordionContent>
                         <div className="space-y-1 text-sm">
                           {businessInfo && Object.entries(businessInfo.hours).map(([day, hours]) => (
@@ -641,7 +561,7 @@ export default function ClaimReceptionistWizard() {
                       </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="services">
-                      <AccordionTrigger>Services</AccordionTrigger>
+                      <AccordionTrigger>Your Services</AccordionTrigger>
                       <AccordionContent>
                         <ul className="list-disc list-inside space-y-1 text-sm">
                           {businessInfo?.services.map((service, idx) => (
@@ -650,18 +570,18 @@ export default function ClaimReceptionistWizard() {
                         </ul>
                       </AccordionContent>
                     </AccordionItem>
-                    <AccordionItem value="contact">
-                      <AccordionTrigger>Contact Info</AccordionTrigger>
+                    <AccordionItem value="knowledge">
+                      <AccordionTrigger>Your Knowledgebase</AccordionTrigger>
                       <AccordionContent>
-                        <div className="space-y-1 text-sm">
-                          {businessInfo?.contact.phone && (
-                            <p>Phone: {businessInfo.contact.phone}</p>
-                          )}
-                          {businessInfo?.contact.email && (
-                            <p>Email: {businessInfo.contact.email}</p>
-                          )}
-                          {businessInfo?.contact.address && (
-                            <p>Address: {businessInfo.contact.address}</p>
+                        <div className="space-y-2 text-sm">
+                          {businessInfo?.faqs.slice(0, 3).map((faq, idx) => (
+                            <div key={idx} className="border-l-2 border-blue-200 pl-3">
+                              <p className="font-medium">{faq.question}</p>
+                              <p className="text-gray-600">{faq.answer}</p>
+                            </div>
+                          ))}
+                          {businessInfo?.faqs && businessInfo.faqs.length > 3 && (
+                            <p className="text-gray-500 italic">...and {businessInfo.faqs.length - 3} more questions</p>
                           )}
                         </div>
                       </AccordionContent>
@@ -671,19 +591,19 @@ export default function ClaimReceptionistWizard() {
               </Card>
             </div>
 
-            {/* Sample Responses */}
+            {/* Sample Conversations */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  Sample Responses
+                  How Your AI Will Sound
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
                   {aiConfig?.conversationStarters.slice(0, 3).map((starter: string, idx: number) => (
                     <div key={idx} className="bg-gray-50 p-3 rounded-lg">
-                      <p className="text-sm text-gray-600">Opening greeting {idx + 1}:</p>
+                      <p className="text-sm text-gray-600">Example greeting:</p>
                       <p className="italic">"{starter}"</p>
                     </div>
                   ))}
@@ -694,9 +614,9 @@ export default function ClaimReceptionistWizard() {
             <div className="flex justify-between">
               <Button 
                 variant="outline" 
-                onClick={() => setCurrentStep('website')}
+                onClick={() => setCurrentStep('edit')}
               >
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                <ArrowLeft className="mr-2 h-4 w-4" /> Customize
               </Button>
               <Button 
                 onClick={() => setCurrentStep('test-call')}
@@ -773,7 +693,7 @@ export default function ClaimReceptionistWizard() {
                           }`} />
                         </div>
                         <div>
-                          <p className="font-semibold">Live Voice Call with Nova Sonic</p>
+                          <p className="font-semibold">Live Voice Call</p>
                           <p className="text-sm text-gray-600">
                             {callStatus === 'calling' ? 'In Progress' : 'Ended'} • {callDuration}s
                           </p>
@@ -804,7 +724,7 @@ export default function ClaimReceptionistWizard() {
 
                     <div className="bg-blue-50 p-3 rounded-lg">
                       <p className="text-sm text-blue-800 font-medium">Status: {voiceStatus}</p>
-                      {!isNovaSonicSupported && (
+                      {!isVoiceSupported && (
                         <p className="text-sm text-red-600 mt-1">
                           Voice features require a modern browser with microphone support.
                         </p>
@@ -850,7 +770,7 @@ export default function ClaimReceptionistWizard() {
                           ✅ Live voice call completed successfully!
                         </p>
                         <p className="text-sm text-green-700">
-                          Your AI receptionist used real voice AI technology powered by Amazon Nova Sonic to have a natural conversation.
+                          Your Ring4 AI receptionist had a natural voice conversation just like a real person would.
                         </p>
                       </div>
                     )}

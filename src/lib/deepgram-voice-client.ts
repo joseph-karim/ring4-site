@@ -5,6 +5,7 @@ export interface VoiceSessionConfig {
   systemPrompt?: string;
   voiceId?: string;
   businessInfo?: any;
+  greeting?: string;
 }
 
 export interface TranscriptMessage {
@@ -104,8 +105,9 @@ export class DeepgramVoiceClient {
       // Start Deepgram session
       this.socket.emit('start_session', {
         systemPrompt: config.systemPrompt || 'You are a helpful AI receptionist. Be professional, friendly, and concise.',
-        voiceId: config.voiceId || 'aura-asteria-en',
-        businessInfo: config.businessInfo
+        voiceId: config.voiceId || 'aura-2-asteria-en',
+        businessInfo: config.businessInfo,
+        greeting: config.greeting
       });
 
     } catch (error) {

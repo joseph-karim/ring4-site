@@ -102,10 +102,10 @@ export default function BusinessInfoEditor({
     <div className="space-y-6">
       {/* Header with Save/Cancel */}
       <div className="flex justify-between items-center">
-        <h3 className="text-2xl font-bold">Customize Your AI's Knowledge</h3>
+        <h3 className="text-2xl font-bold">Customize Your AI Receptionist</h3>
         <div className="flex gap-2">
           <Button variant="outline" onClick={onCancel}>
-            Cancel
+            Skip Customization
           </Button>
           <Button onClick={onSave} className="bg-blue-600 hover:bg-blue-700">
             Save & Continue
@@ -114,7 +114,7 @@ export default function BusinessInfoEditor({
       </div>
 
       <p className="text-gray-600">
-        Review and edit the information extracted from your website. This will be used to train your AI receptionist.
+        These are the professional defaults for your industry. You can customize any information to better match your business.
       </p>
 
       {/* Basic Information */}
@@ -283,33 +283,38 @@ export default function BusinessInfoEditor({
         </CardContent>
       </Card>
 
-      {/* FAQs */}
+      {/* Knowledge Base */}
       <Card>
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
-            Frequently Asked Questions
+            Your Knowledgebase
             <Button size="sm" onClick={addFAQ}>
-              <Plus className="h-4 w-4 mr-1" /> Add FAQ
+              <Plus className="h-4 w-4 mr-1" /> Add Question
             </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
+          <p className="text-sm text-gray-600 mb-4">
+            These are common questions your AI will know how to answer. You can edit these or add your own.
+          </p>
           <div className="space-y-4">
             {businessInfo.faqs.map((faq, index) => (
               <div key={index} className="border p-4 rounded-lg space-y-2">
                 <div>
-                  <Label>Question</Label>
+                  <Label>Question customers might ask</Label>
                   <Input
                     value={faq.question}
                     onChange={(e) => updateFAQ(index, 'question', e.target.value)}
+                    placeholder="e.g., What are your hours?"
                   />
                 </div>
                 <div>
-                  <Label>Answer</Label>
+                  <Label>How your AI should respond</Label>
                   <Textarea
                     value={faq.answer}
                     onChange={(e) => updateFAQ(index, 'answer', e.target.value)}
                     rows={2}
+                    placeholder="Write how you want your AI to answer this question..."
                   />
                 </div>
                 <Button 
@@ -326,17 +331,17 @@ export default function BusinessInfoEditor({
         </CardContent>
       </Card>
 
-      {/* Primary CTA */}
+      {/* Primary Goal */}
       <Card>
         <CardHeader>
-          <CardTitle>Primary Call-to-Action</CardTitle>
+          <CardTitle>Main Goal for Callers</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-gray-600">
-            What action should your AI receptionist guide callers toward?
+            What's the main thing you want callers to do? Your AI will guide conversations toward this goal.
           </p>
           <div>
-            <Label>CTA Text</Label>
+            <Label>What should callers do?</Label>
             <Input
               value={businessInfo.primaryCTA?.text || 'Schedule an appointment'}
               onChange={(e) => onChange({
@@ -346,11 +351,11 @@ export default function BusinessInfoEditor({
                   action: businessInfo.primaryCTA?.action || 'schedule' 
                 }
               })}
-              placeholder="e.g., Schedule a consultation"
+              placeholder="e.g., Schedule a consultation, Get a quote, Book a showing"
             />
           </div>
           <div>
-            <Label>CTA Goal</Label>
+            <Label>How should your AI help them do this?</Label>
             <Textarea
               value={businessInfo.primaryCTA?.action || 'Help the caller schedule an appointment'}
               onChange={(e) => onChange({
@@ -360,7 +365,7 @@ export default function BusinessInfoEditor({
                   action: e.target.value
                 }
               })}
-              placeholder="Describe what should happen when someone wants this action"
+              placeholder="e.g., Get their contact info and preferred times, then have someone call them back"
               rows={2}
             />
           </div>
