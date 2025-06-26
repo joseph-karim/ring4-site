@@ -170,23 +170,17 @@ export default function App() {
           {/* True Programmatic SEO Routes (Variable-Based) */}
           {/* Area Code Template - 300+ pages */}
           <Route path="/local-business-number/:areaCode" element={
-            <PasswordProtected>
-              <ProgrammaticPage bucket="area-code" />
-            </PasswordProtected>
+            <ProgrammaticPage bucket="area-code" />
           } />
           
           {/* Competitor Comparison Template - 25-30 pages */}
           <Route path="/compare/ring4-vs-:competitor" element={
-            <PasswordProtected>
-              <ProgrammaticPage bucket="comparison" />
-            </PasswordProtected>
+            <ProgrammaticPage bucket="comparison" />
           } />
           
           {/* Industry Template - 50+ pages */}
           <Route path="/business-phone-for-:industry" element={
-            <PasswordProtected>
-              <ProgrammaticPage bucket="industry" />
-            </PasswordProtected>
+            <ProgrammaticPage bucket="industry" />
           } />
           
           {/* Legacy/Editorial Routes (Not True Programmatic) */}
@@ -194,7 +188,6 @@ export default function App() {
           <Route path="/fix/:slug" element={<ProgrammaticPage bucket="spam-fix" />} />
           <Route path="/local-number/:city" element={<ProgrammaticPage bucket="location" />} />
           <Route path="/area-code/:code" element={<ProgrammaticPage bucket="location" />} />
-          <Route path="/phone-for-:industry" element={<ProgrammaticPage bucket="industry" />} />
           <Route path="/industries/:industry" element={<ProgrammaticPage bucket="industry" />} />
           <Route path="/features/:feature" element={<ProgrammaticPage bucket="feature" />} />
           <Route path="/guides/:guide" element={<ProgrammaticPage bucket="guide" />} />
