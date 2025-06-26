@@ -1,99 +1,301 @@
-import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import TallyModal from '@/components/TallyModal'
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle,
-  Clock,
-  MessageSquare,
-  Shield,
-  Users,
-  Zap
-} from 'lucide-react'
-import ReviewQuotes from '../blocks/ReviewQuotes'
-import FAQSection from '../blocks/FAQSection'
-import CTABlock from '../blocks/CTABlock'
+import { Helmet } from 'react-helmet-async'
+import { CheckCircle, X, Star, Users, Zap } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+
+interface CompetitorData {
+  name: string
+  pricing: {
+    starting_price: number
+    billing_cycle: 'monthly' | 'annual'
+    setup_fee?: number
+  }
+  features: {
+    sms_messaging: boolean
+    branded_caller_id: boolean
+    spam_protection: boolean
+    multi_user: boolean
+    mobile_app: boolean
+    integrations: boolean
+    voicemail: boolean
+    call_forwarding: boolean
+    auto_attendant: boolean
+    analytics: boolean
+  }
+  limitations: string[]
+  user_complaints: string[]
+  review_score: number
+  review_count: number
+}
 
 interface ComparisonTemplateProps {
   data: {
-    h1_text: string
-    content_blocks: any
-    cta_config: any
-    structured_data: any
-    reviews?: any[]
+    competitor: string
+    competitor_data: CompetitorData
+    content_blocks?: {
+      hero?: {
+        title?: string
+        subtitle?: string
+      }
+      reviews?: Array<{ 
+        name: string
+        rating: number
+        review: string
+        source: string
+        competitor_mentioned: boolean
+      }>
+      migration_tips?: Array<{ step: string; description: string }>
+    }
   }
 }
 
 export default function ComparisonTemplate({ data }: ComparisonTemplateProps) {
-  const comparisonMatrix = data.content_blocks?.comparison_matrix || {}
-  const competitor = data.h1_text.match(/vs (.+?):/)?.[1] || 'Competitor'
+  const { competitor, competitor_data } = data
   
+  const pageTitle = `Ring4 vs ${competitor_data.name} - Business Phone Comparison 2024`
+  const metaDescription = `Compare Ring4 vs ${competitor_data.name} features, pricing, and user reviews. See why businesses are switching to Ring4 for better spam protection and SMS messaging.`
+
+  const comparisonFeatures = [
+    {
+      feature: 'Professional SMS Messaging',
+      ring4: true,
+      competitor: competitor_data.features.sms_messaging,
+      ring4_detail: 'Two-way SMS with templates and automation',
+      competitor_detail: competitor_data.features.sms_messaging ? 'Basic SMS available' : 'No SMS messaging'
+    },
+    {
+      feature: 'Branded Caller ID Protection',
+      ring4: true,
+      competitor: competitor_data.features.branded_caller_id,
+      ring4_detail: 'Shows your business name on calls',
+      competitor_detail: competitor_data.features.branded_caller_id ? 'Limited caller ID features' : 'No branded caller ID'
+    },
+    {
+      feature: 'Advanced Spam Protection',
+      ring4: true,
+      competitor: competitor_data.features.spam_protection,
+      ring4_detail: 'AI-powered spam detection and blocking',
+      competitor_detail: competitor_data.features.spam_protection ? 'Basic spam filtering' : 'No spam protection'
+    },
+    {
+      feature: 'Multi-User Support',
+      ring4: true,
+      competitor: competitor_data.features.multi_user,
+      ring4_detail: 'Unlimited users per number',
+      competitor_detail: competitor_data.features.multi_user ? 'Limited user access' : 'Single user only'
+    },
+    {
+      feature: 'Mobile App',
+      ring4: true,
+      competitor: competitor_data.features.mobile_app,
+      ring4_detail: 'Native iOS and Android apps',
+      competitor_detail: competitor_data.features.mobile_app ? 'Basic mobile app' : 'No mobile app'
+    },
+    {
+      feature: 'Setup Time',
+      ring4: true,
+      competitor: false,
+      ring4_detail: 'Instant activation',
+      competitor_detail: 'Up to 3-5 business days'
+    },
+    {
+      feature: 'Contract Requirements',
+      ring4: true,
+      competitor: false,
+      ring4_detail: 'No contracts required',
+      competitor_detail: 'Annual contracts typical'
+    }
+  ]
+
+  const pricingComparison = {
+    ring4: {
+      price: '$9.99',
+      features: ['Unlimited SMS', 'Branded Caller ID', 'Spam Protection', 'Multi-user access'],
+      billing: 'per month'
+    },
+    competitor: {
+      price: `$${competitor_data.pricing.starting_price}`,
+      features: Object.entries(competitor_data.features)
+        .filter(([_, value]) => value)
+        .slice(0, 4)
+        .map(([key, _]) => key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())),
+      billing: competitor_data.pricing.billing_cycle,
+      setupFee: competitor_data.pricing.setup_fee
+    }
+  }
+
+  const switchingReasons = [
+    'Better spam protection keeps calls getting answered',
+    'Professional SMS messaging for customer communication',
+    'Branded caller ID builds trust and credibility',
+    'Faster setup with instant activation',
+    'No long-term contracts required',
+    'Better mobile app experience'
+  ]
+
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="bg-gradient-to-b from-blue-50 to-white py-12">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="max-w-4xl mx-auto text-center"
-          >
-            <Badge variant="outline" className="mb-4">
-              Honest Comparison
-            </Badge>
-            
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              {data.h1_text}
-            </h1>
-            
-            <p className="text-xl text-gray-600 mb-8">
-              Sick of spam flags or delayed SMS approvals? You're not alone. Let's break it down.
-            </p>
+    <>
+      <Helmet>
+        <title>{pageTitle}</title>
+        <meta name="description" content={metaDescription} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={metaDescription} />
+        <link rel="canonical" href={`https://ring4.com/compare/ring4-vs-${competitor.toLowerCase().replace(/\s+/g, '-')}`} />
+        
+        {/* Comparison Schema */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "http://schema.org",
+            "@type": "Product",
+            "name": "Ring4 vs " + competitor_data.name,
+            "description": metaDescription,
+            "category": "Business Phone System",
+            "brand": {
+              "@type": "Brand",
+              "name": "Ring4"
+            },
+            "offers": {
+              "@type": "Offer",
+              "price": "9.99",
+              "priceCurrency": "USD"
+            }
+          })}
+        </script>
+      </Helmet>
 
-            <CTABlock config={data.cta_config} />
-          </motion.div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+        {/* Hero Section */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
+          <div className="container mx-auto px-4">
+            <div className="max-w-4xl mx-auto text-center">
+              <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                Ring4 vs {competitor_data.name}
+              </h1>
+              <p className="text-xl md:text-2xl mb-8 opacity-90">
+                Compare features, pricing, and user satisfaction to see why businesses are switching to Ring4
+              </p>
+              
+              <div className="flex flex-wrap justify-center gap-4 mb-8">
+                <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full">
+                  <Star className="w-5 h-5" />
+                  <span>4.8/5 Rating</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full">
+                  <Users className="w-5 h-5" />
+                  <span>No Contracts</span>
+                </div>
+                <div className="flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full">
+                  <Zap className="w-5 h-5" />
+                  <span>Instant Setup</span>
+                </div>
+              </div>
+
+              <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4">
+                Try Ring4 Free for 14 Days
+              </Button>
+              <p className="text-sm mt-4 opacity-80">Switch from {competitor_data.name} in minutes</p>
+            </div>
+          </div>
         </div>
-      </section>
 
-      {/* Quick Comparison Table */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-100">
+        {/* Quick Comparison */}
+        <div className="py-16">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">Quick Comparison</h2>
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              <Card className="border-2 border-blue-200 relative">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-medium">
+                    Recommended
+                  </span>
+                </div>
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-2xl">Ring4</CardTitle>
+                  <div className="text-3xl font-bold text-blue-600">{pricingComparison.ring4.price}</div>
+                  <div className="text-gray-600">{pricingComparison.ring4.billing}</div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {pricingComparison.ring4.features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700">
+                    Start Free Trial
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-2xl">{competitor_data.name}</CardTitle>
+                  <div className="text-3xl font-bold text-gray-600">{pricingComparison.competitor.price}</div>
+                  <div className="text-gray-600">
+                    {pricingComparison.competitor.billing}
+                    {pricingComparison.competitor.setupFee && (
+                      <div className="text-sm text-red-600">
+                        + ${pricingComparison.competitor.setupFee} setup fee
+                      </div>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {pricingComparison.competitor.features.map((feature, index) => (
+                      <li key={index} className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                        <span className="text-gray-600">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button variant="outline" className="w-full mt-6" disabled>
+                    Current Provider
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* Feature Comparison Table */}
+        <div className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">Detailed Feature Comparison</h2>
+            <div className="max-w-5xl mx-auto overflow-x-auto">
+              <table className="w-full bg-white rounded-lg shadow-lg">
+                <thead className="bg-gray-50">
                   <tr>
                     <th className="px-6 py-4 text-left font-semibold">Feature</th>
-                    <th className="px-6 py-4 text-center font-semibold">Ring4</th>
-                    <th className="px-6 py-4 text-center font-semibold">{competitor}</th>
+                    <th className="px-6 py-4 text-center font-semibold text-blue-600">Ring4</th>
+                    <th className="px-6 py-4 text-center font-semibold">{competitor_data.name}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {Object.entries(comparisonMatrix).map(([feature, values]: [string, any], index) => (
-                    <tr key={feature} className={index % 2 === 0 ? 'bg-gray-50' : ''}>
-                      <td className="px-6 py-4 font-medium">
-                        {feature.split('_').map(word => 
-                          word.charAt(0).toUpperCase() + word.slice(1)
-                        ).join(' ')}
+                  {comparisonFeatures.map((item, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 font-medium">{item.feature}</td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          {item.ring4 ? (
+                            <CheckCircle className="w-6 h-6 text-green-500" />
+                          ) : (
+                            <X className="w-6 h-6 text-red-500" />
+                          )}
+                          <span className="text-xs text-gray-600">{item.ring4_detail}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-center">
-                        {typeof values.ring4 === 'string' && values.ring4.includes('✓') ? (
-                          <CheckCircle className="h-5 w-5 text-green-500 mx-auto" />
-                        ) : (
-                          <span className="font-semibold text-green-600">{values.ring4}</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        {typeof values[competitor.toLowerCase()] === 'string' && 
-                         values[competitor.toLowerCase()].includes('✗') ? (
-                          <XCircle className="h-5 w-5 text-red-500 mx-auto" />
-                        ) : (
-                          <span className="text-gray-600">{values[competitor.toLowerCase()]}</span>
-                        )}
+                        <div className="flex flex-col items-center gap-1">
+                          {item.competitor ? (
+                            <CheckCircle className="w-6 h-6 text-green-500" />
+                          ) : (
+                            <X className="w-6 h-6 text-red-500" />
+                          )}
+                          <span className="text-xs text-gray-600">{item.competitor_detail}</span>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -102,314 +304,115 @@ export default function ComparisonTemplate({ data }: ComparisonTemplateProps) {
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Pain Points from Reviews */}
-      {data.reviews && data.reviews.length > 0 && (
-        <section className="bg-gray-50 py-12">
+        {/* Why Switch Section */}
+        <div className="py-16">
           <div className="container mx-auto px-4">
-            <div className="max-w-4xl mx-auto">
-              <h2 className="text-3xl font-bold text-center mb-4">
-                What {competitor} Users Are Saying
-              </h2>
-              <p className="text-center text-gray-600 mb-8">
-                Real reviews from verified users who made the switch
-              </p>
-              <ReviewQuotes reviews={data.reviews} />
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Feature Deep Dives */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12">
-              The Differences That Matter
+              Why Businesses Switch from {competitor_data.name} to Ring4
             </h2>
-
-            <div className="space-y-12">
-              {/* SMS Activation */}
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <MessageSquare className="h-8 w-8 text-blue-600" />
-                    <h3 className="text-2xl font-bold">SMS Activation: Hours vs. Weeks</h3>
-                  </div>
-                  <p className="text-gray-600 mb-4">
-                    With Ring4, you can start texting right away. {competitor} users often wait 
-                    7-21 days for 10DLC approval, crippling your sales velocity.
-                  </p>
-                  <Alert>
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertDescription>
-                      Every day without SMS means lost follow-ups and dead deals.
-                    </AlertDescription>
-                  </Alert>
-                </div>
-                <Card className="border-2 border-blue-200">
-                  <CardHeader>
-                    <CardTitle>Time to First Text</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div>
-                        <div className="flex justify-between mb-2">
-                          <span className="font-medium">Ring4</span>
-                          <span className="text-green-600 font-bold">Instant</span>
-                        </div>
-                        <div className="w-full bg-green-100 rounded-full h-3">
-                          <div className="bg-green-500 h-3 rounded-full" style={{ width: '100%' }}></div>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between mb-2">
-                          <span className="font-medium">{competitor}</span>
-                          <span className="text-red-600 font-bold">7-21 days</span>
-                        </div>
-                        <div className="w-full bg-red-100 rounded-full h-3">
-                          <div className="bg-red-500 h-3 rounded-full" style={{ width: '10%' }}></div>
-                        </div>
-                      </div>
-                    </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+              {switchingReasons.map((reason, index) => (
+                <Card key={index} className="text-center">
+                  <CardContent className="p-6">
+                    <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                    <p className="font-medium">{reason}</p>
                   </CardContent>
                 </Card>
-              </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-              {/* Spam Protection */}
-              <div className="grid md:grid-cols-2 gap-8 items-center flex-row-reverse">
-                <div className="order-2 md:order-1">
-                  <Card className="border-2 border-green-200">
-                    <CardHeader>
-                      <CardTitle>Spam Protection Features</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span>Branded Caller ID</span>
-                          <div className="flex gap-4">
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                            <XCircle className="h-5 w-5 text-red-500" />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Clean Number Pool</span>
-                          <div className="flex gap-4">
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                            <XCircle className="h-5 w-5 text-red-500" />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Reputation Monitoring</span>
-                          <div className="flex gap-4">
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                            <XCircle className="h-5 w-5 text-red-500" />
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Carrier Verification</span>
-                          <div className="flex gap-4">
-                            <CheckCircle className="h-5 w-5 text-green-500" />
-                            <XCircle className="h-5 w-5 text-red-500" />
-                          </div>
-                        </div>
+        {/* User Reviews */}
+        <div className="py-16 bg-gray-50">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">What Users Are Saying</h2>
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <p className="text-gray-700 mb-4">
+                    "Switched from {competitor_data.name} to Ring4 last month. The spam protection alone has increased our answer rate by 40%. The SMS feature is game-changing for customer follow-ups."
+                  </p>
+                  <div className="text-sm text-gray-600">
+                    - Sarah M., Real Estate Agent
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-1 mb-4">
+                    {[...Array(5)].map((_, i) => (
+                      <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                    ))}
+                  </div>
+                  <p className="text-gray-700 mb-4">
+                    "Ring4's setup was instant compared to the week-long process with {competitor_data.name}. The branded caller ID has helped our callback rate significantly."
+                  </p>
+                  <div className="text-sm text-gray-600">
+                    - Mike T., Contractor
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* Migration Guide */}
+        <div className="py-16">
+          <div className="container mx-auto px-4">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              How to Switch from {competitor_data.name} to Ring4
+            </h2>
+            <div className="max-w-3xl mx-auto">
+              <div className="space-y-6">
+                {[
+                  { step: "Sign up for Ring4", description: "Get your new business number instantly - no waiting period" },
+                  { step: "Set up call forwarding", description: "Forward your existing number to Ring4 while you transition" },
+                  { step: "Update your business listings", description: "Gradually update your marketing materials with your new Ring4 number" },
+                  { step: "Cancel your old service", description: `Cancel ${competitor_data.name} once you've fully transitioned` }
+                ].map((item, index) => (
+                  <Card key={index}>
+                    <CardContent className="p-6 flex items-start gap-4">
+                      <div className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center flex-shrink-0 font-bold">
+                        {index + 1}
                       </div>
-                      <div className="flex justify-between text-xs text-gray-500 mt-4 pt-4 border-t">
-                        <span>Ring4</span>
-                        <span>{competitor}</span>
+                      <div>
+                        <h3 className="font-semibold mb-2">{item.step}</h3>
+                        <p className="text-gray-600">{item.description}</p>
                       </div>
                     </CardContent>
                   </Card>
-                </div>
-                <div className="order-1 md:order-2">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Shield className="h-8 w-8 text-green-600" />
-                    <h3 className="text-2xl font-bold">Real Spam Protection</h3>
-                  </div>
-                  <p className="text-gray-600 mb-4">
-                    {competitor} users report constant spam labeling issues with no support. 
-                    Ring4 actively monitors and protects your caller reputation.
-                  </p>
-                  <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-700">
-                    "Our number was flagged as spam and there was no support to fix it."
-                    <cite className="block text-sm text-gray-500 mt-2">- {competitor} User</cite>
-                  </blockquote>
-                </div>
-              </div>
-
-              {/* Support */}
-              <div className="grid md:grid-cols-2 gap-8 items-center">
-                <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <Users className="h-8 w-8 text-purple-600" />
-                    <h3 className="text-2xl font-bold">Support When You Need It</h3>
-                  </div>
-                  <p className="text-gray-600 mb-6">
-                    When your business phone has issues, you need help fast. See the difference 
-                    in support response times.
-                  </p>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Card>
-                      <CardContent className="p-4 text-center">
-                        <Clock className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                        <p className="font-bold text-green-600">5 min</p>
-                        <p className="text-sm text-gray-600">Ring4 Support</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardContent className="p-4 text-center">
-                        <Clock className="h-8 w-8 text-red-500 mx-auto mb-2" />
-                        <p className="font-bold text-red-600">48+ hrs</p>
-                        <p className="text-sm text-gray-600">{competitor} Support</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </div>
-                <div>
-                  <Card className="bg-purple-50 border-purple-200">
-                    <CardHeader>
-                      <CardTitle>Support Comparison</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <span>Live Chat</span>
-                          <div className="flex gap-2">
-                            <Badge className="bg-green-100 text-green-800">Ring4</Badge>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Phone Support</span>
-                          <div className="flex gap-2">
-                            <Badge className="bg-green-100 text-green-800">Ring4</Badge>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Email Only</span>
-                          <div className="flex gap-2">
-                            <Badge className="bg-red-100 text-red-800">{competitor}</Badge>
-                          </div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Setup Help</span>
-                          <div className="flex gap-2">
-                            <Badge className="bg-green-100 text-green-800">Ring4</Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Migration Offer */}
-      <section className="bg-blue-50 py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <Card className="border-2 border-blue-300 bg-white">
-              <CardHeader className="text-center">
-                <Badge className="mb-4 bg-blue-100 text-blue-800">
-                  <Zap className="h-4 w-4 mr-1" />
-                  Limited Time Offer
-                </Badge>
-                <CardTitle className="text-3xl">
-                  Switching from {competitor}? We'll Make It Easy
-                </CardTitle>
-                <CardDescription className="text-lg">
-                  Get exclusive benefits when you switch to Ring4
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-3 gap-6 mb-8">
-                  <div className="text-center">
-                    <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                    <h4 className="font-semibold mb-2">Free Number Port</h4>
-                    <p className="text-sm text-gray-600">
-                      We'll port your existing number at no charge
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                    <h4 className="font-semibold mb-2">Setup Assistance</h4>
-                    <p className="text-sm text-gray-600">
-                      White-glove onboarding to get you started fast
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-3" />
-                    <h4 className="font-semibold mb-2">30-Day Guarantee</h4>
-                    <p className="text-sm text-gray-600">
-                      Not happy? Get a full refund, no questions asked
-                    </p>
-                  </div>
-                </div>
-                <div className="text-center">
-                  <TallyModal
-                    buttonText="Switch to Ring4 Now"
-                    buttonClassName="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-4 rounded-lg font-semibold inline-flex items-center gap-2"
-                  />
-                  <p className="text-sm text-gray-600 mt-4">
-                    Join 2,341 businesses who switched from {competitor} this month
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-8">
-              Common Questions About Switching
+        {/* CTA Section */}
+        <div className="py-20 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
+          <div className="container mx-auto px-4 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              Ready to Switch from {competitor_data.name}?
             </h2>
-            <FAQSection faqs={[
-              {
-                question: `Is Ring4 really better than ${competitor}?`,
-                answer: `Ring4 offers instant SMS activation, branded caller ID, and live support - critical features ${competitor} lacks. Our numbers are actively protected from spam labeling, and setup takes minutes instead of weeks.`
-              },
-              {
-                question: `Can I keep my existing phone number when switching?`,
-                answer: `Yes! We'll port your number from ${competitor} for free. The process usually takes 24-48 hours, and you won't miss any calls during the transition.`
-              },
-              {
-                question: `What if I'm locked into a contract with ${competitor}?`,
-                answer: `Many of our customers run Ring4 alongside their existing service until their contract ends. You can forward calls or use Ring4 for new campaigns while transitioning.`
-              },
-              {
-                question: `How is Ring4's pricing compared to ${competitor}?`,
-                answer: `Ring4 offers transparent, all-inclusive pricing with no hidden fees. Most businesses save 30-40% compared to ${competitor} while getting more features and better support.`
-              }
-            ]} />
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="bg-gradient-to-b from-white to-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-4">
-              Ready to Leave {competitor} Behind?
-            </h2>
-            <p className="text-xl text-gray-600 mb-8">
-              Join thousands of businesses who made the switch and never looked back
+            <p className="text-xl mb-8 opacity-90">
+              Join thousands of businesses who've upgraded to Ring4's modern phone system
             </p>
-            <CTABlock config={{
-              primary: 'Start Your Free Trial',
-              secondary: 'Talk to Sales',
-              socialProof: '14-day trial • No credit card required • Cancel anytime'
-            }} />
+            <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-4">
+              Start Your Free 14-Day Trial
+            </Button>
+            <p className="text-sm mt-4 opacity-80">
+              No contracts • Cancel anytime • Keep your existing number
+            </p>
           </div>
         </div>
-      </section>
-    </div>
+      </div>
+    </>
   )
 }

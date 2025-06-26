@@ -15,6 +15,7 @@ import BrandedCallerIDTemplate from './templates/BrandedCallerIDTemplate'
 import BusinessLaunchTemplate from './templates/BusinessLaunchTemplate'
 import FollowUpStrategyTemplate from './templates/FollowUpStrategyTemplate'
 import CallRoutingTemplate from './templates/CallRoutingTemplate'
+import AreaCodeTemplate from './templates/AreaCodeTemplate'
 import { Skeleton } from '../ui/skeleton'
 
 // Map template types to components
@@ -31,6 +32,7 @@ const templateComponents = {
   'business-launch': BusinessLaunchTemplate,
   'follow-up-strategy': FollowUpStrategyTemplate,
   'call-routing': CallRoutingTemplate,
+  'area-code': AreaCodeTemplate,
 } as const
 
 type TemplateType = keyof typeof templateComponents
@@ -59,6 +61,9 @@ export default function ProgrammaticPage({ bucket }: ProgrammaticPageProps) {
             break
           case 'location':
             slug = `local-number-${params.city}`
+            break
+          case 'area-code':
+            slug = `area-code-${params.areaCode}`
             break
           case 'comparison':
             slug = `ring4-vs-${params.competitor}`

@@ -129,6 +129,130 @@ export const mockSEOData = {
     },
     structured_data: {},
     status: 'published'
+  },
+  // True Programmatic Templates with variable data
+  'area-code-312': {
+    id: '7',
+    slug: 'area-code-312',
+    bucket: 'area-code',
+    template_type: 'area-code',
+    meta_title: '312 Business Phone Numbers | Local Chicago, IL Numbers | Ring4',
+    meta_description: 'Get a local 312 business phone number for Chicago, IL. Professional SMS, spam caller ID protection, and branded calling for Chicago businesses.',
+    h1_text: 'Get Your 312 Business Number',
+    area_code: '312',
+    location_data: {
+      area_code: '312',
+      city: 'Chicago',
+      state: 'Illinois',
+      state_abbr: 'IL',
+      business_density: 'high' as const,
+      spam_risk_index: 75,
+      population: 2697000,
+      major_industries: ['Real Estate', 'Healthcare', 'Finance', 'Legal', 'Technology', 'Manufacturing']
+    },
+    content_blocks: {},
+    cta_config: {
+      primary: 'Get Your 312 Number Now',
+      secondary: 'Check Availability',
+      socialProof: 'Join 2,341 Chicago businesses using Ring4'
+    },
+    structured_data: {},
+    status: 'published'
+  },
+  'ring4-vs-openphone': {
+    id: '8',
+    slug: 'ring4-vs-openphone',
+    bucket: 'comparison',
+    template_type: 'comparison',
+    meta_title: 'Ring4 vs OpenPhone - Business Phone Comparison 2024',
+    meta_description: 'Compare Ring4 vs OpenPhone features, pricing, and user reviews. See why businesses are switching to Ring4 for better spam protection and SMS messaging.',
+    h1_text: 'Ring4 vs OpenPhone',
+    competitor: 'openphone',
+    competitor_data: {
+      name: 'OpenPhone',
+      pricing: {
+        starting_price: 15,
+        billing_cycle: 'monthly' as const,
+        setup_fee: 0
+      },
+      features: {
+        sms_messaging: true,
+        branded_caller_id: false,
+        spam_protection: false,
+        multi_user: true,
+        mobile_app: true,
+        integrations: true,
+        voicemail: true,
+        call_forwarding: true,
+        auto_attendant: false,
+        analytics: true
+      },
+      limitations: ['No branded caller ID', 'Limited spam protection', 'SMS delays'],
+      user_complaints: ['SMS activation took weeks', 'No spam labeling support', 'Poor customer service'],
+      review_score: 4.2,
+      review_count: 850
+    },
+    content_blocks: {},
+    cta_config: {
+      primary: 'Try Ring4 Free',
+      secondary: 'Compare Features',
+      socialProof: '87% of businesses prefer Ring4 over OpenPhone'
+    },
+    structured_data: {},
+    status: 'published'
+  },
+  'phone-for-realtors': {
+    id: '9',
+    slug: 'phone-for-realtors',
+    bucket: 'industry',
+    template_type: 'industry',
+    meta_title: 'Business Phone for Real Estate Agents | Ring4',
+    meta_description: 'Professional phone system designed for Real Estate Agents. Get branded caller ID, SMS messaging, and spam protection. Trusted by Real Estate Agents professionals nationwide.',
+    h1_text: 'Business Phone for Real Estate Agents',
+    industry: 'realtors',
+    industry_data: {
+      name: 'realtors',
+      display_name: 'Real Estate Agents',
+      pain_points: [
+        'Clients not answering calls labeled as spam',
+        'Missing leads while showing properties',
+        'Personal number exposed on listings'
+      ],
+      use_cases: {
+        primary: 'property inquiries and showings',
+        secondary: ['Client follow-ups', 'Open house reminders', 'Contract updates']
+      },
+      common_scenarios: [
+        {
+          scenario: 'Showing a property when a hot lead calls',
+          ring4_solution: 'Professional voicemail captures lead details and sends instant SMS notification'
+        },
+        {
+          scenario: 'Following up with open house visitors',
+          ring4_solution: 'Bulk SMS to all visitors with personalized property details and next steps'
+        }
+      ],
+      competitors: ['Google Voice', 'Grasshopper', 'RingCentral'],
+      roi_metrics: {
+        response_rate_improvement: 47,
+        lead_conversion_increase: 32,
+        customer_satisfaction_boost: 89
+      },
+      testimonial: {
+        quote: 'Ring4 increased my callback rate by 50%. Clients actually answer when they see my agency name instead of a random number.',
+        author: 'Sarah Mitchell',
+        company: 'Mitchell Realty Group',
+        result: 'Closed 3 more deals per month'
+      }
+    },
+    content_blocks: {},
+    cta_config: {
+      primary: 'Start Free Trial',
+      secondary: 'See Realtor Features',
+      socialProof: 'Trusted by 5,000+ real estate professionals'
+    },
+    structured_data: {},
+    status: 'published'
   }
 }
 
