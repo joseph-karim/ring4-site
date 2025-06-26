@@ -28,8 +28,7 @@
     "dev:voice": "concurrently \"npm run dev\" \"npm run deepgram\"",
     "dev:deepgram": "concurrently \"npm run dev\" \"npm run deepgram\"",
     "dev:netlify": "npm run supabase:start && npm run netlify",
-    "generate:sitemap": "node scripts/generate-sitemap.js",
-    "prebuild": "npm run generate:sitemap"
+    "generate:sitemap": "node scripts/generate-sitemap.js"
   },
   "dependencies": {
     "@aws-sdk/client-bedrock-runtime": "^3.826.0",
