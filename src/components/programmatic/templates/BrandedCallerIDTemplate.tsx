@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import TallyModal from '@/components/TallyModal'
 import { 
   Shield, 
   Phone, 
@@ -13,8 +12,7 @@ import {
   Clock,
   Building,
   Star,
-  X,
-  Smartphone
+  X
 } from 'lucide-react'
 import FAQSection from '../blocks/FAQSection'
 import CTABlock from '../blocks/CTABlock'
@@ -29,9 +27,6 @@ interface BrandedCallerIDTemplateProps {
 }
 
 export default function BrandedCallerIDTemplate({ data }: BrandedCallerIDTemplateProps) {
-  const benefits = data.content_blocks?.benefits || []
-  const trustFactors = data.content_blocks?.trust_factors || []
-  const stats = data.content_blocks?.stats || {}
 
   return (
     <div className="min-h-screen">

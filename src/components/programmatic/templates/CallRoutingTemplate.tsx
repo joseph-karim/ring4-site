@@ -1,8 +1,6 @@
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import TallyModal from '@/components/TallyModal'
 import { 
   Phone, 
   ArrowRight, 
@@ -10,14 +8,11 @@ import {
   CheckCircle,
   Clock,
   Route,
-  Settings,
   Headphones,
   Building,
-  Star,
   AlertTriangle,
   Zap,
   Target,
-  Shield,
   Volume2
 } from 'lucide-react'
 import FAQSection from '../blocks/FAQSection'
@@ -33,9 +28,6 @@ interface CallRoutingTemplateProps {
 }
 
 export default function CallRoutingTemplate({ data }: CallRoutingTemplateProps) {
-  const routingOptions = data.content_blocks?.routing_options || []
-  const benefits = data.content_blocks?.benefits || []
-  const stats = data.content_blocks?.stats || {}
 
   return (
     <div className="min-h-screen">

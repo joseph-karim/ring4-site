@@ -1,8 +1,6 @@
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import TallyModal from '@/components/TallyModal'
 import { 
   Rocket, 
   Phone, 
@@ -13,8 +11,6 @@ import {
   DollarSign,
   TrendingUp,
   Users,
-  Shield,
-  Smartphone,
   Target,
   AlertTriangle,
   Zap
@@ -32,9 +28,6 @@ interface BusinessLaunchTemplateProps {
 }
 
 export default function BusinessLaunchTemplate({ data }: BusinessLaunchTemplateProps) {
-  const challenges = data.content_blocks?.challenges || []
-  const benefits = data.content_blocks?.benefits || []
-  const stats = data.content_blocks?.stats || {}
 
   return (
     <div className="min-h-screen">

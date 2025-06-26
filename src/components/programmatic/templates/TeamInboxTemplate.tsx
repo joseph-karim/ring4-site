@@ -1,16 +1,11 @@
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import TallyModal from '@/components/TallyModal'
 import { 
   Users, 
-  MessageSquare, 
   AlertTriangle,
   CheckCircle,
-  ArrowRight,
   Clock,
-  Zap,
   Shield,
   TrendingUp,
   X,
@@ -30,9 +25,6 @@ interface TeamInboxTemplateProps {
 }
 
 export default function TeamInboxTemplate({ data }: TeamInboxTemplateProps) {
-  const painPoints = data.content_blocks?.pain_points || []
-  const benefits = data.content_blocks?.benefits || []
-  const stats = data.content_blocks?.stats || {}
 
   return (
     <div className="min-h-screen">

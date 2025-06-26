@@ -1,19 +1,17 @@
 import { motion } from 'framer-motion'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import TallyModal from '@/components/TallyModal'
 import { 
   MessageSquare, 
-  Phone, 
   TrendingUp,
   Clock,
   Users,
   CheckCircle,
   Zap,
   Code,
-  Globe,
   ArrowRight,
   Copy,
   Monitor
@@ -31,8 +29,6 @@ interface SMSWidgetTemplateProps {
 }
 
 export default function SMSWidgetTemplate({ data }: SMSWidgetTemplateProps) {
-  const benefits = data.content_blocks?.benefits || []
-  const features = data.content_blocks?.features || []
   const stats = data.content_blocks?.stats || {}
 
   return (

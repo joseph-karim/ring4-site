@@ -1,23 +1,16 @@
 import { motion } from 'framer-motion'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import TallyModal from '@/components/TallyModal'
 import { 
-  MessageSquare, 
   Clock, 
   Users,
-  CheckCircle,
   TrendingUp,
   Target,
-  Calendar,
-  Bell,
   Repeat,
   Star,
   AlertTriangle,
   Zap,
-  Phone,
-  Mail
+  Phone
 } from 'lucide-react'
 import FAQSection from '../blocks/FAQSection'
 import CTABlock from '../blocks/CTABlock'
@@ -32,9 +25,6 @@ interface FollowUpStrategyTemplateProps {
 }
 
 export default function FollowUpStrategyTemplate({ data }: FollowUpStrategyTemplateProps) {
-  const strategies = data.content_blocks?.strategies || []
-  const templates = data.content_blocks?.templates || []
-  const stats = data.content_blocks?.stats || {}
 
   return (
     <div className="min-h-screen">

@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /.netlify/
+Disallow: /seo-templates
+
+Sitemap: https://ring4.com/sitemap.xml
