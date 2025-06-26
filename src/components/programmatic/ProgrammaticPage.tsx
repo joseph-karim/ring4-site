@@ -66,10 +66,16 @@ export default function ProgrammaticPage({ bucket }: ProgrammaticPageProps) {
             slug = `area-code-${params.areaCode}`
             break
           case 'comparison':
-            slug = `ring4-vs-${params.competitor}`
+            // Handle both /compare/ring4-vs-openphone and /compare/openphone formats
+            slug = params.competitor?.startsWith('ring4-vs-') 
+              ? params.competitor 
+              : `ring4-vs-${params.competitor}`
             break
           case 'industry':
-            slug = `phone-for-${params.industry}`
+            // Handle both /business-phone-for-realtors and other formats
+            slug = params.industry?.startsWith('phone-for-') 
+              ? params.industry 
+              : `phone-for-${params.industry}`
             break
           case 'feature':
             slug = params.feature || ''

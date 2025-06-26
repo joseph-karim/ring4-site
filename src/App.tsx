@@ -174,12 +174,12 @@ export default function App() {
           } />
           
           {/* Competitor Comparison Template - 25-30 pages */}
-          <Route path="/compare/ring4-vs-:competitor" element={
+          <Route path="/compare/:competitor" element={
             <ProgrammaticPage bucket="comparison" />
           } />
           
           {/* Industry Template - 50+ pages */}
-          <Route path="/business-phone-for-:industry" element={
+          <Route path="/business-phone-for/:industry" element={
             <ProgrammaticPage bucket="industry" />
           } />
           
