@@ -182,6 +182,9 @@ export default function App() {
           <Route path="/business-phone-for/:industry" element={
             <ProgrammaticPage bucket="industry" />
           } />
+          <Route path="/business-phone-for-:industry" element={
+            <ProgrammaticPage bucket="industry" />
+          } />
           
           {/* Legacy/Editorial Routes (Not True Programmatic) */}
           <Route path="/fix-spam-likely" element={<ProgrammaticPage bucket="spam-fix" />} />
