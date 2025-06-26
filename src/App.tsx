@@ -10,6 +10,9 @@ import PricingPage from './components/PricingPage'
 import PrivacyPolicyPage from './components/PrivacyPolicyPage'
 import TermsOfServicePage from './components/TermsOfServicePage'
 import TallyModal from './components/TallyModal'
+import ProgrammaticPage from './components/programmatic/ProgrammaticPage'
+import PasswordProtected from './components/PasswordProtected'
+import SEOTemplateIndex from './components/SEOTemplateIndex'
 
 import { Button } from './components/ui/button'
 import { Toaster } from './components/ui/toaster'
@@ -160,6 +163,82 @@ export default function App() {
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+          
+          {/* SEO Template Index (Internal) */}
+          <Route path="/seo-templates" element={<SEOTemplateIndex />} />
+          
+          {/* Programmatic SEO Routes */}
+          <Route path="/fix-spam-likely" element={<ProgrammaticPage bucket="spam-fix" />} />
+          <Route path="/fix/:slug" element={<ProgrammaticPage bucket="spam-fix" />} />
+          <Route path="/local-number/:city" element={<ProgrammaticPage bucket="location" />} />
+          <Route path="/area-code/:code" element={<ProgrammaticPage bucket="location" />} />
+          <Route path="/compare/ring4-vs-:competitor" element={<ProgrammaticPage bucket="comparison" />} />
+          <Route path="/phone-for-:industry" element={<ProgrammaticPage bucket="industry" />} />
+          <Route path="/industries/:industry" element={<ProgrammaticPage bucket="industry" />} />
+          <Route path="/features/:feature" element={<ProgrammaticPage bucket="feature" />} />
+          <Route path="/guides/:guide" element={<ProgrammaticPage bucket="guide" />} />
+          
+          {/* Password Protected SEO Template Routes */}
+          <Route path="/sms-widget" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="sms-widget" />
+            </PasswordProtected>
+          } />
+          <Route path="/website-texting" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="sms-widget" />
+            </PasswordProtected>
+          } />
+          <Route path="/team-inbox" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="team-inbox" />
+            </PasswordProtected>
+          } />
+          <Route path="/shared-inbox" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="team-inbox" />
+            </PasswordProtected>
+          } />
+          <Route path="/branded-caller-id" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="branded-caller-id" />
+            </PasswordProtected>
+          } />
+          <Route path="/business-caller-id" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="branded-caller-id" />
+            </PasswordProtected>
+          } />
+          <Route path="/startup-phone" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="business-launch" />
+            </PasswordProtected>
+          } />
+          <Route path="/business-launch" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="business-launch" />
+            </PasswordProtected>
+          } />
+          <Route path="/follow-up-strategy" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="follow-up-strategy" />
+            </PasswordProtected>
+          } />
+          <Route path="/customer-follow-up" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="follow-up-strategy" />
+            </PasswordProtected>
+          } />
+          <Route path="/call-routing" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="call-routing" />
+            </PasswordProtected>
+          } />
+          <Route path="/ivr-system" element={
+            <PasswordProtected>
+              <ProgrammaticPage bucket="call-routing" />
+            </PasswordProtected>
+          } />
         </Routes>
       </div>
       <Toaster />
