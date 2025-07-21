@@ -160,6 +160,7 @@ export default function App() {
           <Route path="/nevermiss-ai" element={<NeverMissAIPage />} />
           <Route path="/real-estate-agents" element={<RealEstateAgentsPage />} />
           <Route path="/claim-receptionist" element={<ClaimReceptionistWizard />} />
+          <Route path="/business/AI-enhanced-IVR" element={<ClaimReceptionistWizard />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />

@@ -44,6 +44,39 @@ const deepgram = createClient(DEEPGRAM_API_KEY);
 // Store active sessions
 const activeSessions = new Map<string, any>();
 
+// Audio buffer management
+interface AudioSession {
+  agent: any;
+  audioQueue: Buffer[];
+  isPlaying: boolean;
+  socketId: string;
+}
+
+const audioSessions = new Map<string, AudioSession>();
+
+// Play audio chunks with proper timing
+const playNextAudioChunk = async (socketId: string) => {
+  const session = audioSessions.get(socketId);
+  if (!session || session.audioQueue.length === 0) {
+    if (session) {
+      session.isPlaying = false;
+    }
+    return;
+  }
+
+  session.isPlaying = true;
+  const audioChunk = session.audioQueue.shift()!;
+  
+  // Convert audio buffer to base64 for Socket.IO transmission
+  const audioBase64 = audioChunk.toString('base64');
+  io.to(socketId).emit('audioResponse', audioBase64);
+  
+  // Small delay to prevent audio overlap (10ms)
+  setTimeout(() => {
+    playNextAudioChunk(socketId);
+  }, 10);
+};
+
 // Health check endpoint
 app.get('/health', (_req, res) => {
   res.json({
@@ -76,6 +109,14 @@ io.on('connection', (socket) => {
       // Create an agent connection
       const agent = deepgram.agent();
       activeSessions.set(socket.id, agent);
+      
+      // Initialize audio session
+      audioSessions.set(socket.id, {
+        agent,
+        audioQueue: [],
+        isPlaying: false,
+        socketId: socket.id
+      });
 
       // Set up event handlers
       agent.on(AgentEvents.Open, () => {
@@ -105,7 +146,7 @@ io.on('connection', (socket) => {
             },
             output: {
               encoding: 'linear16',
-              sample_rate: 24000,
+              sample_rate: 16000, // Match input sample rate for consistency
               container: 'none'
             }
           },
@@ -130,13 +171,13 @@ io.on('connection', (socket) => {
               - Agent Name: ${config.businessInfo.agentName || 'AI Receptionist'}
               
               SERVICES YOU KNOW ABOUT:
-              ${config.businessInfo.services ? config.businessInfo.services.map(s => `- ${s}`).join('\n') : '- General business services'}
+              ${config.businessInfo.services ? config.businessInfo.services.map((s: string) => `- ${s}`).join('\n') : '- General business services'}
               
               BUSINESS HOURS:
               ${config.businessInfo.hours ? Object.entries(config.businessInfo.hours).map(([day, hours]) => `${day}: ${hours}`).join('\n') : 'Standard business hours'}
               
               KNOWLEDGE BASE (Questions you can answer):
-              ${config.businessInfo.knowledgeBase?.faqs ? config.businessInfo.knowledgeBase.faqs.map(faq => `Q: ${faq.question}\nA: ${faq.answer}`).join('\n\n') : 'Standard business questions'}
+              ${config.businessInfo.knowledgeBase?.faqs ? config.businessInfo.knowledgeBase.faqs.map((faq: any) => `Q: ${faq.question}\nA: ${faq.answer}`).join('\n\n') : 'Standard business questions'}
               
               CONVERSATION STARTERS:
               ${config.businessInfo.conversationStarters ? config.businessInfo.conversationStarters.join('\n- ') : 'How can I help you today?'}
@@ -179,17 +220,11 @@ io.on('connection', (socket) => {
             console.log('🗣️ Sending conversation start trigger...');
             
             // Try different approaches to start the conversation
-            if (typeof agent.sendMessage === 'function') {
-              agent.sendMessage({ type: 'conversation_start' });
-            } else if (typeof agent.injectUserMessage === 'function') {
-              agent.injectUserMessage('');
-            } else {
-              // If no specific method, send empty audio to trigger response
-              agent.send(Buffer.alloc(0));
-            }
+            // Send empty audio to trigger response
+            agent.send(Buffer.alloc(0));
             
           } catch (error) {
-            console.log('⚠️ Could not trigger greeting:', error.message);
+            console.log('⚠️ Could not trigger greeting:', (error as Error).message);
             console.log('Available agent methods:', Object.getOwnPropertyNames(agent));
           }
         }, 500);
@@ -204,9 +239,14 @@ io.on('connection', (socket) => {
       });
 
       agent.on(AgentEvents.Audio, (audio: Buffer) => {
-        // Convert audio buffer to base64 for Socket.IO transmission
-        const audioBase64 = audio.toString('base64');
-        socket.emit('audioResponse', audioBase64);
+        // Add audio to buffer queue
+        const session = audioSessions.get(socket.id);
+        if (session) {
+          session.audioQueue.push(audio);
+          if (!session.isPlaying) {
+            playNextAudioChunk(socket.id);
+          }
+        }
       });
 
       agent.on(AgentEvents.Error, (error: Error) => {
@@ -217,6 +257,7 @@ io.on('connection', (socket) => {
       agent.on(AgentEvents.Close, () => {
         console.log('Agent connection closed');
         activeSessions.delete(socket.id);
+        audioSessions.delete(socket.id);
       });
 
     } catch (error) {
@@ -249,6 +290,7 @@ io.on('connection', (socket) => {
         console.error('Error disconnecting agent:', error);
       }
       activeSessions.delete(socket.id);
+      audioSessions.delete(socket.id);
     }
   });
 });
@@ -290,6 +332,7 @@ process.on('SIGTERM', async () => {
     }
   }
   activeSessions.clear();
+  audioSessions.clear();
   
   server.close(() => {
     console.log('👋 Server closed');
